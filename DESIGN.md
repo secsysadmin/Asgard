@@ -1,6 +1,6 @@
 ---
 name: SEC Engineering Career Fair
-description: A direct, information-first fair site for Aggie engineers and recruiters.
+description: An editorial, information-first fair site for Aggie engineers and recruiters.
 colors:
   maroon: "#500000"
   maroon-dark: "#330000"
@@ -10,13 +10,13 @@ colors:
   sand: "#e7d7c2"
 typography:
   display:
-    fontFamily: "IBM Plex Sans, Arial, sans-serif"
-    fontSize: "clamp(2.25rem, 4vw, 4.75rem)"
-    fontWeight: 600
-    lineHeight: 0.98
-    letterSpacing: "-0.035em"
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "clamp(3rem, 6vw, 7.875rem)"
+    fontWeight: 500
+    lineHeight: 0.88
+    letterSpacing: "-0.04em"
   body:
-    fontFamily: "IBM Plex Sans, Arial, sans-serif"
+    fontFamily: "DM Sans, Arial, sans-serif"
     fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.6
@@ -45,7 +45,7 @@ components:
 
 **Creative North Star: "The Maroon Field Guide"**
 
-The public site behaves like a well-designed event program: clear hierarchy, practical schedules, and a student-run operation that feels organized rather than promotional. The admin surface shares the same seriousness but shifts into a quieter, operations-first utility mode.
+The public site behaves like a well-designed event program: clear hierarchy, practical schedules, and a student-run operation with a refined editorial character. The admin surface shares the same seriousness but shifts into a quieter, operations-first utility mode.
 
 ## Colors
 
@@ -53,7 +53,7 @@ Maroon is the institutional anchor; warm sand carries gentle contrast and action
 
 ## Typography
 
-IBM Plex Sans provides a practical, technical voice for headings and reading. DM Mono is reserved for administrative and event metadata.
+Playfair Display provides a measured editorial voice for the hero, team showcase, and contact heading. DM Sans carries body copy and functional information; DM Mono is reserved for metadata.
 
 ## Layout
 
@@ -87,4 +87,4 @@ Tab groups are the core information architecture: compact selectors expose rich 
 - Do use ruled lists for schedules, teams, and logistical information.
 - Don’t use generic dashboard-card grids on the public site.
 - Don’t use gradients or glass effects.
-- Don’t add an eyebrow above primary display headings.
+- Don’t apply the display face to schedules, tabs, logistics, or other functional information.
