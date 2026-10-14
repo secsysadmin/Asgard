@@ -1,4 +1,15 @@
--- Future CMS persistence model for Vercel + Neon.
+-- CMS persistence model: same database, separate schemas by environment.
+create schema if not exists development;
+create schema if not exists production;
+
+create table if not exists development.site_config (
+  id smallint primary key check (id = 1), config jsonb not null, updated_at timestamptz not null default now()
+);
+create table if not exists production.site_config (
+  id smallint primary key check (id = 1), config jsonb not null, updated_at timestamptz not null default now()
+);
+
+-- Future normalized CMS tables. Create these within the intended schema.
 create table if not exists site_pages (
   id text primary key,
   slug text not null unique,

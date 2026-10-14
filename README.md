@@ -18,8 +18,9 @@ The public student and recruiter tabs live in `lib/site-content.ts`. The admin i
 ## Vercel + Neon handoff
 
 1. Create a Neon database and populate `DATABASE_URL` from `.env.example`.
-2. Run `schema.sql` against that database.
-3. Add authenticated admin access (for example, Auth.js or Clerk).
+2. Run `npm run db:migrate`. This creates two schemas in the same database: `development` and `production`.
+3. Set `APP_ENV=production` only for Vercel Production. Local and Vercel Preview use `development`; production selects `production` automatically through `VERCEL_ENV` or explicitly through `APP_ENV`.
+4. Add authenticated admin access (for example, Auth.js or Clerk).
 4. Replace the localStorage calls in `app/admin/page.tsx` with server actions that write `site_pages` and `page_sections`.
 5. Store uploaded images in Vercel Blob or another object store; save their URLs in `media_assets`.
 
