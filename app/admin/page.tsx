@@ -1,27 +1,26 @@
 "use client";
 import Link from "next/link";
-import { ArrowLeft, Check, ChevronDown, GripVertical, ImagePlus, LayoutTemplate, Menu, Save, Type } from "lucide-react";
+import { Check, ChevronDown, GripVertical, ImagePlus, LayoutTemplate, Menu, Save, Type } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type Block = { id: string; label: string; kind: string; visible: boolean };
 const initialBlocks: Block[] = [
   { id: "hero", label: "Career Fair hero", kind: "Hero", visible: true },
-  { id: "intro", label: "Intro statement", kind: "Text", visible: true },
+  { id: "dates", label: "At a glance", kind: "Events", visible: true },
   { id: "students", label: "Student information", kind: "Tabs", visible: true },
   { id: "recruiters", label: "Recruiter information", kind: "Tabs", visible: true },
-  { id: "dates", label: "At a glance", kind: "Events", visible: true },
   { id: "team", label: "Meet the team", kind: "People", visible: true },
   { id: "contact", label: "Contact us", kind: "Contact", visible: true }
 ];
 
 export default function Admin() {
-  const [blocks, setBlocks] = useState(initialBlocks); const [selected, setSelected] = useState("hero"); const [panel, setPanel] = useState<"pages" | "navigation" | "media" | "styles">("pages"); const [saved, setSaved] = useState(false); const [image, setImage] = useState(""); const [hero, setHero] = useState({ headline: "Engineering Career Fair", supporting: "Where Aggie engineers meet what’s next.", dates: "September 9–10, 2026", image: "" });
+  const [blocks, setBlocks] = useState(initialBlocks); const [selected, setSelected] = useState("hero"); const [panel, setPanel] = useState<"pages" | "navigation" | "media" | "styles">("pages"); const [saved, setSaved] = useState(false); const [image, setImage] = useState(""); const [hero, setHero] = useState({ headline: "SEC Engineering Career Fair", supporting: "Where Aggie engineers meet what’s next.", dates: "September 9–10, 2026", image: "" });
   const blocksRef = useRef(blocks); const heroRef = useRef(hero);
   const updateBlocks = (next: Block[]) => { blocksRef.current = next; setBlocks(next); };
   const updateHero = (update: Partial<typeof hero>) => { const next = { ...heroRef.current, ...update }; heroRef.current = next; setHero(next); };
   useEffect(() => { fetch("/api/site-config").then(response => response.ok ? response.json() : null).then(config => { if (!config) return; const definitions = new Map<string, Block>(initialBlocks.map(block => [block.id, block])); const stored: Pick<Block, "id" | "visible">[] = Array.isArray(config.layout) ? config.layout : []; const ordered: Block[] = stored.flatMap((item) => { const definition = definitions.get(item?.id); return definition ? [{ ...definition, visible: item.visible !== false }] : []; }); const included = new Set(ordered.map(block => block.id)); updateBlocks([...ordered, ...initialBlocks.filter(block => !included.has(block.id))]); updateHero(config.hero ?? {}); }).catch(() => undefined); }, []);
   const move = (i: number, delta: number) => { const next = [...blocksRef.current]; const target = i + delta; if(target < 0 || target >= next.length) return; [next[i], next[target]] = [next[target], next[i]]; updateBlocks(next); };
-  const save = async () => { const currentHero = heroRef.current; const safeHero = { headline: currentHero.headline.trim() || "Engineering Career Fair", supporting: currentHero.supporting.trim() || "Where Aggie engineers meet what’s next.", dates: currentHero.dates.trim() || "September 9–10, 2026", image: currentHero.image }; const response = await fetch("/api/site-config", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ layout: blocksRef.current.map(({id, visible}) => ({id, visible})), hero: safeHero }) }); if (!response.ok) return; heroRef.current = safeHero; setHero(safeHero); setSaved(true); setTimeout(() => setSaved(false), 1800); };
+  const save = async () => { const currentHero = heroRef.current; const safeHero = { headline: currentHero.headline.trim() || "SEC Engineering Career Fair", supporting: currentHero.supporting.trim() || "Where Aggie engineers meet what’s next.", dates: currentHero.dates.trim() || "September 9–10, 2026", image: currentHero.image }; const response = await fetch("/api/site-config", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ layout: blocksRef.current.map(({id, visible}) => ({id, visible})), hero: safeHero }) }); if (!response.ok) return; heroRef.current = safeHero; setHero(safeHero); setSaved(true); setTimeout(() => setSaved(false), 1800); };
   const upload = (file?: File) => { if(!file) return; const reader = new FileReader(); reader.onload = () => { const next = String(reader.result); setImage(next); updateHero({ image: next }); }; reader.readAsDataURL(file); };
   return <div className="studio">
     <aside className="studio-sidebar"><Link href="/" className="studio-logo">SEC <span>site studio</span></Link><button className="site-switcher">Engineering Career Fair <ChevronDown/></button><div className="studio-nav"><p>CONTENT</p><button className={panel === "pages" ? "selected" : ""} onClick={() => setPanel("pages")}><LayoutTemplate/> Pages</button><button className={panel === "navigation" ? "selected" : ""} onClick={() => setPanel("navigation")}><Menu/> Navigation</button><button className={panel === "media" ? "selected" : ""} onClick={() => setPanel("media")}><ImagePlus/> Media library</button><p>SETTINGS</p><button className={panel === "styles" ? "selected" : ""} onClick={() => setPanel("styles")}><Type/> Site styles</button></div><div className="studio-user"><span>CF</span><div><strong>Career Fair Admin</strong><small>Administrator</small></div></div></aside>

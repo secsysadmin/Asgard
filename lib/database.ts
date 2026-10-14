@@ -6,8 +6,8 @@ export type SiteConfig = {
 };
 
 export const defaultConfig: SiteConfig = {
-  layout: ["hero", "intro", "students", "recruiters", "dates", "team", "contact"].map(id => ({ id, visible: true })),
-  hero: { headline: "Engineering Career Fair", supporting: "Where Aggie engineers meet what’s next.", dates: "September 9–10, 2026", image: "" }
+  layout: ["hero", "dates", "students", "recruiters", "team", "contact"].map(id => ({ id, visible: true })),
+  hero: { headline: "SEC Engineering Career Fair", supporting: "Where Aggie engineers meet what’s next.", dates: "September 9–10, 2026", image: "" }
 };
 
 export function deploymentSchema() {

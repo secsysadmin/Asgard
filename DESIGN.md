@@ -1,6 +1,6 @@
 ---
 name: SEC Engineering Career Fair
-description: A confident editorial fair site for Aggie engineers and recruiters.
+description: A direct, information-first fair site for Aggie engineers and recruiters.
 colors:
   maroon: "#500000"
   maroon-dark: "#330000"
@@ -10,13 +10,13 @@ colors:
   sand: "#e7d7c2"
 typography:
   display:
-    fontFamily: "Playfair Display, Georgia, serif"
-    fontSize: "clamp(3rem, 8vw, 9.25rem)"
-    fontWeight: 500
-    lineHeight: 0.82
-    letterSpacing: "-0.065em"
+    fontFamily: "IBM Plex Sans, Arial, sans-serif"
+    fontSize: "clamp(2.25rem, 4vw, 4.75rem)"
+    fontWeight: 600
+    lineHeight: 0.98
+    letterSpacing: "-0.035em"
   body:
-    fontFamily: "DM Sans, Arial, sans-serif"
+    fontFamily: "IBM Plex Sans, Arial, sans-serif"
     fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.6
@@ -45,7 +45,7 @@ components:
 
 **Creative North Star: "The Maroon Field Guide"**
 
-The public site balances campus ritual with the physical scale of a real recruiting event. It feels like a well-designed event program: bold type, big pauses, practical schedules, and a visible human hand. The admin surface shares the same seriousness but shifts into a quieter, operations-first utility mode.
+The public site behaves like a well-designed event program: clear hierarchy, practical schedules, and a student-run operation that feels organized rather than promotional. The admin surface shares the same seriousness but shifts into a quieter, operations-first utility mode.
 
 ## Colors
 
@@ -53,7 +53,7 @@ Maroon is the institutional anchor; warm sand carries gentle contrast and action
 
 ## Typography
 
-Display uses Playfair Display for a confident editorial voice. DM Sans handles reading, controls, and schedules; DM Mono identifies administrative and event metadata.
+IBM Plex Sans provides a practical, technical voice for headings and reading. DM Mono is reserved for administrative and event metadata.
 
 ## Layout
 
