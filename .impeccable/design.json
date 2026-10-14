@@ -1,0 +1,7 @@
+{
+  "name": "SEC Engineering Career Fair",
+  "northStar": "The Maroon Field Guide",
+  "colors": { "maroon": "#500000", "cream": "#f5f1e8", "paper": "#fbfaf6", "ink": "#241b18", "sand": "#e7d7c2" },
+  "typography": { "display": "Playfair Display", "body": "DM Sans", "metadata": "DM Mono" },
+  "principles": ["Editorial scale meets operational clarity", "Warm sand is a signal rather than a background default", "Use ruled lists for practical information", "Avoid generic card grids and decorative gradients"]
+}
