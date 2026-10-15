@@ -569,6 +569,7 @@ function Team({ data, at }: Props<"team">) {
       </div>
       <List
         className="team-track"
+        containerProps={{ tabIndex: 0, role: "region", "aria-label": `${data.heading}: scroll sideways for more` }}
         items={data.members}
         path={[...at, "members"]}
         label="person"

@@ -97,7 +97,7 @@ const home: Page = {
       summary: "<p>The premier recruiting event for the College of Engineering at Texas A&amp;M.</p>",
       dates: "September 9–10, 2026",
       location: "Legends Event Center · Bryan, TX",
-      image: img("/images/career-fair-hero.png", "Engineering students in professional attire arriving at the career fair"),
+      image: img("/images/career-fair-hero.webp", "Engineering students in professional attire arriving at the career fair"),
       primary: { label: "I’m a student", href: "/students" },
       secondary: { label: "I’m a recruiter", href: "/recruiters" },
     }),

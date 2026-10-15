@@ -200,7 +200,16 @@ export function Img({
   const [open, setOpen] = useState(false);
   if (!edit) {
     if (!value.src) return null;
-    const image = <img className={className} src={value.src} alt={value.alt} loading={loading} decoding="async" />;
+    const image = (
+      <img
+        className={className}
+        src={value.src}
+        alt={value.alt}
+        loading={loading}
+        decoding="async"
+        fetchPriority={loading === "eager" ? "high" : undefined}
+      />
+    );
     if (!zoom) return frameClassName ? <span className={frameClassName}>{image}</span> : image;
     return (
       <>
@@ -334,6 +343,7 @@ export function List<T>({
   className,
   label = "item",
   min = 0,
+  containerProps,
 }: {
   items: T[];
   path: Path;
@@ -342,12 +352,14 @@ export function List<T>({
   className?: string;
   label?: string;
   min?: number;
+  /** Extra attributes for the list element itself (e.g. a scroll region's label). */
+  containerProps?: React.HTMLAttributes<HTMLElement>;
 }) {
   const edit = useEdit();
   const [armed, setArmed] = useState<number | null>(null);
   const [drag, setDrag] = useState<{ from: number; over: number } | null>(null);
   const Tag = as as "div";
-  if (!edit) return <Tag className={className}>{items.map((item, i) => <Fragment key={i}>{render(item, i, [...path, i])}</Fragment>)}</Tag>;
+  if (!edit) return <Tag className={className} {...containerProps}>{items.map((item, i) => <Fragment key={i}>{render(item, i, [...path, i])}</Fragment>)}</Tag>;
 
   const isRow = as === "tbody";
   const rendered = items.map((item, i) => {
@@ -415,7 +427,7 @@ export function List<T>({
     </button>
   );
   return (
-    <Tag className={cx(className, "ed-list")}>
+    <Tag className={cx(className, "ed-list")} {...containerProps}>
       {rendered}
       {isRow ? (
         <tr className="ed-add-row">

@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/student", destination: "/students", permanent: true },
+      // The hero was converted to WebP; drafts saved earlier still reference the PNG.
+      { source: "/images/career-fair-hero.png", destination: "/images/career-fair-hero.webp", permanent: true },
       { source: "/student-:rest", destination: "/students", permanent: false },
       { source: "/recruiter-:rest", destination: "/recruiters", permanent: false },
     ];

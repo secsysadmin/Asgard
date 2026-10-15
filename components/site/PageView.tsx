@@ -36,6 +36,7 @@ function Header({ content, page }: { content: SiteContent; page: Page }) {
           className="menu-toggle"
           aria-expanded={open}
           aria-controls="site-nav"
+          aria-label={open ? "Close menu" : "Open menu"}
           onClick={() => setOpen(!open)}
         >
           {open ? <X aria-hidden /> : <Menu aria-hidden />}

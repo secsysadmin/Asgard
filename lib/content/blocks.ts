@@ -22,7 +22,7 @@ export const blockSpecs: { [K in BlockType]: BlockSpec<K> } = {
       summary: "<p>Short supporting sentence.</p>",
       dates: "Date",
       location: "Location",
-      image: img("/images/career-fair-hero.png", "Students at the career fair"),
+      image: img("/images/career-fair-hero.webp", "Students at the career fair"),
       primary: { label: "Primary action", href: "/students" },
       secondary: { label: "Secondary action", href: "/recruiters" },
     }),
