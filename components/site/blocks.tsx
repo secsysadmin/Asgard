@@ -17,7 +17,8 @@ import {
   Shirt,
   Users,
 } from "lucide-react";
-import { useMemo, useRef } from "react";
+import { memo, useRef } from "react";
+import { faqItemId } from "@/lib/content/anchors";
 import type { Block, BlockData, BlockType } from "@/lib/content/types";
 import { Img, List, Lnk, MaybeLink, type Path, Rich, Text, useEdit } from "../edit/context";
 
@@ -407,9 +408,6 @@ function Steps({ data, at }: Props<"steps">) {
   );
 }
 
-/** Anchor for one FAQ question, shared with the site search index. */
-export const faqItemId = (blockId: string, group: number, item: number) => `${blockId}-q${group + 1}-${item + 1}`;
-
 function Faq({ block, data, at }: Props<"faq">) {
   const edit = useEdit();
   return (
@@ -682,11 +680,12 @@ const renderers: { [K in BlockType]: (props: Props<K>) => React.ReactNode } = {
   callout: Callout,
 };
 
-export function BlockView({ block, at }: { block: Block; at: Path }) {
-  const Render = renderers[block.type] as (props: Props<BlockType>) => React.ReactNode;
-  return useMemo(
-    () => <Render block={block as never} data={block.data as never} at={at} />,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [block, at.join("/")],
-  );
-}
+/** Re-renders only when its block or position changes, so typing in one
+ *  section of the studio doesn't re-render every other section. */
+export const BlockView = memo(
+  function BlockView({ block, at }: { block: Block; at: Path }) {
+    const Render = renderers[block.type] as (props: Props<BlockType>) => React.ReactNode;
+    return <Render block={block as never} data={block.data as never} at={at} />;
+  },
+  (prev, next) => prev.block === next.block && prev.at.join("/") === next.at.join("/"),
+);

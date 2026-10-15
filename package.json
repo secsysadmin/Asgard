@@ -1,7 +1,26 @@
 {
   "name": "tamu-career-fair",
   "private": true,
-  "scripts": { "dev": "next dev", "build": "next build", "start": "next start", "lint": "next lint", "db:migrate": "node --env-file=.env scripts/migrate.mjs" },
-  "dependencies": { "@neondatabase/serverless": "^1.0.1", "next": "^16.0.1", "react": "^19.2.0", "react-dom": "^19.2.0", "lucide-react": "^0.468.0" },
-  "devDependencies": { "@types/node": "^22.9.0", "@types/react": "^19.0.2", "@types/react-dom": "^19.0.2", "typescript": "^5.7.2" }
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "db:migrate": "node --env-file=.env scripts/migrate.mjs"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.1",
+    "lucide-react": "^0.468.0",
+    "next": "^16.0.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.1",
+    "typescript": "^5.7.2"
+  }
 }

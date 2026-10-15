@@ -70,20 +70,23 @@ export async function publish(input: unknown, label = "") {
   const json = JSON.stringify(content);
   const schema = deploymentSchema();
   const sql = database();
-  const rows = (await sql.query(
-    `insert into ${schema}.site_content (id, draft, published, draft_updated_at, published_at)
-     values (1, $1::jsonb, $1::jsonb, now(), now())
-     on conflict (id) do update set draft = excluded.draft, published = excluded.published,
-       draft_updated_at = now(), published_at = now()
-     returning published_at`,
-    [json],
-  )) as { published_at: string }[];
-  await sql.query(`insert into ${schema}.site_revisions (content, label) values ($1::jsonb, $2)`, [json, label.slice(0, 120)]);
-  // Keep the 30 most recent revisions.
-  await sql.query(
-    `delete from ${schema}.site_revisions where id not in (select id from ${schema}.site_revisions order by id desc limit 30)`,
-  );
-  return { content, publishedAt: rows[0]?.published_at ?? null };
+  // Publish, record the revision, and prune old revisions atomically.
+  const [published] = (await sql.transaction([
+    sql.query(
+      `insert into ${schema}.site_content (id, draft, published, draft_updated_at, published_at)
+       values (1, $1::jsonb, $1::jsonb, now(), now())
+       on conflict (id) do update set draft = excluded.draft, published = excluded.published,
+         draft_updated_at = now(), published_at = now()
+       returning published_at`,
+      [json],
+    ),
+    sql.query(`insert into ${schema}.site_revisions (content, label) values ($1::jsonb, $2)`, [json, label.slice(0, 120)]),
+    // Keep the 30 most recent revisions.
+    sql.query(
+      `delete from ${schema}.site_revisions where id not in (select id from ${schema}.site_revisions order by id desc limit 30)`,
+    ),
+  ])) as { published_at: string }[][];
+  return { content, publishedAt: published[0]?.published_at ?? null };
 }
 
 export async function listRevisions() {

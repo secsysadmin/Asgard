@@ -6,7 +6,9 @@ The public site for the Texas A&M SEC Engineering Career Fair, plus **Site Studi
 
 ```bash
 npm install
-npm run dev
+npm run dev      # http://localhost:3000
+npm run lint     # ESLint (Next.js core-web-vitals + TypeScript rules)
+npm run build    # production build + type check
 ```
 
 Open `/` for the site and `/admin` for the studio.
@@ -22,7 +24,7 @@ Open `/` for the site and `/admin` for the studio.
 | `/recruiters` | Complete recruiter guide: deadlines, registration, pricing, payment & tax ID, refunds, pre-fair events, itinerary, parking, booth & shipping, interview rooms, virtual fair, hotels, FAQs, contact |
 | `/career-discovery-fair` | Career Discovery Fair details for companies |
 
-Guide pages have a sticky "On this page" menu that tracks your position as you scroll (on phones it becomes a dropdown). Old URLs from the previous site (`/student-*`, `/recruiter-*`, `/student`) redirect to the matching guide.
+Guide pages have a sticky "On this page" menu that tracks your position as you scroll (on phones it becomes a dropdown). **Site search** (header button, ⌘K/Ctrl K, or `/`) covers every visible section and item on every page; FAQ results open the matching answer. Old URLs from the previous site (`/student-*`, `/recruiter-*`, `/student`) redirect to the matching guide.
 
 ## Using Site Studio
 
@@ -38,12 +40,25 @@ Guide pages have a sticky "On this page" menu that tracks your position as you s
 
 ## How it works
 
-- `lib/content/types.ts` defines the content model: pages made of typed blocks (hero, schedule, cards, FAQ, and so on).
-- `lib/content/defaults.ts` holds the starting content, adapted from the previous careerfair.sec.tamu.edu site.
-- `components/site/*` renders the public site. `components/edit/context.tsx` makes the same components editable in place when they're rendered inside the studio.
-- `lib/content/normalize.ts` validates every save against the block schema, and `lib/sanitize.ts` allowlists rich-text HTML.
+| Path | Role |
+| --- | --- |
+| `lib/content/types.ts` | Content model: pages made of typed blocks (hero, schedule, cards, FAQ, …). |
+| `lib/content/blocks.ts` | Block library: labels, descriptions, and starter content for each block type. |
+| `lib/content/defaults.ts` | Starting content, adapted from the previous careerfair.sec.tamu.edu site. |
+| `lib/content/normalize.ts` | Validates and sanitizes every save against the block schema. |
+| `lib/content/store.ts` | Neon reads/writes: draft, published, revisions. |
+| `lib/content/search.ts` | Builds and ranks the site-search index. |
+| `lib/sanitize.ts` | Allowlist sanitizer for rich text and link URLs. |
+| `lib/media.ts`, `lib/request.ts` | Upload validation and the guards shared by studio API routes. |
+| `lib/auth.ts` | `isAuthorized()`, the single hook for adding sign-in. |
+| `components/site/*` | Public site: page shell, block renderers, search, links. |
+| `components/edit/context.tsx` | Makes the same renderers editable in place inside the studio. |
+| `components/studio/*` | The studio: shell, panels, inspector, dialogs, rich-text toolbar. |
+
 - Content and uploads are stored in Neon: `site_content` (draft + published), `site_revisions`, and `media_files`. Images are served from `/api/media/<id>`. The tables are created automatically on first use, or with `npm run db:migrate`.
 - Public pages are statically generated and refreshed when you publish.
+- Every studio API route checks `isAuthorized()`, rejects cross-site requests, and requires JSON bodies. Uploads are checked against their real file contents; SVGs with scripts or external links are refused and served sandboxed.
+- Security headers (no framing, `nosniff`, referrer and permissions policies) are set for every route in `next.config.ts`.
 
 ## Deploying (Vercel + Neon)
 

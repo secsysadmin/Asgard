@@ -28,7 +28,7 @@ The 2026 fair is September 9–10 at Legends Event Center, with a virtual fair o
 
 ## Capabilities and Constraints
 
-The public site requires student and recruiter tab groups, team, and contact information. The admin surface supports in-browser section reordering, visibility, content-field editing, and image previewing. Authentication, cloud upload, and Neon persistence remain integration work rather than fabricated functionality.
+The public site has a home page, complete student and recruiter guides with a sticky section menu, a Career Discovery Fair page, and site-wide search. The Site Studio (`/admin`) edits every page visually: inline text and rich-text editing, image upload and replacement, drag-and-drop sections and list items, page management, draft autosave, publishing, and revision history, all persisted in Neon. The studio has no sign-in yet; Google OAuth is planned.
 
 ## Brand Commitments
 
@@ -36,7 +36,7 @@ Texas A&M maroon and the SEC home site are binding visual references. The experi
 
 ## Evidence on Hand
 
-Content and dates are adapted from the live 2026 SEC Career Fair website. The hero is an AI-generated, explicitly temporary placeholder image at `public/images/career-fair-hero.png`.
+Content and dates are adapted from the previous careerfair.sec.tamu.edu site and the Texas A&M Career Closet site. The hero is an AI-generated, explicitly temporary placeholder image at `public/images/career-fair-hero.png`.
 
 ## Product Principles
 

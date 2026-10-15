@@ -13,10 +13,13 @@ import {
   useState,
 } from "react";
 import { ArrowDown, ArrowUp, Copy, GripVertical, ImagePlus, Link2, Plus, Trash2 } from "lucide-react";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { safeHref, sanitizeHtml } from "@/lib/sanitize";
 import type { ImageRef, LinkRef } from "@/lib/content/types";
+import { SmartLink } from "../site/SmartLink";
 
-export type Path = (string | number)[];
+import type { Path } from "@/lib/studio/paths";
+
+export type { Path };
 
 /** Operations the studio exposes to editable regions of the rendered page. */
 export type EditApi = {
@@ -264,8 +267,6 @@ function Lightbox({ image, onClose }: { image: ImageRef; onClose: () => void }) 
 
 /* ──────────────────────────────── Links ──────────────────────────────── */
 
-const isExternal = (href: string) => /^https?:/i.test(href);
-
 export function Lnk({
   value,
   path,
@@ -281,12 +282,13 @@ export function Lnk({
 }) {
   const edit = useEdit();
   if (!edit) {
-    if (!value.label || !value.href) return null;
+    const href = safeHref(value.href);
+    if (!value.label || !href) return null;
     return (
-      <a className={className} href={value.href} {...(isExternal(value.href) ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
+      <SmartLink className={className} href={href}>
         {value.label}
         {children}
-      </a>
+      </SmartLink>
     );
   }
   return (
@@ -313,11 +315,12 @@ export function Lnk({
 /** A plain href attached to a non-link element (schedule rows, key dates). */
 export function MaybeLink({ href, className, children }: { href: string; className?: string; children: ReactNode }) {
   const edit = useEdit();
+  href = safeHref(href);
   if (!href || edit) return <span className={className}>{children}</span>;
   return (
-    <a className={className} href={href} {...(isExternal(href) ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
+    <SmartLink className={className} href={href}>
       {children}
-    </a>
+    </SmartLink>
   );
 }
 

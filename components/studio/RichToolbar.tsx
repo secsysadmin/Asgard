@@ -67,7 +67,6 @@ export function RichToolbar() {
       target.removeEventListener("input", place);
       target.removeEventListener("keydown", onKey);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target]);
 
   if (!target || !position) return null;

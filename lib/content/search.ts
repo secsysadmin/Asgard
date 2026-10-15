@@ -1,4 +1,5 @@
 import { stripHtml } from "../sanitize";
+import { faqItemId } from "./anchors";
 import type { Block, Page, SiteContent } from "./types";
 
 // Site-wide search over the published content. Every visible section becomes
@@ -56,7 +57,7 @@ function ownText(record: Record<string, unknown>, exclude = ""): string {
     .join(" · ");
 }
 
-export function buildSearchIndex(content: SiteContent, faqItemId: (block: string, group: number, item: number) => string): SearchEntry[] {
+export function buildSearchIndex(content: SiteContent): SearchEntry[] {
   const entries: SearchEntry[] = [];
   for (const page of content.pages) {
     const pageTitle = page.slug ? page.title : "Home";

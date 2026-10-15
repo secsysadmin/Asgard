@@ -1,9 +1,28 @@
 "use client";
 import { ArrowRight, CornerDownLeft, Search as SearchIcon, X } from "lucide-react";
-import { Fragment, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { buildSearchIndex, search, snippet, tokenize, type SearchResult } from "@/lib/content/search";
 import type { SiteContent } from "@/lib/content/types";
-import { faqItemId } from "./blocks";
+import { revealHash } from "./reveal";
+
+const noSubscribe = () => () => {};
+/** "⌘K" on Apple devices, "Ctrl K" elsewhere; "⌘K" during server render. */
+const useShortcutLabel = () =>
+  useSyncExternalStore(
+    noSubscribe,
+    () => (/Mac|iPhone|iPad/.test(navigator.userAgent) ? "⌘K" : "Ctrl K"),
+    () => "⌘K",
+  );
+
+type Group = { page: string; items: { result: SearchResult; position: number }[] };
+
+/** Results grouped under their page, numbered in on-screen order for arrow keys. */
+function groupByPage(results: SearchResult[]): Group[] {
+  const groups = new Map<string, SearchResult[]>();
+  for (const result of results) groups.set(result.page, [...(groups.get(result.page) ?? []), result]);
+  let position = 0;
+  return [...groups].map(([page, items]) => ({ page, items: items.map((result) => ({ result, position: position++ })) }));
+}
 
 const SUGGESTIONS = ["Dress code", "Parking", "Shuttle", "Registration", "Virtual fair", "Hotels", "Headshots", "Payment"];
 
@@ -15,49 +34,25 @@ function highlight(text: string, query: string): ReactNode {
   return text.split(pattern).map((part, i) => (i % 2 ? <mark key={i}>{part}</mark> : <Fragment key={i}>{part}</Fragment>));
 }
 
-/** Navigate to a result, opening an FAQ answer if that's the target. */
-export function revealHash(hash: string) {
-  const el = hash ? document.getElementById(decodeURIComponent(hash.replace(/^#/, ""))) : null;
-  if (!el) return;
-  if (el instanceof HTMLDetailsElement) el.open = true;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
-  if (el instanceof HTMLDetailsElement) el.querySelector("summary")?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
-  // Images above the target can finish loading after the jump and push it
-  // down; keep it aligned until the page settles or the reader scrolls.
-  let settled = false;
-  const stop = () => {
-    settled = true;
-    observer.disconnect();
-    window.removeEventListener("wheel", stop);
-    window.removeEventListener("touchmove", stop);
-    window.removeEventListener("keydown", stop);
-  };
-  let first = true; // ResizeObserver reports once on observe; skip it.
-  const observer = new ResizeObserver(() => {
-    if (first) first = false;
-    else if (!settled) el.scrollIntoView({ block: "start" });
-  });
-  observer.observe(document.body);
-  window.addEventListener("wheel", stop, { passive: true });
-  window.addEventListener("touchmove", stop, { passive: true });
-  window.addEventListener("keydown", stop);
-  window.setTimeout(stop, 2500);
-}
-
 export function SiteSearch({ content }: { content: SiteContent }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
-  const [shortcut, setShortcut] = useState("⌘K");
+  const shortcut = useShortcutLabel();
   const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const listId = useId();
-  const index = useMemo(() => buildSearchIndex(content, faqItemId), [content]);
+  const index = useMemo(() => buildSearchIndex(content), [content]);
   const results = useMemo(() => search(index, query), [index, query]);
+  const groups = useMemo(() => groupByPage(results), [results]);
+  const ordered = useMemo(() => groups.flatMap((group) => group.items), [groups]);
+  const updateQuery = (value: string) => {
+    setQuery(value);
+    setActive(0);
+  };
 
   useEffect(() => {
-    if (!/Mac|iPhone|iPad/.test(navigator.userAgent)) setShortcut("Ctrl K");
     const onKey = (event: KeyboardEvent) => {
       const typing = (event.target as HTMLElement).closest?.("input, textarea, select, [contenteditable]");
       if (((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") || (event.key === "/" && !typing)) {
@@ -75,7 +70,6 @@ export function SiteSearch({ content }: { content: SiteContent }) {
     input.current?.select();
   }, [open]);
 
-  useEffect(() => setActive(0), [query]);
   useEffect(() => {
     list.current?.querySelector(`[data-index="${active}"]`)?.scrollIntoView({ block: "nearest" });
   }, [active]);
@@ -94,15 +88,6 @@ export function SiteSearch({ content }: { content: SiteContent }) {
       else window.scrollTo({ top: 0, behavior: "smooth" });
     } else location.href = result.href;
   };
-
-  // Group results under their page, keeping best-first order inside each.
-  const groups: { page: string; items: { result: SearchResult; index: number }[] }[] = [];
-  results.forEach((result, i) => {
-    const group = groups.find((g) => g.page === result.page) ?? groups[groups.push({ page: result.page, items: [] }) - 1];
-    group.items.push({ result, index: i });
-  });
-  // Flatten in display order so arrow keys follow what's on screen.
-  const ordered = groups.flatMap((group) => group.items);
 
   return (
     <>
@@ -131,7 +116,7 @@ export function SiteSearch({ content }: { content: SiteContent }) {
               aria-autocomplete="list"
               placeholder="Search dates, parking, dress code, FAQs…"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => updateQuery(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "ArrowDown") {
                   event.preventDefault();
@@ -160,7 +145,7 @@ export function SiteSearch({ content }: { content: SiteContent }) {
                 <ul>
                   {SUGGESTIONS.map((suggestion) => (
                     <li key={suggestion}>
-                      <button type="button" onClick={() => setQuery(suggestion)}>
+                      <button type="button" onClick={() => updateQuery(suggestion)}>
                         {suggestion}
                       </button>
                     </li>
@@ -185,8 +170,7 @@ export function SiteSearch({ content }: { content: SiteContent }) {
                       {group.page}
                     </p>
                     <ul role="presentation">
-                      {group.items.map(({ result }) => {
-                        const position = ordered.findIndex((item) => item.result === result);
+                      {group.items.map(({ result, position }) => {
                         return (
                           <li key={`${result.href}|${result.title}`} role="presentation">
                             <a

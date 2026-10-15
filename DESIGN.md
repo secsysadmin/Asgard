@@ -53,11 +53,11 @@ Maroon is the institutional anchor; warm sand carries gentle contrast and action
 
 ## Typography
 
-Playfair Display provides a measured editorial voice for the hero, team showcase, and contact heading. DM Sans carries body copy and functional information; DM Mono is reserved for metadata.
+Playfair Display provides a measured editorial voice for page and section headings. IBM Plex Sans carries body copy and functional information; DM Mono is reserved for metadata such as times and dates.
 
 ## Layout
 
-Public pages use an 8vw desktop gutter and alternate expansive editorial moments with dense operational sections. Mobile reduces gutters to 24px and preserves the reading order. The admin area uses a persistent sidebar and two-column workspace that becomes one column on small screens.
+Public pages use a fluid gutter (6% of the page, 20–96px) and alternate expansive editorial moments with dense operational sections. Responsive rules are container queries on the `.site` wrapper, so the studio's device previews behave like real devices. Guide pages pair a sticky "On this page" sidebar (a dropdown under 960px) with the content column. The studio uses a top bar, a left panel rail, a centered canvas, and a right inspector.
 
 ## Elevation & Depth
 
@@ -75,11 +75,11 @@ Primary buttons use maroon or warm-sand fills, direct action language, and a sub
 
 ### Navigation
 
-The public navigation is compact and horizontal until mobile, where it becomes a simple stacked disclosure. Admin navigation prioritizes a dark operational rail with a strong active row.
+The public header is solid maroon with white logos: horizontal links above 1100px, a Menu disclosure below; search collapses to an icon below 1280px. The studio's left rail switches between Sections, Pages, Media, Site, and History.
 
 ### Signature Component
 
-Tab groups are the core information architecture: compact selectors expose rich but scannable logistics beneath.
+Guide pages are the core information architecture: grouped section navigation, fact cards with icons, flowchart steps, and FAQ topic cards make logistics scannable.
 
 ## Do's and Don'ts
 

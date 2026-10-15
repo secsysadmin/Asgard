@@ -2,11 +2,12 @@
 import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import type { Block, Page, SiteContent } from "@/lib/content/types";
+import { safeHref } from "@/lib/sanitize";
 import { Rich, type Path, useEdit } from "../edit/context";
 import { BlockView } from "./blocks";
-import { revealHash, SiteSearch } from "./Search";
-
-const external = (href: string) => (/^https?:/i.test(href) ? { target: "_blank", rel: "noopener noreferrer" } : {});
+import { revealHash } from "./reveal";
+import { SmartLink } from "./SmartLink";
+import { SiteSearch } from "./Search";
 
 export function pagePath(page: Page) {
   return `/${page.slug}`;
@@ -24,11 +25,11 @@ function Header({ content, page }: { content: SiteContent; page: Page }) {
   return (
     <header className="site-header">
       <div className="site-header-inner">
-        <a className="brand" href="/" aria-label={`${settings.siteName} home`}>
+        <SmartLink className="brand" href="/" aria-label={`${settings.siteName} home`}>
           <img src="/images/tamu-logo-white.svg" alt="Texas A&M University" width={183} height={28} />
           <span aria-hidden className="brand-rule" />
           <img src="/images/sec-logo-white.png" alt="Student Engineers’ Council" width={774} height={331} className="brand-sec" />
-        </a>
+        </SmartLink>
         {!edit && <SiteSearch content={content} />}
         <button
           type="button"
@@ -44,17 +45,17 @@ function Header({ content, page }: { content: SiteContent; page: Page }) {
           <ul>
             {settings.nav.map((link, i) => (
               <li key={i}>
-                <a href={link.href} aria-current={isCurrent(link.href, page) ? "page" : undefined} onClick={() => setOpen(false)} {...external(link.href)}>
+                <SmartLink href={safeHref(link.href)} aria-current={isCurrent(link.href, page) ? "page" : undefined} onClick={() => setOpen(false)}>
                   {link.label}
                   {/^https?:/i.test(link.href) && <ArrowUpRight aria-hidden className="nav-external" />}
-                </a>
+                </SmartLink>
               </li>
             ))}
           </ul>
           {settings.headerCta.label && settings.headerCta.href && (
-            <a className="button button-small" href={settings.headerCta.href} onClick={() => setOpen(false)} {...external(settings.headerCta.href)}>
+            <SmartLink className="button button-small" href={safeHref(settings.headerCta.href)} onClick={() => setOpen(false)}>
               {settings.headerCta.label}
-            </a>
+            </SmartLink>
           )}
         </nav>
       </div>
@@ -74,13 +75,11 @@ function Footer({ content }: { content: SiteContent }) {
       <nav aria-label="Footer">
         <ul>
           <li>
-            <a href="/">Home</a>
+            <SmartLink href="/">Home</SmartLink>
           </li>
           {settings.nav.map((link, i) => (
             <li key={i}>
-              <a href={link.href} {...external(link.href)}>
-                {link.label}
-              </a>
+              <SmartLink href={safeHref(link.href)}>{link.label}</SmartLink>
             </li>
           ))}
         </ul>
@@ -88,7 +87,9 @@ function Footer({ content }: { content: SiteContent }) {
       <div className="footer-contact">
         <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>
         <span>© {new Date().getFullYear()} Student Engineers’ Council</span>
-        <a className="footer-staff" href="/admin">Staff sign-in</a>
+        <SmartLink className="footer-staff" href="/admin">
+          Staff sign-in
+        </SmartLink>
       </div>
     </footer>
   );

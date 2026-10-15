@@ -16,7 +16,7 @@ export function database() {
   return neon(url);
 }
 
-/** DDL for one environment schema. Shared with scripts/migrate.mjs. */
+/** DDL for one environment schema. Keep scripts/migrate.mjs and schema.sql in sync. */
 export function schemaStatements(schema: string) {
   return [
     `create schema if not exists ${schema}`,
@@ -53,7 +53,8 @@ let ready: Promise<void> | null = null;
 export function ensureSchema() {
   ready ??= (async () => {
     const sql = database();
-    for (const statement of schemaStatements(deploymentSchema())) await sql.query(statement);
+    // One HTTP round trip on cold start instead of one per statement.
+    await sql.transaction(schemaStatements(deploymentSchema()).map((statement) => sql.query(statement)));
   })().catch((error) => {
     ready = null;
     throw error;

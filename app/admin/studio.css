@@ -18,7 +18,6 @@
   overflow: hidden;
 }
 .st-top svg,
-.st-banner svg,
 .st-left svg,
 .st-right svg,
 .st-btn svg,
@@ -96,18 +95,6 @@
 .st-spacer {
   flex: 1;
 }
-.st-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  padding: 7px 16px;
-  background: #fff6e0;
-  border-bottom: 1px solid #f0dfb0;
-  color: #6b4b00;
-  font-size: 13px;
-}
-
 /* Buttons */
 .st-btn {
   display: inline-flex;
