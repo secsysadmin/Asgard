@@ -132,7 +132,7 @@ export const blockSpecs: { [K in BlockType]: BlockSpec<K> } = {
   },
   faq: {
     label: "FAQ accordion",
-    description: "Searchable questions grouped by topic.",
+    description: "Expandable questions grouped by topic.",
     starter: () => ({
       heading: "Frequently asked questions",
       intro: "",

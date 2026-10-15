@@ -215,7 +215,7 @@ const students: Page = {
       items: [
         {
           title: "Current students",
-          body: "<ul><li>No pre-registration for the in-person fair (Sep 9–10)</li><li>Present your A&amp;M student ID at the door</li><li>Business casual is required; business professional is recommended</li><li>For the virtual fair (Sep 11), RSVP on HireAggies — <a href=\"#virtual-fair\">see the steps</a></li></ul>",
+          body: "<ul><li>No pre-registration for the in-person fair (Sep 9–10)</li><li>Present your A&amp;M student ID at the door</li><li>Business casual is required; business professional is recommended</li><li>For the virtual fair (Sep 11), RSVP on HireAggies — <a href=\"#virtual-students\">see the steps</a></li></ul>",
           image: noImg,
         },
         {
@@ -267,6 +267,7 @@ const students: Page = {
         { label: "Time", value: "12:00 PM – 4:00 PM" },
         { label: "Location", value: "ConocoPhillips Atrium & Virginia Brown Atrium" },
         { label: "Dress", value: "Casual" },
+        { label: "Registration", value: "Not required" },
       ],
       links: [{ label: "View company schedule", href: "https://docs.google.com/spreadsheets/d/1QzFNrbyRoifpGoPdxP4MlSVoCsm4Q1P8xpazv-8AsVM/edit?usp=sharing" }],
       note: "",
@@ -288,30 +289,30 @@ const students: Page = {
     }, { nav: "Welcome Social", group: "Before the fair" }),
     blk("itinerary", "timeline", {
       heading: "Fair itinerary",
-      intro: "",
+      intro: "<p>Company Chat and the Welcome Social happen the day before, on Tuesday, September 8. See <a href=\"#company-chat\">Company Chat</a> and <a href=\"#welcome-social\">Welcome Social</a>.</p>",
       days: [
         {
-          title: "Tuesday — Pre-fair events",
-          meta: "September 8, 2026",
+          title: "In-person fair · Day 1",
+          meta: "Wednesday, September 9 · Legends Event Center",
           entries: [
-            { time: "12:00 PM – 4:00 PM", title: "Company Chat", detail: "<p>ConocoPhillips Atrium &amp; Virginia Brown Atrium</p>" },
-            { time: "7:30 PM – 9:30 PM", title: "Welcome Social", detail: "<p>Zone Club at Kyle Field</p>" },
+            { time: "7:30 AM – 6:30 PM", title: "Free shuttle from Zachry", detail: "<p>Every 7–10 minutes. <a href=\"#getting-there\">Route &amp; parking</a></p>" },
+            { time: "9:00 AM – 5:00 PM", title: "Exhibition", detail: "<p>Bring your A&amp;M ID and dress professionally.</p>" },
           ],
         },
         {
-          title: "Wednesday — In-person fair, day 1",
-          meta: "September 9, 2026 · Legends Event Center",
-          entries: [{ time: "9:00 AM – 5:00 PM", title: "Exhibition", detail: "" }],
+          title: "In-person fair · Day 2",
+          meta: "Thursday, September 10 · Legends Event Center",
+          entries: [
+            { time: "7:30 AM – 6:30 PM", title: "Free shuttle from Zachry", detail: "<p>Every 7–10 minutes. <a href=\"#getting-there\">Route &amp; parking</a></p>" },
+            { time: "9:00 AM – 5:00 PM", title: "Exhibition", detail: "<p>Bring your A&amp;M ID and dress professionally.</p>" },
+          ],
         },
         {
-          title: "Thursday — In-person fair, day 2",
-          meta: "September 10, 2026 · Legends Event Center",
-          entries: [{ time: "9:00 AM – 5:00 PM", title: "Exhibition", detail: "" }],
-        },
-        {
-          title: "Friday — Virtual fair",
-          meta: "September 11, 2026 · HireAggies",
-          entries: [{ time: "9:00 AM – 5:00 PM", title: "Virtual Career Fair", detail: "<p><a href=\"#virtual-fair\">How to register</a></p>" }],
+          title: "Virtual fair",
+          meta: "Friday, September 11 · HireAggies",
+          entries: [
+            { time: "9:00 AM – 5:00 PM", title: "Virtual Career Fair", detail: "<p>RSVP on HireAggies beforehand. <a href=\"#virtual-students\">How to register</a></p>" },
+          ],
         },
       ],
       note: "",
@@ -332,7 +333,7 @@ const students: Page = {
         },
         {
           title: "Recommended footwear",
-          body: "<ul><li>Men: neutral dress shoes (black or brown)</li><li>Women: closed-toe dress shoes</li></ul><p>Don’t own a pair? Borrow one from the Career Closet below.</p>",
+          body: "<ul><li>Men: neutral dress shoes (black or brown)</li><li>Women: closed-toe dress shoes</li></ul><p>Don’t own a pair? Check the <a href=\"#career-closet\">Career Closet</a>.</p>",
           image: img("/images/fair/dress-recommended-footwear.webp", "Recommended footwear graphic: neutral dress shoes for men, closed-toe dress shoes for women."),
         },
         {
@@ -341,8 +342,41 @@ const students: Page = {
           image: img("/images/fair/dress-allowed-footwear.webp", "Allowed footwear graphic: neutral cowboy boots, ankle boots, and neutral non-patterned sneakers."),
         },
       ],
-      note: "<p><strong>Texas A&amp;M Career Closet pop-up</strong> — borrow professional clothing at no cost. September 2–3, 2026, 10:00 AM – 4:00 PM, ConocoPhillips Atrium.</p>",
+      note: "<p><strong>Don’t own a suit?</strong> Borrow one from the <a href=\"#career-closet\">Texas A&amp;M Career Closet</a>, including at its pop-up before the fair.</p>",
     }, { nav: "Dress code", group: "Fair day" }),
+    blk("career-closet", "event", {
+      heading: "Career Closet",
+      body: "<p>Need a suit for the fair? The Texas A&amp;M Career Closet lends professional attire to current Texas A&amp;M students, with suits for men and women (skirt or pant options). It’s run by student volunteers, and no appointment is needed.</p><p>Before the fair, the Career Closet sets up a <strong>pop-up in the ConocoPhillips Atrium</strong>, steps from the engineering buildings, so you can find an outfit without a trip to the MSC.</p>",
+      facts: [
+        { label: "Fair pop-up dates", value: "Wednesday–Thursday, September 2–3" },
+        { label: "Pop-up hours", value: "10:00 AM – 4:00 PM" },
+        { label: "Pop-up location", value: "ConocoPhillips Atrium" },
+        { label: "Year-round location", value: "MSC L428 · Mondays & Thursdays, 10 AM – 4 PM" },
+        { label: "Cost", value: "Free to borrow · $5 subsidized dry cleaning" },
+        { label: "Who can borrow", value: "Current Texas A&M students" },
+      ],
+      links: [
+        { label: "Career Closet website", href: "https://careercloset.tamu.edu/" },
+        { label: "Career Closet FAQs", href: "https://careercloset.tamu.edu/faqs/" },
+      ],
+      note: "",
+      gallery: [],
+    }, { nav: "Career Closet", group: "Fair day" }),
+    blk("career-closet-steps", "steps", {
+      heading: "How borrowing works",
+      intro: "<p>The Career Closet’s standard checkout policy. Suits are donated, so some sizes may be limited; arrive early for the best selection.</p>",
+      steps: [
+        { title: "Drop in", body: "<p>No reservation needed. Help is first come, first served, and the closet fits no more than two people at a time.</p>" },
+        { title: "Try on and check out", body: "<p><strong>Women:</strong> skirts and blazers in sizes 2–22W, pants 2–18.</p><p><strong>Men:</strong> pants 30x30–38x32, jackets 36S–52L.</p>" },
+        { title: "Wear it for one week", body: "<p>Checkout lasts one week, including dry cleaning. Need longer? Email <a href=\"mailto:operations.tamucareercloset@gmail.com\">operations.tamucareercloset@gmail.com</a> before checkout with the subject “Extended Check-Out: (Name)”, your UIN, and the reason.</p>" },
+        { title: "Clean and return", body: "<p>Take the suit to Park Cleaners (314 George Bush Dr.) with the $5 voucher you get at checkout, then return it with the receipt to MSC L428 during open hours.</p>" },
+      ],
+      links: [{ label: "Email the Career Closet", href: "mailto:careercloset.tamu@gmail.com" }],
+    }, { group: "Fair day" }),
+    blk("career-closet-terms", "callout", {
+      tone: "info",
+      body: "<p><strong>Good to know:</strong> you’re responsible for up to $100 if a suit is lost or badly damaged, and not returning it can place holds on your HireAggies and Student Business Services accounts. The closet is volunteer-run and generally open during the fall and spring semesters; check its website for current dates.</p>",
+    }, { group: "Fair day" }),
     blk("getting-there", "cards", {
       heading: "Getting there",
       intro: "<p>Legends Event Center is off campus in Bryan. <strong>The free shuttle is the fastest option</strong> — rideshare is not recommended because of surge pricing during fair hours.</p>",
@@ -391,7 +425,7 @@ const students: Page = {
       gallery: [],
     }, { nav: "Virtual fair", group: "Virtual fair" }),
     blk("virtual-students", "steps", {
-      heading: "Register: current students",
+      heading: "Current Student Registration",
       intro: "<p>RSVP through HireAggies using your @tamu.edu email.</p>",
       steps: [
         { title: "Log in to HireAggies", body: "<p>Go to <a href=\"https://tamu-csm.symplicity.com/students\">tamu-csm.symplicity.com</a> and sign in with your @tamu.edu email.</p>" },
@@ -399,9 +433,9 @@ const students: Page = {
         { title: "RSVP and browse companies", body: "<p>Click RSVP, then browse attending companies and schedule one-on-one sessions with recruiters.</p>" },
       ],
       links: [{ label: "Go to HireAggies", href: HIREAGGIES_STUDENTS }],
-    }, { group: "Virtual fair" }),
+    }, { nav: "Current student registration", group: "Virtual fair" }),
     blk("virtual-alumni", "steps", {
-      heading: "Register: alumni",
+      heading: "Alumni Registration",
       intro: "<p>Former students no longer have a @tamu.edu email. Create a free @aggienetwork.com address to register.</p>",
       steps: [
         { title: "Create an Aggie Network account", body: "<p>Visit <a href=\"https://www.aggienetwork.com/register/\">aggienetwork.com/register</a>. Enter your name and class year, verify with your UIN or contact email, then select your name.</p>" },
@@ -435,7 +469,7 @@ const students: Page = {
           title: "Preparation",
           items: [
             { q: "What can I do now to prepare?", a: "<p>Review the <a href=\"#preparation\">preparation materials</a> and attend the <a href=\"#pre-fair-week\">Pre-Career Fair Week</a> workshops.</p>" },
-            { q: "What should I wear?", a: "<p>Business casual is required; business professional is recommended for both the in-person and virtual fairs. See the <a href=\"#dress-code\">dress code</a>.</p>" },
+            { q: "What should I wear?", a: "<p>Business casual is required; business professional is recommended for both the in-person and virtual fairs. See the <a href=\"#dress-code\">dress code</a>. Don’t own a suit? Borrow one from the <a href=\"#career-closet\">Career Closet</a>.</p>" },
           ],
         },
         {
@@ -550,6 +584,7 @@ const recruiters: Page = {
         { label: "Time", value: "TBD" },
         { label: "Location", value: "TBD" },
         { label: "Format", value: "Open networking" },
+        { label: "Registration", value: "Select Company Chat on your fair registration form" },
       ],
       links: [],
       note: "<p><strong>How to participate:</strong> select Company Chat on the registration form. Coordinators will follow up with confirmed details and your time slot.</p>",
@@ -563,6 +598,7 @@ const recruiters: Page = {
         { label: "Time", value: "TBD" },
         { label: "Location", value: "TBD" },
         { label: "Dress", value: "Company polo (students wear business casual)" },
+        { label: "Registration", value: "Select Welcome Social on your fair registration form" },
       ],
       links: [],
       note: "<p><strong>How to participate:</strong> select Welcome Social on the registration form. This is a reception-style event — please avoid formal setups or presentation tables.</p>",
@@ -573,15 +609,15 @@ const recruiters: Page = {
       intro: "",
       days: [
         {
-          title: "Tuesday — Early check-in",
-          meta: "September 8, 2026 · Legends Event Center",
+          title: "Early check-in",
+          meta: "Tuesday, September 8 · Legends Event Center",
           entries: [
             { time: "2:00 PM – 5:00 PM", title: "Recruiter check-in", detail: "<p>Pick up your badge and booth materials and set up before fair day.</p>" },
           ],
         },
         {
-          title: "Wednesday — In-person fair, day 1",
-          meta: "September 9, 2026 · Legends Event Center",
+          title: "In-person fair · Day 1",
+          meta: "Wednesday, September 9 · Legends Event Center",
           entries: [
             { time: "7:00 AM – 9:00 AM", title: "Check-in & complimentary breakfast", detail: "<p>Finalize booth setup; breakfast is served in the recruiter lounge.</p>" },
             { time: "9:00 AM – 5:00 PM", title: "Exhibition", detail: "<p>12,000+ engineering students seeking internships, co-ops, and full-time roles.</p>" },
@@ -589,8 +625,8 @@ const recruiters: Page = {
           ],
         },
         {
-          title: "Thursday — In-person fair, day 2",
-          meta: "September 10, 2026 · Legends Event Center",
+          title: "In-person fair · Day 2",
+          meta: "Thursday, September 10 · Legends Event Center",
           entries: [
             { time: "7:00 AM – 9:00 AM", title: "Check-in & complimentary breakfast", detail: "" },
             { time: "9:00 AM – 5:00 PM", title: "Exhibition", detail: "" },

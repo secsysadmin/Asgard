@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import type { Block, Page, SiteContent } from "@/lib/content/types";
 import { Rich, type Path, useEdit } from "../edit/context";
 import { BlockView } from "./blocks";
+import { revealHash, SiteSearch } from "./Search";
 
 const external = (href: string) => (/^https?:/i.test(href) ? { target: "_blank", rel: "noopener noreferrer" } : {});
 
@@ -18,6 +19,7 @@ function isCurrent(href: string, page: Page) {
 
 function Header({ content, page }: { content: SiteContent; page: Page }) {
   const [open, setOpen] = useState(false);
+  const edit = useEdit();
   const { settings } = content;
   return (
     <header className="site-header">
@@ -27,6 +29,7 @@ function Header({ content, page }: { content: SiteContent; page: Page }) {
           <span aria-hidden className="brand-rule" />
           <img src="/images/sec-logo-white.png" alt="Student Engineers’ Council" width={774} height={331} className="brand-sec" />
         </a>
+        {!edit && <SiteSearch content={content} />}
         <button
           type="button"
           className="menu-toggle"
@@ -187,6 +190,14 @@ export function PageView({
 }) {
   const edit = useEdit();
   const page = content.pages[pageIndex];
+  // Links to an FAQ question (from search or shared URLs) open its answer.
+  useEffect(() => {
+    if (edit) return;
+    const onHash = () => revealHash(location.hash);
+    if (location.hash) requestAnimationFrame(onHash);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [edit]);
   const render = (block: Block, index: number) => wrap(block, index, <BlockView block={block} at={[...basePath, index, "data"]} />);
   const indexed = page.blocks.map((block, index) => ({ block, index }));
   const lead = page.layout === "guide" && page.blocks[0]?.type === "pageHeader" ? indexed.slice(0, 1) : [];

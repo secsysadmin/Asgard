@@ -1,7 +1,23 @@
 "use client";
-import { ArrowRight, ArrowUpRight, CalendarDays, ChevronLeft, ChevronRight, Mail, MapPin, Phone, Search } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
-import { stripHtml } from "@/lib/sanitize";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  CircleDollarSign,
+  ClipboardCheck,
+  Clock,
+  Info,
+  type LucideIcon,
+  Mail,
+  MapPin,
+  Monitor,
+  Phone,
+  Shirt,
+  Users,
+} from "lucide-react";
+import { useMemo, useRef } from "react";
 import type { Block, BlockData, BlockType } from "@/lib/content/types";
 import { Img, List, Lnk, MaybeLink, type Path, Rich, Text, useEdit } from "../edit/context";
 
@@ -277,6 +293,19 @@ function Cards({ data, at }: Props<"cards">) {
   );
 }
 
+// Icons for event facts, chosen from the label so editors never pick one.
+const FACT_ICONS: [RegExp, LucideIcon][] = [
+  [/time|hour/i, Clock],
+  [/date|when|day/i, CalendarDays],
+  [/location|venue|where|place/i, MapPin],
+  [/dress|attire|wear/i, Shirt],
+  [/regist|rsvp|sign.?up|ticket/i, ClipboardCheck],
+  [/platform|virtual|online/i, Monitor],
+  [/cost|price|fee|pay/i, CircleDollarSign],
+  [/format|who|audience/i, Users],
+];
+const factIcon = (label: string) => FACT_ICONS.find(([pattern]) => pattern.test(label))?.[1] ?? Info;
+
 function Event({ data, at }: Props<"event">) {
   const edit = useEdit();
   return (
@@ -306,12 +335,20 @@ function Event({ data, at }: Props<"event">) {
             items={data.facts}
             path={[...at, "facts"]}
             label="fact"
-            render={(fact, _i, p) => (
-              <div>
-                <Text as="dt" value={fact.label} path={[...p, "label"]} placeholder="Label" />
-                <Text as="dd" value={fact.value} path={[...p, "value"]} placeholder="Value" />
-              </div>
-            )}
+            render={(fact, _i, p) => {
+              const Icon = factIcon(fact.label);
+              return (
+                <div className="fact">
+                  <dt>
+                    <span className="fact-icon" aria-hidden>
+                      <Icon />
+                    </span>
+                    <Text value={fact.label} path={[...p, "label"]} placeholder="Label" />
+                  </dt>
+                  <Text as="dd" value={fact.value} path={[...p, "value"]} placeholder="Value" />
+                </div>
+              );
+            }}
           />
         )}
       </div>
@@ -370,62 +407,49 @@ function Steps({ data, at }: Props<"steps">) {
   );
 }
 
-function Faq({ data, at }: Props<"faq">) {
+/** Anchor for one FAQ question, shared with the site search index. */
+export const faqItemId = (blockId: string, group: number, item: number) => `${blockId}-q${group + 1}-${item + 1}`;
+
+function Faq({ block, data, at }: Props<"faq">) {
   const edit = useEdit();
-  const [query, setQuery] = useState("");
-  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-  const matches = (q: string, a: string) => {
-    const haystack = `${q} ${stripHtml(a)}`.toLowerCase();
-    return terms.every((term) => haystack.includes(term));
-  };
-  const total = data.groups.reduce((sum, group) => sum + group.items.filter((item) => matches(item.q, item.a)).length, 0);
   return (
     <>
       <Head heading={data.heading} intro={data.intro} at={at} />
-      {!edit && (
-        <label className="faq-search">
-          <Search aria-hidden />
-          <span className="sr-only">Search questions</span>
-          <input type="search" placeholder="Search questions" value={query} onChange={(event) => setQuery(event.target.value)} />
-          {terms.length > 0 && <span className="faq-count" aria-live="polite">{total} {total === 1 ? "match" : "matches"}</span>}
-        </label>
-      )}
       <List
         className="faq-groups"
         items={data.groups}
         path={[...at, "groups"]}
         label="topic"
-        render={(group, _i, p) => {
-          const visible = edit || group.items.some((item) => matches(item.q, item.a));
-          return (
-            <section className="faq-group" hidden={!visible}>
+        render={(group, gi, p) => (
+          <section className="faq-group">
+            <header className="faq-group-head">
               <Text as="h3" value={group.title} path={[...p, "title"]} placeholder="Topic" />
-              <List
-                className="faq-items"
-                items={group.items}
-                path={[...p, "items"]}
-                label="question"
-                render={(item, _j, qp) =>
-                  edit ? (
-                    <div className="faq-item faq-item-open">
-                      <Text as="p" className="faq-q" value={item.q} path={[...qp, "q"]} placeholder="Question" />
-                      <Rich value={item.a} path={[...qp, "a"]} className="faq-a" placeholder="Answer" />
-                    </div>
-                  ) : (
-                    <details className="faq-item" hidden={!matches(item.q, item.a)} open={terms.length > 0 || undefined}>
-                      <summary>{item.q}</summary>
-                      <Rich value={item.a} path={[...qp, "a"]} className="faq-a" />
-                    </details>
-                  )
-                }
-              />
-            </section>
-          );
-        }}
+              <span className="faq-group-count">
+                {group.items.length} {group.items.length === 1 ? "question" : "questions"}
+              </span>
+            </header>
+            <List
+              className="faq-items"
+              items={group.items}
+              path={[...p, "items"]}
+              label="question"
+              render={(item, qi, qp) =>
+                edit ? (
+                  <div className="faq-item faq-item-open">
+                    <Text as="p" className="faq-q" value={item.q} path={[...qp, "q"]} placeholder="Question" />
+                    <Rich value={item.a} path={[...qp, "a"]} className="faq-a" placeholder="Answer" />
+                  </div>
+                ) : (
+                  <details className="faq-item" id={faqItemId(block.id, gi, qi)}>
+                    <summary>{item.q}</summary>
+                    <Rich value={item.a} path={[...qp, "a"]} className="faq-a" />
+                  </details>
+                )
+              }
+            />
+          </section>
+        )}
       />
-      {!edit && terms.length > 0 && total === 0 && (
-        <p className="faq-empty">No questions match “{query}”. Try another word, or email us.</p>
-      )}
     </>
   );
 }
