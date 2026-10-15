@@ -522,6 +522,26 @@
 .hero .ed-text:empty::before {
   color: rgba(255, 255, 255, 0.55);
 }
+/* Tiptap: the wrapper shouldn't affect layout; lists hold paragraphs. */
+.ed-rich-host {
+  display: contents;
+}
+.ed-rich-active li > p {
+  margin: 0;
+}
+.ed-rich-active p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: rgba(120, 112, 105, 0.75);
+  font-style: italic;
+  font-weight: 400;
+  pointer-events: none;
+}
+.tone-maroon .ed-rich-active p.is-editor-empty:first-child::before,
+.hero .ed-rich-active p.is-editor-empty:first-child::before {
+  color: rgba(255, 255, 255, 0.55);
+}
 .ed-rich:empty {
   display: block;
   min-height: 1.6em;

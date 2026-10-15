@@ -1,10 +1,10 @@
 "use client";
+import type { Editor } from "@tiptap/core";
 import { Bold, Heading3, Italic, Link2, List, ListOrdered, RemoveFormatting, Underline, Unlink } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState, useSyncExternalStore } from "react";
+import { RICH_TOOLBAR_ATTR, richStore } from "../edit/RichField";
 
 type Position = { top: number; left: number };
-
-const exec = (command: string, value?: string) => document.execCommand(command, false, value);
 
 function normalizeUrl(raw: string) {
   const url = raw.trim();
@@ -14,108 +14,96 @@ function normalizeUrl(raw: string) {
   return `https://${url}`;
 }
 
-/** Floating formatting bar shown above whichever rich-text field has focus. */
+/** Floating formatting bar for whichever rich-text field is being edited. */
 export function RichToolbar() {
-  const [target, setTarget] = useState<HTMLElement | null>(null);
+  const { editor, linkRequests } = useSyncExternalStore(richStore.subscribe, richStore.get, richStore.get);
   const [position, setPosition] = useState<Position | null>(null);
   const [linking, setLinking] = useState(false);
   const [url, setUrl] = useState("");
-  const [, refresh] = useState(0);
+  const [, rerender] = useReducer((n: number) => n + 1, 0);
   const bar = useRef<HTMLDivElement>(null);
-  const savedRange = useRef<Range | null>(null);
 
+  // Follow the field and refresh button states as the selection changes.
   useEffect(() => {
-    const onFocusIn = (event: FocusEvent) => {
-      const el = (event.target as HTMLElement).closest?.<HTMLElement>("[data-rich]");
-      if (el) setTarget(el);
-      else if (!bar.current?.contains(event.target as Node)) {
-        setTarget(null);
-        setLinking(false);
-      }
-    };
-    const onSelection = () => refresh((n) => n + 1);
-    document.addEventListener("focusin", onFocusIn);
-    document.addEventListener("selectionchange", onSelection);
-    return () => {
-      document.removeEventListener("focusin", onFocusIn);
-      document.removeEventListener("selectionchange", onSelection);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!target) return setPosition(null);
+    if (!editor) return;
     const place = () => {
-      const rect = target.getBoundingClientRect();
+      const rect = editor.view.dom.getBoundingClientRect();
       const height = bar.current?.offsetHeight ?? 44;
+      const width = bar.current?.offsetWidth ?? 360;
       const top = rect.top - height - 10 < 64 ? rect.bottom + 10 : rect.top - height - 10;
-      setPosition({ top, left: Math.max(12, Math.min(rect.left, window.innerWidth - (bar.current?.offsetWidth ?? 360) - 12)) });
+      setPosition({ top, left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)) });
+    };
+    const onTransaction = () => {
+      place();
+      rerender();
     };
     place();
-    const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k" && document.activeElement === target) {
-        event.preventDefault();
-        startLink();
-      }
-    };
+    editor.on("transaction", onTransaction);
     window.addEventListener("scroll", place, true);
     window.addEventListener("resize", place);
-    target.addEventListener("input", place);
-    target.addEventListener("keydown", onKey);
     return () => {
+      editor.off("transaction", onTransaction);
       window.removeEventListener("scroll", place, true);
       window.removeEventListener("resize", place);
-      target.removeEventListener("input", place);
-      target.removeEventListener("keydown", onKey);
     };
-  }, [target]);
+  }, [editor]);
 
-  if (!target || !position) return null;
-
-  const state = (command: string) => {
-    try {
-      return document.queryCommandState(command);
-    } catch {
-      return false;
-    }
-  };
-  const inHeading = () => /h3/i.test(String(document.queryCommandValue("formatBlock")));
-  const inLink = () => !!window.getSelection()?.anchorNode?.parentElement?.closest("a");
-
-  function startLink() {
-    const selection = window.getSelection();
-    savedRange.current = selection && selection.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
-    setUrl(selection?.anchorNode?.parentElement?.closest("a")?.getAttribute("href") ?? "");
+  // ⌘K from inside the field opens the link input.
+  const lastRequest = useRef(linkRequests);
+  useEffect(() => {
+    if (linkRequests === lastRequest.current || !editor) return;
+    lastRequest.current = linkRequests;
+    setUrl(editor.getAttributes("link").href ?? "");
     setLinking(true);
-  }
+  }, [linkRequests, editor]);
+
+  if (!editor || !position) return null;
+
+  const run = (command: (chain: ReturnType<Editor["chain"]>) => ReturnType<Editor["chain"]>) => command(editor.chain().focus()).run();
+  const startLink = () => {
+    setUrl(editor.getAttributes("link").href ?? "");
+    setLinking(true);
+  };
   const applyLink = () => {
     const href = normalizeUrl(url);
-    target.focus();
-    const selection = window.getSelection();
-    if (savedRange.current && selection) {
-      selection.removeAllRanges();
-      selection.addRange(savedRange.current);
-    }
-    if (!href) exec("unlink");
-    else if (selection?.isCollapsed) exec("insertHTML", `<a href="${href.replace(/"/g, "&quot;")}">${href.replace(/^mailto:/, "").replace(/</g, "&lt;")}</a>`);
-    else exec("createLink", href);
     setLinking(false);
+    if (!href) return run((c) => c.extendMarkRange("link").unsetLink());
+    if (editor.state.selection.empty && !editor.isActive("link")) {
+      const text = href.replace(/^mailto:/, "");
+      return run((c) => c.insertContent({ type: "text", text, marks: [{ type: "link", attrs: { href } }] }));
+    }
+    run((c) => c.extendMarkRange("link").setLink({ href }));
   };
 
-  const button = (label: string, icon: React.ReactNode, run: () => void, active = false) => (
+  const button = (label: string, icon: React.ReactNode, action: () => void, active = false) => (
     <button
       type="button"
       title={label}
       aria-label={label}
       aria-pressed={active}
       onMouseDown={(event) => event.preventDefault()}
-      onClick={run}
+      onClick={action}
     >
       {icon}
     </button>
   );
 
   return (
-    <div ref={bar} className="st-rich-toolbar" style={{ top: position.top, left: position.left }} role="toolbar" aria-label="Text formatting">
+    <div
+      ref={bar}
+      className="st-rich-toolbar"
+      style={{ top: position.top, left: position.left }}
+      role="toolbar"
+      aria-label="Text formatting"
+      {...{ [RICH_TOOLBAR_ATTR]: "" }}
+      onBlur={(event) => {
+        // Leaving both the toolbar and its field ends the editing session.
+        const next = event.relatedTarget as Node | null;
+        if (bar.current?.contains(next) || editor.view.dom.contains(next)) return;
+        setLinking(false);
+        richStore.release(editor);
+      }}
+    >
       {linking ? (
         <form
           className="st-rich-link"
@@ -124,26 +112,44 @@ export function RichToolbar() {
             applyLink();
           }}
         >
-          <input autoFocus value={url} onChange={(event) => setUrl(event.target.value)} placeholder="Paste a URL, page path, or email" aria-label="Link address" />
+          <input
+            autoFocus
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                setLinking(false);
+                editor.commands.focus();
+              }
+            }}
+            placeholder="Paste a URL, page path, or email"
+            aria-label="Link address"
+          />
           <button type="submit">Apply</button>
-          <button type="button" onClick={() => { setLinking(false); target.focus(); }}>Cancel</button>
+          <button
+            type="button"
+            onClick={() => {
+              setLinking(false);
+              editor.commands.focus();
+            }}
+          >
+            Cancel
+          </button>
         </form>
       ) : (
         <>
-          {button("Bold (⌘B)", <Bold />, () => exec("bold"), state("bold"))}
-          {button("Italic (⌘I)", <Italic />, () => exec("italic"), state("italic"))}
-          {button("Underline (⌘U)", <Underline />, () => exec("underline"), state("underline"))}
+          {button("Bold (⌘B)", <Bold />, () => run((c) => c.toggleBold()), editor.isActive("bold"))}
+          {button("Italic (⌘I)", <Italic />, () => run((c) => c.toggleItalic()), editor.isActive("italic"))}
+          {button("Underline (⌘U)", <Underline />, () => run((c) => c.toggleUnderline()), editor.isActive("underline"))}
           <span className="st-sep" />
-          {button("Subheading", <Heading3 />, () => exec("formatBlock", inHeading() ? "p" : "h3"), inHeading())}
-          {button("Bulleted list", <List />, () => exec("insertUnorderedList"), state("insertUnorderedList"))}
-          {button("Numbered list", <ListOrdered />, () => exec("insertOrderedList"), state("insertOrderedList"))}
+          {button("Subheading", <Heading3 />, () => run((c) => c.toggleHeading({ level: 3 })), editor.isActive("heading", { level: 3 }))}
+          {button("Bulleted list", <List />, () => run((c) => c.toggleBulletList()), editor.isActive("bulletList"))}
+          {button("Numbered list", <ListOrdered />, () => run((c) => c.toggleOrderedList()), editor.isActive("orderedList"))}
           <span className="st-sep" />
-          {button("Link (⌘K)", <Link2 />, startLink, inLink())}
-          {inLink() && button("Remove link", <Unlink />, () => exec("unlink"))}
-          {button("Clear formatting", <RemoveFormatting />, () => {
-            exec("removeFormat");
-            exec("formatBlock", "p");
-          })}
+          {button("Link (⌘K)", <Link2 />, startLink, editor.isActive("link"))}
+          {editor.isActive("link") && button("Remove link", <Unlink />, () => run((c) => c.extendMarkRange("link").unsetLink()))}
+          {button("Clear formatting", <RemoveFormatting />, () => run((c) => c.unsetAllMarks().clearNodes()))}
         </>
       )}
     </div>

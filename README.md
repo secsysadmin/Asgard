@@ -53,9 +53,10 @@ Guide pages have a sticky "On this page" menu that tracks your position as you s
 | `lib/auth.ts` | `isAuthorized()`, the single hook for adding sign-in. |
 | `components/site/*` | Public site: page shell, block renderers, search, links. |
 | `components/edit/context.tsx` | Makes the same renderers editable in place inside the studio. |
+| `components/edit/RichField.tsx` | Rich-text fields: a [Tiptap](https://tiptap.dev) editor, created only when a field is clicked, limited to what the sanitizer allows. |
 | `components/studio/*` | The studio: shell, panels, inspector, dialogs, rich-text toolbar. |
 
-- Content and uploads are stored in Neon: `site_content` (draft + published), `site_revisions`, and `media_files`. Images are served from `/api/media/<id>`. The tables are created automatically on first use, or with `npm run db:migrate`.
+- Content and uploads are stored in Neon: `site_content` (draft + published), `site_revisions`, and `media_files`. Images are served from `/api/media/<id>` and cached on Vercel's CDN for a year (each upload gets a new URL), so Neon is read only on a cache miss. The tables are created automatically on first use, or with `npm run db:migrate`.
 - Public pages are statically generated and refreshed when you publish.
 - Every studio API route checks `isAuthorized()`, rejects cross-site requests, and requires JSON bodies. Uploads are checked against their real file contents; SVGs with scripts or external links are refused and served sandboxed.
 - Security headers (no framing, `nosniff`, referrer and permissions policies) are set for every route in `next.config.ts`.

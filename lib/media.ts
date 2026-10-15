@@ -39,7 +39,10 @@ export function validateUpload(mime: string, bytes: Buffer): string | null {
 export function mediaHeaders(mime: string, filename: string): Record<string, string> {
   return {
     "Content-Type": mime,
-    "Cache-Control": "public, max-age=31536000, immutable",
+    // Every upload gets a new id, so a URL's bytes never change: cache it on
+    // Vercel's CDN (s-maxage) and in browsers for a year. Neon is only read
+    // on a CDN miss.
+    "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
     "Content-Disposition": `inline; filename="${filename.replace(/[^\w.\- ]+/g, "")}"`,
     "X-Content-Type-Options": "nosniff",
     // Opened directly, an SVG is a document: sandbox it so nothing can run.

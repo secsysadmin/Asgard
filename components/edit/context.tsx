@@ -16,6 +16,7 @@ import { ArrowDown, ArrowUp, Copy, GripVertical, ImagePlus, Link2, Plus, Trash2 
 import { safeHref, sanitizeHtml } from "@/lib/sanitize";
 import type { ImageRef, LinkRef } from "@/lib/content/types";
 import { SmartLink } from "../site/SmartLink";
+import { RichField } from "./RichField";
 
 import type { Path } from "@/lib/studio/paths";
 
@@ -128,55 +129,7 @@ export function Rich({
     const html = sanitizeHtml(value);
     return html ? <div className={cx("rich", className)} dangerouslySetInnerHTML={{ __html: html }} /> : null;
   }
-  return <EditableRich {...{ value, path, className, placeholder, edit }} />;
-}
-
-function EditableRich({
-  value,
-  path,
-  className,
-  placeholder,
-  edit,
-}: {
-  value: string;
-  path: Path;
-  className?: string;
-  placeholder: string;
-  edit: EditApi;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (el && document.activeElement !== el && el.innerHTML !== value) el.innerHTML = sanitizeHtml(value);
-  }, [value]);
-  return (
-    <div
-      ref={ref}
-      className={cx("rich", className, "ed-rich")}
-      contentEditable
-      suppressContentEditableWarning
-      role="textbox"
-      aria-multiline
-      aria-label={placeholder}
-      data-placeholder={placeholder}
-      data-rich
-      onFocus={() => document.execCommand("defaultParagraphSeparator", false, "p")}
-      onInput={(event) => {
-        const html = event.currentTarget.innerHTML;
-        edit.set(path, event.currentTarget.textContent?.trim() || /<(li|br)/.test(html) ? html : "");
-      }}
-      onPaste={(event) => {
-        event.preventDefault();
-        const html = event.clipboardData.getData("text/html");
-        const text = event.clipboardData.getData("text/plain");
-        if (html) document.execCommand("insertHTML", false, sanitizeHtml(html));
-        else document.execCommand("insertText", false, text);
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") event.currentTarget.blur();
-      }}
-    />
-  );
+  return <RichField {...{ value, path, className, placeholder, edit }} />;
 }
 
 /* ──────────────────────────────── Images ──────────────────────────────── */
