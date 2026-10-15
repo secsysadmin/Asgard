@@ -275,7 +275,7 @@ const students: Page = {
     }, { nav: "Company Chat", group: "Before the fair" }),
     blk("welcome-social", "event", {
       heading: "Welcome Social",
-      body: "<p>A reception-style evening to meet recruiters from prominent companies in your discipline. Leave your backpack and resume at home and come ready to learn about industries and opportunities — with complimentary refreshments.</p>",
+      body: "<p>A reception-style evening to meet recruiters from prominent companies in your discipline. Leave your backpack and resume at home and come ready to learn about industries and opportunities — with complimentary refreshments.</p><p><strong>This isn’t a career fair:</strong> skip the lines and keep conversations free-flowing. Paid parking is available at University Center Garage (near Koldus), Gene Stallings Garage, and West Campus Garage.</p>",
       facts: [
         { label: "Date", value: "Tuesday, September 8" },
         { label: "Time", value: "7:30 PM – 9:30 PM" },
@@ -284,7 +284,7 @@ const students: Page = {
         { label: "Registration", value: "Not required" },
       ],
       links: [{ label: "View company list", href: "https://www.canva.com/design/DAHTnqEfU_w/mnvs55tQyoW9MSuG_lH7lQ/view" }],
-      note: "<p><strong>This is not a career fair.</strong> Avoid forming lines and keep conversations free-flowing. Paid parking is available at University Center Garage (near Koldus), Gene Stallings Garage, and West Campus Garage.</p>",
+      note: "",
       gallery: welcomeSocialPhotos,
     }, { nav: "Welcome Social", group: "Before the fair" }),
     blk("itinerary", "timeline", {
@@ -578,7 +578,7 @@ const recruiters: Page = {
     }, { nav: "Withdrawals & refunds", group: "Register" }),
     blk("pre-fair-events", "event", {
       heading: "Company Chat",
-      body: "<p>Each company receives a dedicated 2- or 4-hour time slot for open networking, so students can ask questions and build connections before the Career Fair.</p>",
+      body: "<p>Each company receives a dedicated 2- or 4-hour time slot for open networking, so students can ask questions and build connections before the Career Fair.</p><p><strong>How to participate:</strong> select Company Chat on your fair registration form. Coordinators will follow up with confirmed details and your time slot.</p>",
       facts: [
         { label: "Date", value: "Tuesday, September 8" },
         { label: "Time", value: "TBD" },
@@ -587,12 +587,12 @@ const recruiters: Page = {
         { label: "Registration", value: "Select Company Chat on your fair registration form" },
       ],
       links: [],
-      note: "<p><strong>How to participate:</strong> select Company Chat on the registration form. Coordinators will follow up with confirmed details and your time slot.</p>",
+      note: "",
       gallery: companyChatPhotos,
     }, { nav: "Company Chat", group: "Pre-fair events" }),
     blk("welcome-social", "event", {
       heading: "Welcome Social",
-      body: "<p>A less formal but professional evening: a recruiter-only dinner, then reception-style networking with outstanding Aggie engineering students over dessert. Detailed timing will be shared closer to the event.</p>",
+      body: "<p>A less formal but professional evening: a recruiter-only dinner, then reception-style networking with outstanding Aggie engineering students over dessert. Detailed timing will be shared closer to the event.</p><p><strong>How to participate:</strong> select Welcome Social on your fair registration form, and coordinators will follow up with details. It’s a reception, so please skip formal setups and presentation tables.</p>",
       facts: [
         { label: "Date", value: "Tuesday, September 8" },
         { label: "Time", value: "TBD" },
@@ -601,7 +601,7 @@ const recruiters: Page = {
         { label: "Registration", value: "Select Welcome Social on your fair registration form" },
       ],
       links: [],
-      note: "<p><strong>How to participate:</strong> select Welcome Social on the registration form. This is a reception-style event — please avoid formal setups or presentation tables.</p>",
+      note: "",
       gallery: welcomeSocialPhotos,
     }, { nav: "Welcome Social", group: "Pre-fair events" }),
     blk("rec-itinerary", "timeline", {
