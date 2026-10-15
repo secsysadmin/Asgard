@@ -1,35 +1,13 @@
 import { neon } from "@neondatabase/serverless";
 
-export type SiteConfig = {
-  layout: { id: string; visible: boolean }[];
-  hero: { headline: string; supporting: string; dates: string; image: string };
-  images: Record<string, string>;
-};
-
-export const defaultConfig: SiteConfig = {
-  layout: [
-    "hero",
-    "stats",
-    "students",
-    "recruiters",
-    "dates",
-    "team",
-    "contact",
-  ].map((id) => ({ id, visible: true })),
-  hero: {
-    headline: "SEC Engineering Career Fair",
-    supporting: "Where Aggie engineers meet what’s next.",
-    dates: "September 9–10, 2026",
-    image: "",
-  },
-  images: {},
-};
-
 export function deploymentSchema() {
-  return process.env.APP_ENV === "production" ||
-    process.env.VERCEL_ENV === "production"
+  return process.env.APP_ENV === "production" || process.env.VERCEL_ENV === "production"
     ? "production"
     : "development";
+}
+
+export function hasDatabase() {
+  return !!process.env.DATABASE_URL;
 }
 
 export function database() {
@@ -38,80 +16,47 @@ export function database() {
   return neon(url);
 }
 
-export function normalizeConfig(input: Partial<SiteConfig>): SiteConfig {
-  const known = new Set(defaultConfig.layout.map((section) => section.id));
-  const seen = new Set<string>();
-  const submitted = Array.isArray(input.layout)
-    ? input.layout
-        .filter((section): section is { id: string; visible: boolean } => {
-          if (!section || !known.has(section.id) || seen.has(section.id))
-            return false;
-          seen.add(section.id);
-          return true;
-        })
-        .map((section) => ({
-          id: section.id,
-          visible: section.visible !== false,
-        }))
-    : [];
-  // Preserve the editor's sequence, while inserting newly supported sections
-  // beside their intended neighbors for older persisted layouts.
-  const layout = [...submitted];
-  for (const section of defaultConfig.layout) {
-    if (seen.has(section.id)) continue;
-    const nextKnown = defaultConfig.layout
-      .slice(defaultConfig.layout.indexOf(section) + 1)
-      .find((candidate) => seen.has(candidate.id));
-    const nextIndex = nextKnown
-      ? layout.findIndex((candidate) => candidate.id === nextKnown.id)
-      : -1;
-    layout.splice(nextIndex === -1 ? layout.length : nextIndex, 0, section);
-    seen.add(section.id);
-  }
-  const legacyOrder = [
-    "hero",
-    "stats",
-    "dates",
-    "students",
-    "recruiters",
-    "team",
-    "contact",
+/** DDL for one environment schema. Shared with scripts/migrate.mjs. */
+export function schemaStatements(schema: string) {
+  return [
+    `create schema if not exists ${schema}`,
+    `create table if not exists ${schema}.site_content (
+      id smallint primary key check (id = 1),
+      draft jsonb,
+      published jsonb,
+      draft_updated_at timestamptz,
+      published_at timestamptz
+    )`,
+    `create table if not exists ${schema}.site_revisions (
+      id bigserial primary key,
+      content jsonb not null,
+      label text not null default '',
+      created_at timestamptz not null default now()
+    )`,
+    `create table if not exists ${schema}.media_files (
+      id text primary key,
+      filename text not null,
+      mime text not null,
+      alt text not null default '',
+      size integer not null,
+      width integer,
+      height integer,
+      data text not null,
+      created_at timestamptz not null default now()
+    )`,
   ];
-  if (layout.map((section) => section.id).join("|") === legacyOrder.join("|")) {
-    const visibility = new Map(
-      layout.map((section) => [section.id, section.visible]),
-    );
-    layout.splice(
-      0,
-      layout.length,
-      ...defaultConfig.layout.map((section) => ({
-        ...section,
-        visible: visibility.get(section.id) !== false,
-      })),
-    );
-  }
-  const hero = input.hero ?? defaultConfig.hero;
-  const images =
-    input.images && typeof input.images === "object" ? input.images : {};
-  return {
-    layout,
-    hero: {
-      headline:
-        typeof hero.headline === "string" && hero.headline.trim()
-          ? hero.headline.trim()
-          : defaultConfig.hero.headline,
-      supporting:
-        typeof hero.supporting === "string" && hero.supporting.trim()
-          ? hero.supporting.trim()
-          : defaultConfig.hero.supporting,
-      dates:
-        typeof hero.dates === "string" && hero.dates.trim()
-          ? hero.dates.trim()
-          : defaultConfig.hero.dates,
-      image: typeof hero.image === "string" ? hero.image : "",
-    },
-    images: Object.fromEntries(
-      Object.entries(images).filter(([, value]) => typeof value === "string"),
-    ),
-  };
+}
+
+let ready: Promise<void> | null = null;
+
+/** Creates the CMS tables on first use so a fresh database just works. */
+export function ensureSchema() {
+  ready ??= (async () => {
+    const sql = database();
+    for (const statement of schemaStatements(deploymentSchema())) await sql.query(statement);
+  })().catch((error) => {
+    ready = null;
+    throw error;
+  });
+  return ready;
 }
