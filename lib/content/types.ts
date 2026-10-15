@@ -19,7 +19,15 @@ export type BlockData = {
     primary: LinkRef;
     secondary: LinkRef;
   };
-  pageHeader: { eyebrow: string; title: string; intro: RichText };
+  pageHeader: {
+    eyebrow: string;
+    title: string;
+    intro: RichText;
+    /** At-a-glance summary card beside the title (optional). */
+    facts: { label: string; value: string }[];
+    /** Buttons for the page's top tasks (optional). */
+    links: LinkRef[];
+  };
   keyDates: {
     heading: string;
     items: { date: string; title: string; meta: string; href: string }[];

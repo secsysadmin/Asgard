@@ -29,8 +29,8 @@ export const blockSpecs: { [K in BlockType]: BlockSpec<K> } = {
   },
   pageHeader: {
     label: "Page header",
-    description: "Eyebrow, page title, and introduction.",
-    starter: () => ({ eyebrow: "Section", title: "Page title", intro: "<p>Introduce this page.</p>" }),
+    description: "Title and introduction, with an optional summary card and buttons.",
+    starter: () => ({ eyebrow: "Section", title: "Page title", intro: "<p>Introduce this page.</p>", facts: [], links: [] }),
   },
   keyDates: {
     label: "Key dates strip",

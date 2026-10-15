@@ -133,7 +133,7 @@ export function NewPageDialog({
         : "";
   const create = () => {
     const header = createBlock("pageHeader");
-    if (header.type === "pageHeader") header.data = { eyebrow: "", title: title.trim(), intro: "<p>Introduce this page.</p>" };
+    if (header.type === "pageHeader") header.data = { eyebrow: "", title: title.trim(), intro: "<p>Introduce this page.</p>", facts: [], links: [] };
     const blocks =
       start === "copy"
         ? currentPage.blocks.map((block) => ({ ...structuredClone(block) }))

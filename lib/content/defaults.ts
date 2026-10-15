@@ -193,9 +193,20 @@ const students: Page = {
   layout: "guide",
   blocks: [
     blk("stu-header", "pageHeader", {
-      eyebrow: "Students",
-      title: "Student guide",
-      intro: "<p>The premier recruiting event for the College of Engineering at Texas A&amp;M — historically hosting over 500 companies and more than 12,000 students. Current students don’t need to pre-register: bring your A&amp;M ID and dress professionally.</p>",
+      eyebrow: "Students · Fall 2026",
+      title: "Everything you need for fair day",
+      intro: "<p>Current students don’t need to register. Bring your A&amp;M ID, dress professionally, and plan which of the 500+ companies you want to meet.</p>",
+      facts: [
+        { label: "Fair days", value: "Wed–Thu, Sep 9–10 · 9 AM – 5 PM" },
+        { label: "Location", value: "Legends Event Center, Bryan" },
+        { label: "Getting there", value: "Free shuttle from Zachry, every 7–10 min" },
+        { label: "Virtual fair", value: "Fri, Sep 11 · HireAggies" },
+      ],
+      links: [
+        { label: "Search companies", href: "https://tamu-csm.symplicity.com/students/app/career-fairs/b35a231b6bedd62b18e97cad9c8babb3/overview" },
+        { label: "Shuttle & parking", href: "#getting-there" },
+        { label: "Dress code", href: "#dress-code" },
+      ],
     }),
     blk("dates", "schedule", {
       heading: "Dates & times",
@@ -511,17 +522,19 @@ const recruiters: Page = {
   layout: "guide",
   blocks: [
     blk("rec-header", "pageHeader", {
-      eyebrow: "Recruiters",
-      title: "Recruiter guide",
-      intro: "<p>The largest student-run career fair in the nation, connecting top engineering companies with 12,000+ Aggie engineers seeking internships, co-ops, and full-time roles.</p>",
-    }),
-    blk("rec-key-dates", "keyDates", {
-      heading: "Deadlines",
-      items: [
-        { date: "Wed, May 6", title: "Registration opens", meta: "8:00 AM CST", href: "#registration" },
-        { date: "Thu, Aug 21", title: "Registration closes", meta: "11:59 PM CST", href: "#registration" },
-        { date: "Mon, Sep 7", title: "Booth shipments due", meta: "At Legends Event Center", href: "#booth-shipping" },
-        { date: "Fri, Sep 11", title: "Payment due", meta: "$50 late fee after", href: "#payment" },
+      eyebrow: "Recruiters · Fall 2026",
+      title: "Plan your company’s visit",
+      intro: "<p>Meet 12,000+ Aggie engineers seeking internships, co-ops, and full-time roles at the largest student-run career fair in the nation.</p>",
+      facts: [
+        { label: "Registration closes", value: "Thu, Aug 21 · 11:59 PM CST" },
+        { label: "Ship booth materials by", value: "Mon, Sep 7 · Legends Event Center" },
+        { label: "Fair days", value: "Wed–Thu, Sep 9–10 · 9 AM – 5 PM" },
+        { label: "Payment due", value: "Fri, Sep 11 · $50 late fee after" },
+      ],
+      links: [
+        { label: "Register on Symplicity", href: SYMPLICITY_EMPLOYERS },
+        { label: "Request a quote", href: "mailto:careerfair@sec.tamu.edu?subject=Career%20Fair%20Quote%20%5BCOMPANY%20NAME%5D" },
+        { label: "Booth & shipping", href: "#booth-shipping" },
       ],
     }),
     blk("rec-dates", "schedule", {
@@ -789,9 +802,19 @@ const discovery: Page = {
   layout: "guide",
   blocks: [
     blk("cdf-header", "pageHeader", {
-      eyebrow: "Recruiters",
+      eyebrow: "Recruiters · Fall 2026",
       title: "Career Discovery Fair",
-      intro: "<p>An exposure event where over 3,000 first-year engineering students learn about majors and industries through conversations with hundreds of company representatives. Free for companies to attend.</p>",
+      intro: "<p>Meet 3,000+ first-year engineering students as they explore majors and industries. Build your brand early and connect with future talent.</p>",
+      facts: [
+        { label: "Date", value: "Tue, Nov 17 · 9 AM – 4 PM" },
+        { label: "Location", value: "Texas A&M Hotel and Conference Center" },
+        { label: "Registration opens", value: "May 18, 2026 · Symplicity" },
+        { label: "Cost", value: "Free for companies" },
+      ],
+      links: [
+        { label: "Register on Symplicity", href: SYMPLICITY_EMPLOYERS },
+        { label: "Email the team", href: "mailto:engrdevelopment@sec.tamu.edu" },
+      ],
     }),
     blk("cdf-about", "text", {
       heading: "About the fair",

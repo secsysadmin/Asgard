@@ -1,7 +1,9 @@
 "use client";
 import {
+  ArrowDown,
   ArrowRight,
   ArrowUpRight,
+  Bus,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -13,13 +15,14 @@ import {
   Mail,
   MapPin,
   Monitor,
+  Package,
   Phone,
   Shirt,
   Users,
 } from "lucide-react";
 import { memo, useRef } from "react";
 import { faqItemId } from "@/lib/content/anchors";
-import type { Block, BlockData, BlockType } from "@/lib/content/types";
+import type { Block, BlockData, BlockType, LinkRef } from "@/lib/content/types";
 import { Img, List, Lnk, MaybeLink, type Path, Rich, Text, useEdit } from "../edit/context";
 
 type Props<K extends BlockType> = { block: Extract<Block, { type: K }>; data: BlockData[K]; at: Path };
@@ -81,12 +84,86 @@ function Hero({ data, at }: Props<"hero">) {
   );
 }
 
-function PageHeader({ data, at }: Props<"pageHeader">) {
+// Icons for fact cards, chosen from the label so editors never pick one.
+const FACT_ICONS: [RegExp, LucideIcon][] = [
+  [/time|hour/i, Clock],
+  [/date|when|day/i, CalendarDays],
+  [/location|venue|where|place/i, MapPin],
+  [/dress|attire|wear/i, Shirt],
+  [/regist|rsvp|sign.?up|ticket/i, ClipboardCheck],
+  [/platform|virtual|online/i, Monitor],
+  [/cost|price|fee|pay/i, CircleDollarSign],
+  [/format|who|audience/i, Users],
+  [/shuttle|bus|getting there|parking/i, Bus],
+  [/ship|deliver|package/i, Package],
+];
+const factIcon = (label: string) => FACT_ICONS.find(([pattern]) => pattern.test(label))?.[1] ?? Info;
+
+
+/** The icon card of label/value facts used by event sections and page headers. */
+function FactList({ facts, at }: { facts: { label: string; value: string }[]; at: Path }) {
+  const edit = useEdit();
+  if (!facts.length && !edit) return null;
   return (
-    <div className="page-header">
-      <Text as="p" className="eyebrow" value={data.eyebrow} path={[...at, "eyebrow"]} placeholder="Eyebrow" />
-      <Text as="h1" value={data.title} path={[...at, "title"]} placeholder="Page title" />
-      <Rich value={data.intro} path={[...at, "intro"]} className="page-intro" placeholder="Introduce this page" />
+    <List
+      as="dl"
+      className="facts"
+      items={facts}
+      path={at}
+      label="fact"
+      render={(fact, _i, p) => {
+        const Icon = factIcon(fact.label);
+        return (
+          <div className="fact">
+            <dt>
+              <span className="fact-icon" aria-hidden>
+                <Icon />
+              </span>
+              <Text value={fact.label} path={[...p, "label"]} placeholder="Label" />
+            </dt>
+            <Text as="dd" value={fact.value} path={[...p, "value"]} placeholder="Value" />
+          </div>
+        );
+      }}
+    />
+  );
+}
+
+/** A row of buttons; the first is solid, the rest outlined. */
+function Actions({ links, at, className = "actions" }: { links: LinkRef[]; at: Path; className?: string }) {
+  const edit = useEdit();
+  if (!links.length && !edit) return null;
+  return (
+    <List
+      className={className}
+      items={links}
+      path={at}
+      label="button"
+      render={(link, i, p) => {
+        // ↗ leaves the site, ↓ jumps within this page, → goes to another page here.
+        const Icon = /^(https?:|mailto:|tel:)/i.test(link.href) ? ArrowUpRight : link.href.startsWith("#") ? ArrowDown : ArrowRight;
+        return (
+          <Lnk className={i === 0 ? "button" : "button button-quiet"} value={link} path={p}>
+            <Icon aria-hidden />
+          </Lnk>
+        );
+      }}
+    />
+  );
+}
+
+function PageHeader({ data, at }: Props<"pageHeader">) {
+  const edit = useEdit();
+  const withCard = data.facts.length > 0 || edit;
+  return (
+    <div className={withCard ? "page-header page-header-split" : "page-header"}>
+      <div className="page-header-main">
+        <Text as="p" className="eyebrow" value={data.eyebrow} path={[...at, "eyebrow"]} placeholder="Eyebrow" />
+        <Text as="h1" value={data.title} path={[...at, "title"]} placeholder="Page title" />
+        <Rich value={data.intro} path={[...at, "intro"]} className="page-intro" placeholder="Introduce this page" />
+        <Actions links={data.links} at={[...at, "links"]} className="actions page-header-actions" />
+      </div>
+      <FactList facts={data.facts} at={[...at, "facts"]} />
     </div>
   );
 }
@@ -294,19 +371,6 @@ function Cards({ data, at }: Props<"cards">) {
   );
 }
 
-// Icons for event facts, chosen from the label so editors never pick one.
-const FACT_ICONS: [RegExp, LucideIcon][] = [
-  [/time|hour/i, Clock],
-  [/date|when|day/i, CalendarDays],
-  [/location|venue|where|place/i, MapPin],
-  [/dress|attire|wear/i, Shirt],
-  [/regist|rsvp|sign.?up|ticket/i, ClipboardCheck],
-  [/platform|virtual|online/i, Monitor],
-  [/cost|price|fee|pay/i, CircleDollarSign],
-  [/format|who|audience/i, Users],
-];
-const factIcon = (label: string) => FACT_ICONS.find(([pattern]) => pattern.test(label))?.[1] ?? Info;
-
 function Event({ data, at }: Props<"event">) {
   const edit = useEdit();
   return (
@@ -315,43 +379,9 @@ function Event({ data, at }: Props<"event">) {
         <div className="event-main">
           <Text as="h2" value={data.heading} path={[...at, "heading"]} placeholder="Event name" />
           <Rich value={data.body} path={[...at, "body"]} className="lead" />
-          {(data.links.length > 0 || edit) && (
-            <List
-              className="actions"
-              items={data.links}
-              path={[...at, "links"]}
-              label="button"
-              render={(link, i, p) => (
-                <Lnk className={i === 0 ? "button" : "button button-quiet"} value={link} path={p}>
-                  <ArrowUpRight aria-hidden />
-                </Lnk>
-              )}
-            />
-          )}
+          <Actions links={data.links} at={[...at, "links"]} />
         </div>
-        {(data.facts.length > 0 || edit) && (
-          <List
-            as="dl"
-            className="facts"
-            items={data.facts}
-            path={[...at, "facts"]}
-            label="fact"
-            render={(fact, _i, p) => {
-              const Icon = factIcon(fact.label);
-              return (
-                <div className="fact">
-                  <dt>
-                    <span className="fact-icon" aria-hidden>
-                      <Icon />
-                    </span>
-                    <Text value={fact.label} path={[...p, "label"]} placeholder="Label" />
-                  </dt>
-                  <Text as="dd" value={fact.value} path={[...p, "value"]} placeholder="Value" />
-                </div>
-              );
-            }}
-          />
-        )}
+        <FactList facts={data.facts} at={[...at, "facts"]} />
       </div>
       <Note value={data.note} at={at} />
       {(data.gallery.length > 0 || edit) && (
