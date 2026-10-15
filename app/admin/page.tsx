@@ -1,35 +1,481 @@
 "use client";
 import Link from "next/link";
-import { Check, ChevronDown, GripVertical, ImagePlus, LayoutTemplate, Menu, Save, Type } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Eye,
+  GripVertical,
+  ImagePlus,
+  LayoutTemplate,
+  Menu,
+  Save,
+  Type,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
 type Block = { id: string; label: string; kind: string; visible: boolean };
+type Hero = {
+  headline: string;
+  supporting: string;
+  dates: string;
+  image: string;
+};
 const initialBlocks: Block[] = [
   { id: "hero", label: "Career Fair hero", kind: "Hero", visible: true },
-  { id: "dates", label: "At a glance", kind: "Events", visible: true },
+  { id: "stats", label: "Fair at a glance", kind: "Stats", visible: true },
+  { id: "dates", label: "Fair schedule", kind: "Events", visible: true },
   { id: "students", label: "Student information", kind: "Tabs", visible: true },
-  { id: "recruiters", label: "Recruiter information", kind: "Tabs", visible: true },
+  {
+    id: "recruiters",
+    label: "Recruiter information",
+    kind: "Tabs",
+    visible: true,
+  },
   { id: "team", label: "Meet the team", kind: "People", visible: true },
-  { id: "contact", label: "Contact us", kind: "Contact", visible: true }
+  { id: "contact", label: "Contact us", kind: "Contact", visible: true },
 ];
-
+const teamAssets = [
+  "Nathan Lam",
+  "Raul Lozano",
+  "Sofia Irahola",
+  "Nayeon Lee",
+  "Nikhila Manikandan",
+  "Cathy Molyneux",
+];
 export default function Admin() {
-  const [blocks, setBlocks] = useState(initialBlocks); const [selected, setSelected] = useState("hero"); const [panel, setPanel] = useState<"pages" | "navigation" | "media" | "styles">("pages"); const [saved, setSaved] = useState(false); const [image, setImage] = useState(""); const [hero, setHero] = useState({ headline: "SEC Engineering Career Fair", supporting: "Where Aggie engineers meet what’s next.", dates: "September 9–10, 2026", image: "" });
-  const blocksRef = useRef(blocks); const heroRef = useRef(hero);
-  const updateBlocks = (next: Block[]) => { blocksRef.current = next; setBlocks(next); };
-  const updateHero = (update: Partial<typeof hero>) => { const next = { ...heroRef.current, ...update }; heroRef.current = next; setHero(next); };
-  useEffect(() => { fetch("/api/site-config").then(response => response.ok ? response.json() : null).then(config => { if (!config) return; const definitions = new Map<string, Block>(initialBlocks.map(block => [block.id, block])); const stored: Pick<Block, "id" | "visible">[] = Array.isArray(config.layout) ? config.layout : []; const ordered: Block[] = stored.flatMap((item) => { const definition = definitions.get(item?.id); return definition ? [{ ...definition, visible: item.visible !== false }] : []; }); const included = new Set(ordered.map(block => block.id)); updateBlocks([...ordered, ...initialBlocks.filter(block => !included.has(block.id))]); updateHero(config.hero ?? {}); }).catch(() => undefined); }, []);
-  const move = (i: number, delta: number) => { const next = [...blocksRef.current]; const target = i + delta; if(target < 0 || target >= next.length) return; [next[i], next[target]] = [next[target], next[i]]; updateBlocks(next); };
-  const save = async () => { const currentHero = heroRef.current; const safeHero = { headline: currentHero.headline.trim() || "SEC Engineering Career Fair", supporting: currentHero.supporting.trim() || "Where Aggie engineers meet what’s next.", dates: currentHero.dates.trim() || "September 9–10, 2026", image: currentHero.image }; const response = await fetch("/api/site-config", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ layout: blocksRef.current.map(({id, visible}) => ({id, visible})), hero: safeHero }) }); if (!response.ok) return; heroRef.current = safeHero; setHero(safeHero); setSaved(true); setTimeout(() => setSaved(false), 1800); };
-  const upload = (file?: File) => { if(!file) return; const reader = new FileReader(); reader.onload = () => { const next = String(reader.result); setImage(next); updateHero({ image: next }); }; reader.readAsDataURL(file); };
-  return <div className="studio">
-    <aside className="studio-sidebar"><Link href="/" className="studio-logo">SEC <span>site studio</span></Link><button className="site-switcher">Engineering Career Fair <ChevronDown/></button><div className="studio-nav"><p>CONTENT</p><button className={panel === "pages" ? "selected" : ""} onClick={() => setPanel("pages")}><LayoutTemplate/> Pages</button><button className={panel === "navigation" ? "selected" : ""} onClick={() => setPanel("navigation")}><Menu/> Navigation</button><button className={panel === "media" ? "selected" : ""} onClick={() => setPanel("media")}><ImagePlus/> Media library</button><p>SETTINGS</p><button className={panel === "styles" ? "selected" : ""} onClick={() => setPanel("styles")}><Type/> Site styles</button></div><div className="studio-user"><span>CF</span><div><strong>Career Fair Admin</strong><small>Administrator</small></div></div></aside>
-    <section className="studio-workspace"><header className="studio-header"><div><p>{panel.toUpperCase()}</p><h1>{panel === "pages" ? "Home" : panel === "media" ? "Media library" : panel === "styles" ? "Site styles" : "Navigation"} <span>● Live</span></h1></div><div className="studio-actions"><Link href="/" target="_blank">Preview</Link><button onClick={save} className="save">{saved ? <Check/> : <Save/>}{saved ? "Saved" : "Save changes"}</button></div></header>
-      {panel === "pages" && <><div className="editor-grid"><div className="block-panel"><div className="panel-title"><div><h2>Page sections</h2><p>Drag sections to rearrange your page.</p></div></div><div className="blocks">{blocks.map((block, i) => <div key={block.id} className={`block ${selected === block.id ? "active" : ""}`} draggable onDragStart={e => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("source", String(i)); }} onDrop={e => { e.preventDefault(); const from = Number(e.dataTransfer.getData("source")); if(Number.isNaN(from) || from === i) return; const next=[...blocksRef.current]; const [item]=next.splice(from,1); next.splice(i,0,item); updateBlocks(next); }} onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }} onClick={() => setSelected(block.id)}><GripVertical/><div><strong>{block.label}</strong><small>{block.kind}</small></div><div className="block-controls"><button onClick={e=>{e.stopPropagation();move(i,-1)}} aria-label="Move up">↑</button><button onClick={e=>{e.stopPropagation();move(i,1)}} aria-label="Move down">↓</button><label className="toggle"><input type="checkbox" checked={block.visible === true} onChange={() => updateBlocks(blocksRef.current.map(b => b.id === block.id ? {...b, visible: !b.visible} : b))}/><i/></label></div></div>)}</div></div>
-      <div className="inspector"><div className="inspector-label">Editing</div><h2>{blocks.find(b=>b.id===selected)?.label}</h2>{selected === "hero" ? <><label>Headline<input value={hero.headline ?? ""} onChange={e => updateHero({headline: e.target.value})}/></label><label>Supporting text<textarea value={hero.supporting ?? ""} onChange={e => updateHero({supporting: e.target.value})}/></label><label>Event dates<input value={hero.dates ?? ""} onChange={e => updateHero({dates: e.target.value})}/></label><label className="upload">Hero image<input type="file" accept="image/*" onChange={e=>upload(e.target.files?.[0])}/><ImagePlus/><span>{image || hero.image ? "New image ready to save" : "Replace photo"}</span></label>{(image || hero.image) && <img src={image || hero.image} alt="New hero preview" className="upload-preview"/>}<p className="field-note">Hero copy, image, section order, and visibility save to the selected Neon environment. Uploaded images are stored as configuration data for now; move large files to Vercel Blob before production use.</p></> : <p className="field-note inspector-note">This section’s placement and visibility are live controls in the list. Its detailed copy remains structured in the site source until dedicated editor fields are added.</p>}</div></div>
-      <section className="cms-note"><div><h3>Content first</h3><p>Hero content is stored in Neon, and public sections continue to use the reviewed career-fair copy already in the site.</p></div><div><h3>Layout control</h3><p>Drag and drop changes the public-page sequence. Visibility toggles and keyboard move buttons persist with the same save action.</p></div><div><h3>Environment aware</h3><p>Development and production use separate schemas in the same Neon database so previews cannot overwrite the live site.</p></div></section></>}
-      {panel === "navigation" && <div className="utility-panel"><h2>Primary navigation</h2><p>These anchors mirror the public header. Navigation is intentionally fixed until editable navigation has destinations and validation.</p>{["Students", "Recruiters", "The Team", "Contact"].map((label, i) => <div className="utility-row" key={label}><span>0{i + 1}</span><strong>{label}</strong><small>Live</small></div>)}</div>}
-      {panel === "media" && <div className="utility-panel"><h2>Hero media</h2><p>Upload an image for the public hero, then save it with the rest of the page configuration.</p><label className="upload media-upload"><input type="file" accept="image/*" onChange={e=>upload(e.target.files?.[0])}/><ImagePlus/><span>Choose hero image</span></label>{hero.image && <img src={hero.image} alt="Uploaded hero asset" className="media-preview"/>}</div>}
-      {panel === "styles" && <div className="utility-panel"><h2>Site styles</h2><p>The public design uses a fixed maroon, warm-sand, cream, and ink palette to preserve Texas A&amp;M and SEC brand consistency.</p><div className="swatches"><span style={{background:"#500000"}}>Maroon</span><span style={{background:"#e7d7c2"}}>Warm sand</span><span style={{background:"#f5f1e8",color:"#241b18"}}>Cream</span><span style={{background:"#241b18"}}>Ink</span></div></div>}
-    </section></div>;
+  const [blocks, setBlocks] = useState(initialBlocks);
+  const [selected, setSelected] = useState("hero");
+  const [panel, setPanel] = useState<
+    "pages" | "navigation" | "media" | "styles"
+  >("pages");
+  const [saved, setSaved] = useState(false);
+  const [hero, setHero] = useState<Hero>({
+    headline: "SEC Engineering Career Fair",
+    supporting: "Where Aggie engineers meet what’s next.",
+    dates: "September 9–10, 2026",
+    image: "",
+  });
+  const [images, setImages] = useState<Record<string, string>>({});
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const blocksRef = useRef(blocks);
+  const heroRef = useRef(hero);
+  const imagesRef = useRef(images);
+  const updateBlocks = (next: Block[]) => {
+    blocksRef.current = next;
+    setBlocks(next);
+  };
+  const updateHero = (update: Partial<Hero>) => {
+    const next = { ...heroRef.current, ...update };
+    heroRef.current = next;
+    setHero(next);
+  };
+  const updateImages = (update: Record<string, string>) => {
+    const next = { ...imagesRef.current, ...update };
+    imagesRef.current = next;
+    setImages(next);
+  };
+  useEffect(() => {
+    fetch("/api/site-config")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((config) => {
+        if (!config) return;
+        const definitions = new Map(
+          initialBlocks.map((block) => [block.id, block]),
+        );
+        const ordered: Block[] = (
+          Array.isArray(config.layout) ? config.layout : []
+        ).flatMap((item: { id?: string; visible?: boolean }) => {
+          const definition = definitions.get(item.id ?? "");
+          return definition
+            ? [{ ...definition, visible: item.visible !== false }]
+            : [];
+        });
+        const included = new Set(ordered.map((block) => block.id));
+        updateBlocks([
+          ...ordered,
+          ...initialBlocks.filter((block) => !included.has(block.id)),
+        ]);
+        updateHero(config.hero ?? {});
+        updateImages(config.images ?? {});
+      })
+      .catch(() => undefined);
+  }, []);
+  useEffect(() => {
+    const doc = frameRef.current?.contentDocument;
+    if (!doc) return;
+    doc
+      .querySelectorAll<HTMLElement>("[data-studio-section]")
+      .forEach((element) =>
+        element.classList.toggle(
+          "studio-selected",
+          element.dataset.studioSection === selected,
+        ),
+      );
+  }, [selected]);
+  const sendDraft = () =>
+    frameRef.current?.contentWindow?.postMessage(
+      { type: "site-studio-draft", config: { layout: blocks, hero, images } },
+      window.location.origin,
+    );
+  const bindCanvas = () => {
+    const doc = frameRef.current?.contentDocument;
+    if (!doc) return;
+    doc.querySelectorAll<HTMLElement>("section").forEach((section) => {
+      const id = section.id === "top" ? "hero" : section.id;
+      if (!initialBlocks.some((block) => block.id === id)) return;
+      section.dataset.studioSection = id;
+      section.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setSelected(id);
+      };
+    });
+    sendDraft();
+  };
+  useEffect(() => {
+    sendDraft();
+  }, [blocks, hero, images]);
+  useEffect(() => {
+    const connectCanvas = (event: MessageEvent) => {
+      if (
+        event.origin === window.location.origin &&
+        event.data?.type === "site-studio-ready"
+      )
+        bindCanvas();
+    };
+    window.addEventListener("message", connectCanvas);
+    return () => window.removeEventListener("message", connectCanvas);
+  }, []);
+  const move = (index: number, delta: number) => {
+    const next = [...blocksRef.current];
+    const target = index + delta;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    updateBlocks(next);
+  };
+  const upload = (key: string, file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () =>
+      key === "hero"
+        ? updateHero({ image: String(reader.result) })
+        : updateImages({ [key]: String(reader.result) });
+    reader.readAsDataURL(file);
+  };
+  const save = async () => {
+    const current = heroRef.current;
+    const safeHero = {
+      headline: current.headline.trim() || "SEC Engineering Career Fair",
+      supporting:
+        current.supporting.trim() || "Where Aggie engineers meet what’s next.",
+      dates: current.dates.trim() || "September 9–10, 2026",
+      image: current.image,
+    };
+    const response = await fetch("/api/site-config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        layout: blocksRef.current.map(({ id, visible }) => ({ id, visible })),
+        hero: safeHero,
+        images: imagesRef.current,
+      }),
+    });
+    if (!response.ok) return;
+    heroRef.current = safeHero;
+    setHero(safeHero);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  };
+  const selectedBlock =
+    blocks.find((block) => block.id === selected) ?? initialBlocks[0];
+  const assetRows = teamAssets.map((name, index) => (
+    <label className="asset-row" key={name}>
+      <span>{name}</span>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(event) => upload(`team-${index}`, event.target.files?.[0])}
+      />
+      <ImagePlus />
+    </label>
+  ));
+  return (
+    <div className="studio">
+      <aside className="studio-sidebar">
+        <Link href="/" className="studio-logo">
+          SEC <span>site studio</span>
+        </Link>
+        <button className="site-switcher">
+          Engineering Career Fair <ChevronDown />
+        </button>
+        <div className="studio-nav">
+          <p>CONTENT</p>
+          <button
+            className={panel === "pages" ? "selected" : ""}
+            onClick={() => setPanel("pages")}
+          >
+            <LayoutTemplate /> Pages
+          </button>
+          <button
+            className={panel === "navigation" ? "selected" : ""}
+            onClick={() => setPanel("navigation")}
+          >
+            <Menu /> Navigation
+          </button>
+          <button
+            className={panel === "media" ? "selected" : ""}
+            onClick={() => setPanel("media")}
+          >
+            <ImagePlus /> Media library
+          </button>
+          <p>SETTINGS</p>
+          <button
+            className={panel === "styles" ? "selected" : ""}
+            onClick={() => setPanel("styles")}
+          >
+            <Type /> Site styles
+          </button>
+        </div>
+        <div className="studio-user">
+          <span>CF</span>
+          <div>
+            <strong>Career Fair Admin</strong>
+            <small>Administrator</small>
+          </div>
+        </div>
+      </aside>
+      <section className="studio-workspace">
+        <header className="studio-header">
+          <div>
+            <p>{panel.toUpperCase()}</p>
+            <h1>
+              {panel === "pages"
+                ? "Visual editor"
+                : panel === "media"
+                  ? "Media library"
+                  : panel === "styles"
+                    ? "Site styles"
+                    : "Navigation"}{" "}
+              <span>● Live draft</span>
+            </h1>
+          </div>
+          <div className="studio-actions">
+            <Link href="/" target="_blank">
+              <Eye /> Open site
+            </Link>
+            <button onClick={save} className="save">
+              {saved ? <Check /> : <Save />}
+              {saved ? "Saved" : "Save changes"}
+            </button>
+          </div>
+        </header>
+        {panel === "pages" && (
+          <div className="visual-editor">
+            <aside className="section-rail">
+              <div className="panel-title">
+                <div>
+                  <h2>Sections</h2>
+                  <p>Drag, hide, or select a section.</p>
+                </div>
+              </div>
+              <div className="blocks">
+                {blocks.map((block, index) => (
+                  <div
+                    key={block.id}
+                    className={`block ${selected === block.id ? "active" : ""}`}
+                    draggable
+                    onDragStart={(event) =>
+                      event.dataTransfer.setData("source", String(index))
+                    }
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      const from = Number(event.dataTransfer.getData("source"));
+                      if (Number.isNaN(from) || from === index) return;
+                      const next = [...blocksRef.current];
+                      const [item] = next.splice(from, 1);
+                      next.splice(index, 0, item);
+                      updateBlocks(next);
+                    }}
+                    onClick={() => setSelected(block.id)}
+                  >
+                    <GripVertical />
+                    <div>
+                      <strong>{block.label}</strong>
+                      <small>{block.kind}</small>
+                    </div>
+                    <div className="block-controls">
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          move(index, -1);
+                        }}
+                        aria-label={`Move ${block.label} up`}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          move(index, 1);
+                        }}
+                        aria-label={`Move ${block.label} down`}
+                      >
+                        ↓
+                      </button>
+                      <label
+                        className="toggle"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={block.visible}
+                          onChange={() =>
+                            updateBlocks(
+                              blocksRef.current.map((item) =>
+                                item.id === block.id
+                                  ? { ...item, visible: !item.visible }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                        <i />
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </aside>
+            <main className="canvas-panel">
+              <div className="canvas-toolbar">
+                <span>Click a section in the page to edit it</span>
+                <span>Draft preview</span>
+              </div>
+              <div className="site-canvas">
+                <iframe
+                  ref={frameRef}
+                  title="Live website preview"
+                  src="/?studio-preview=1"
+                />
+              </div>
+            </main>
+            <aside className="edit-inspector">
+              <p className="inspector-label">Editing</p>
+              <h2>{selectedBlock.label}</h2>
+              {selected === "hero" ? (
+                <>
+                  <label>
+                    Headline
+                    <input
+                      value={hero.headline}
+                      onChange={(event) =>
+                        updateHero({ headline: event.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Supporting text
+                    <textarea
+                      value={hero.supporting}
+                      onChange={(event) =>
+                        updateHero({ supporting: event.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Event dates
+                    <input
+                      value={hero.dates}
+                      onChange={(event) =>
+                        updateHero({ dates: event.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="upload">
+                    Hero photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) =>
+                        upload("hero", event.target.files?.[0])
+                      }
+                    />
+                    <ImagePlus />
+                    <span>Replace image</span>
+                  </label>
+                </>
+              ) : selected === "team" ? (
+                <>
+                  <p className="field-note">
+                    Replace each portrait here. The carousel updates after you
+                    save.
+                  </p>
+                  <div className="asset-list">{assetRows}</div>
+                </>
+              ) : (
+                <>
+                  <p className="field-note inspector-note">
+                    This section is selected on the canvas. Drag it in the left
+                    rail or use its visibility switch. Detailed copy remains
+                    structured in the public content model.
+                  </p>
+                  <button
+                    className="wide-button"
+                    onClick={() => setSelected("hero")}
+                  >
+                    Edit hero copy
+                  </button>
+                </>
+              )}
+            </aside>
+          </div>
+        )}
+        {panel === "media" && (
+          <div className="utility-panel">
+            <h2>Media library</h2>
+            <p>
+              Replace the hero or any team portrait from one place. Changes stay
+              in the current draft until saved.
+            </p>
+            <label className="upload media-upload">
+              Hero photo
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(event) => upload("hero", event.target.files?.[0])}
+              />
+              <ImagePlus />
+              <span>Choose hero image</span>
+            </label>
+            <div className="asset-list media-assets">{assetRows}</div>
+          </div>
+        )}
+        {panel === "navigation" && (
+          <div className="utility-panel">
+            <h2>Primary navigation</h2>
+            <p>
+              Header navigation mirrors the public page and stays intentionally
+              fixed while section anchors are editable in the visual editor.
+            </p>
+          </div>
+        )}
+        {panel === "styles" && (
+          <div className="utility-panel">
+            <h2>Site styles</h2>
+            <p>
+              Brand colors are locked to preserve Texas A&amp;M and SEC
+              identity.
+            </p>
+            <div className="swatches">
+              <span style={{ background: "#500000" }}>Maroon</span>
+              <span style={{ background: "#e7d7c2" }}>Warm sand</span>
+              <span style={{ background: "#f5f1e8", color: "#241b18" }}>
+                Cream
+              </span>
+              <span style={{ background: "#241b18" }}>Ink</span>
+            </div>
+          </div>
+        )}
+      </section>
+    </div>
+  );
 }
