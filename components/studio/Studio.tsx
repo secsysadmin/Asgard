@@ -13,7 +13,6 @@ import {
   Laptop,
   Layers,
   Loader2,
-  LogOut,
   Monitor,
   PanelsTopLeft,
   Pencil,
@@ -77,7 +76,7 @@ function templateFor(content: SiteContent, listPath: Path): unknown {
 
 const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
-export function Studio({ authMode }: { authMode: "open" | "password" }) {
+export function Studio() {
   const [content, setContent] = useState<SiteContent | null>(null);
   const [published, setPublished] = useState<SiteContent | null>(null);
   const [loadError, setLoadError] = useState("");
@@ -455,26 +454,7 @@ export function Studio({ authMode }: { authMode: "open" | "password" }) {
         <button type="button" className="st-btn st-btn-primary" onClick={publish} disabled={publishing || !unpublished || dirty}>
           {publishing ? <Loader2 className="st-spin" /> : <Upload />} Publish
         </button>
-        {authMode === "password" && (
-          <button
-            type="button"
-            className="st-icon"
-            title="Sign out"
-            aria-label="Sign out"
-            onClick={async () => {
-              await fetch("/api/auth/logout", { method: "POST" });
-              location.reload();
-            }}
-          >
-            <LogOut />
-          </button>
-        )}
       </header>
-      {authMode === "open" && (
-        <p className="st-banner">
-          <TriangleAlert /> The studio isn’t password-protected in local development. Set <code>ADMIN_PASSWORD</code> to require sign-in; deployed sites always require it.
-        </p>
-      )}
 
       <EditProvider value={api}>
         <div className="st-body">

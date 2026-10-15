@@ -1516,46 +1516,6 @@ div.st-navlist {
   margin: 0;
   max-width: 60ch;
 }
-.st-login {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: #f3f1ed;
-  font-family: var(--sans);
-}
-.st-login form {
-  width: min(380px, 100%);
-  display: grid;
-  gap: 14px;
-  padding: 32px 28px;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-.st-login h1 {
-  font: 600 26px/1.2 var(--display);
-  color: #500000;
-}
-.st-login p {
-  margin: 0;
-  color: #6d645e;
-}
-.st-login a {
-  justify-self: center;
-  color: #6d645e;
-  font-size: 13px;
-}
-.st-login-icon {
-  width: 30px;
-  height: 30px;
-  color: #500000;
-}
-.st-login svg.st-spin {
-  width: 16px;
-  height: 16px;
-}
-
 /* Smaller screens: inspector collapses under the canvas width */
 @media (max-width: 1280px) {
   .st-body {

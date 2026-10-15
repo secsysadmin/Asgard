@@ -9,7 +9,9 @@ npm install
 npm run dev
 ```
 
-Open `/` for the site and `/admin` for the studio. Locally, the studio is open unless `ADMIN_PASSWORD` is set.
+Open `/` for the site and `/admin` for the studio.
+
+> **The studio currently has no sign-in.** Anyone with the `/admin` link can edit and publish. Google OAuth is planned; it plugs into `isAuthorized()` in `lib/auth.ts`, which every studio route already checks.
 
 ## Pages
 
@@ -46,5 +48,4 @@ Guide pages have a sticky "On this page" menu that tracks your position as you s
 ## Deploying (Vercel + Neon)
 
 1. Set `DATABASE_URL` (Neon).
-2. **Set `ADMIN_PASSWORD`.** Deployed studios refuse all sign-ins without it.
-3. Production uses the `production` schema (through `VERCEL_ENV=production` or `APP_ENV=production`). Previews and local development use `development`.
+2. Production uses the `production` schema (through `VERCEL_ENV=production` or `APP_ENV=production`). Previews and local development use `development`.
