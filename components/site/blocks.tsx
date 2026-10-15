@@ -20,7 +20,7 @@ import {
   Shirt,
   Users,
 } from "lucide-react";
-import { memo, useRef } from "react";
+import { memo, type RefObject, useEffect, useRef, useState } from "react";
 import { faqItemId } from "@/lib/content/anchors";
 import type { Block, BlockData, BlockType, LinkRef } from "@/lib/content/types";
 import { Img, List, Lnk, MaybeLink, type Path, Rich, Text, useEdit } from "../edit/context";
@@ -371,32 +371,58 @@ function Cards({ data, at }: Props<"cards">) {
   );
 }
 
+/**
+ * True when an event's fact card runs well past its description while the two
+ * sit side by side. The photos then move up under the description to fill
+ * that space instead of leaving a gap above a full-width strip.
+ */
+function useTuckPhotos(ref: RefObject<HTMLDivElement | null>, enabled: boolean) {
+  const [tuck, setTuck] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    const main = el?.querySelector<HTMLElement>(":scope > .event-main");
+    const facts = el?.querySelector<HTMLElement>(":scope > .facts");
+    if (!el || !main || !facts || !enabled) return;
+    const observer = new ResizeObserver(() => {
+      const sideBySide = facts.getBoundingClientRect().left >= main.getBoundingClientRect().right;
+      setTuck(sideBySide && facts.offsetHeight - main.offsetHeight > 96);
+    });
+    [el, main, facts].forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  }, [ref, enabled]);
+  return enabled && tuck;
+}
+
 function Event({ data, at }: Props<"event">) {
   const edit = useEdit();
+  const event = useRef<HTMLDivElement>(null);
+  const tuck = useTuckPhotos(event, data.gallery.length > 1);
+  const gallery = (data.gallery.length > 0 || edit) && (
+    <List
+      className={`photo-strip photo-strip-${Math.min(data.gallery.length, 3)}`}
+      items={data.gallery}
+      path={[...at, "gallery"]}
+      label="photo"
+      render={(image, _i, p) => (
+        <figure>
+          <Img value={image} path={p} zoom />
+        </figure>
+      )}
+    />
+  );
   return (
     <>
-      <div className={data.facts.length > 0 || edit ? "event" : "event event-solo"}>
+      <div ref={event} className={["event", !(data.facts.length > 0 || edit) && "event-solo", tuck && "event-tuck"].filter(Boolean).join(" ")}>
         <div className="event-main">
           <Text as="h2" value={data.heading} path={[...at, "heading"]} placeholder="Event name" />
           <Rich value={data.body} path={[...at, "body"]} className="lead" />
           <Actions links={data.links} at={[...at, "links"]} />
         </div>
         <FactList facts={data.facts} at={[...at, "facts"]} />
+        {tuck && gallery}
       </div>
       <Note value={data.note} at={at} />
-      {(data.gallery.length > 0 || edit) && (
-        <List
-          className={`photo-strip photo-strip-${Math.min(data.gallery.length, 3)}`}
-          items={data.gallery}
-          path={[...at, "gallery"]}
-          label="photo"
-          render={(image, _i, p) => (
-            <figure>
-              <Img value={image} path={p} zoom />
-            </figure>
-          )}
-        />
-      )}
+      {!tuck && gallery}
     </>
   );
 }

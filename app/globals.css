@@ -1358,6 +1358,25 @@ a.key-date:hover {
   aspect-ratio: 4 / 3;
   object-fit: cover;
 }
+/* Photos tucked under the description, beside a tall fact card. */
+.event-tuck {
+  grid-template-areas: "main facts" "photos facts";
+  grid-template-rows: auto 1fr;
+  row-gap: 28px;
+}
+.event-tuck > .event-main {
+  grid-area: main;
+}
+.event-tuck > .facts {
+  grid-area: facts;
+}
+.event-tuck > .photo-strip {
+  grid-area: photos;
+  align-self: end;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 0;
+}
 /* A single image (e.g. the booth map) spans the whole content column. */
 .photo-strip-1 {
   grid-template-columns: minmax(0, 1fr);
