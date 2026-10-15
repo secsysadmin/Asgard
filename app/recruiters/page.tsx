@@ -3,22 +3,218 @@ import Link from "next/link";
 import { ArrowLeft, CalendarDays, MapPin } from "lucide-react";
 
 const schedule = [
-  ["Tue, Sep 8", "Recruiter check-in", "2:00 PM–5:00 PM", "Legends Event Center"],
-  ["Wed, Sep 9", "Recruiter check-in & breakfast", "7:00 AM–9:00 AM", "Legends Event Center"],
+  [
+    "Tue, Sep 8",
+    "Recruiter check-in",
+    "2:00 PM–5:00 PM",
+    "Legends Event Center",
+  ],
+  [
+    "Wed, Sep 9",
+    "Recruiter check-in & breakfast",
+    "7:00 AM–9:00 AM",
+    "Legends Event Center",
+  ],
   ["Wed, Sep 9", "Exhibition", "9:00 AM–5:00 PM", "Legends Event Center"],
-  ["Thu, Sep 10", "Check-in & breakfast", "7:00 AM–9:00 AM", "Legends Event Center"],
+  [
+    "Thu, Sep 10",
+    "Check-in & breakfast",
+    "7:00 AM–9:00 AM",
+    "Legends Event Center",
+  ],
   ["Thu, Sep 10", "Exhibition", "9:00 AM–5:00 PM", "Legends Event Center"],
-  ["Fri, Sep 11", "Virtual Career Fair", "9:00 AM–5:00 PM", "Symplicity (HireAggies)"]
+  [
+    "Fri, Sep 11",
+    "Virtual Career Fair",
+    "9:00 AM–5:00 PM",
+    "Symplicity (HireAggies)",
+  ],
 ];
-const hotels = ["The Stella Hotel · 4100 Lake Atlas Dr · (979) 421-4000", "The George · 180 Century Ct · (979) 485-5638", "Cavalry Court · 200 Century Ct · (844) 313-7337", "Texas A&M Hotel · 177 Joe Routt Blvd · (979) 260-5000", "Hyatt Place · 1100 University Dr. East · (979) 846-9800", "Holiday Inn Express · 1203 University Dr. East · (979) 846-8700", "Hampton Inn · 320 Texas Ave. South · (979) 846-0184", "Best Western Premiere · 1920 Austin's Colony Pkwy · (979) 731-5300", "Courtyard Marriott · 3939 Highway 6 South · (979) 695-8111", "Four Points by Sheraton · 1503 Texas Ave · (979) 693-1741", "Best Western Plus Inn & Suites · 950 Arrington Rd · (979) 704-6444", "La Quinta Inn & Suites · 1838 Graham Rd · (979) 704-6100", "Fairfield Inn · 4613 South Texas Ave · (979) 268-1552", "Days Inn · 2514 Texas Ave · (979) 696-6988", "TownePlace Suites by Marriott · 1300 University Dr. East · (979) 260-8500", "Ramada College Station · 506 Earl Rudder Fwy. South · (979) 846-0300"];
+const hotels = [
+  "The Stella Hotel · 4100 Lake Atlas Dr · (979) 421-4000",
+  "The George · 180 Century Ct · (979) 485-5638",
+  "Cavalry Court · 200 Century Ct · (844) 313-7337",
+  "Texas A&M Hotel · 177 Joe Routt Blvd · (979) 260-5000",
+  "Hyatt Place · 1100 University Dr. East · (979) 846-9800",
+  "Holiday Inn Express · 1203 University Dr. East · (979) 846-8700",
+  "Hampton Inn · 320 Texas Ave. South · (979) 846-0184",
+  "Best Western Premiere · 1920 Austin's Colony Pkwy · (979) 731-5300",
+  "Courtyard Marriott · 3939 Highway 6 South · (979) 695-8111",
+  "Four Points by Sheraton · 1503 Texas Ave · (979) 693-1741",
+  "Best Western Plus Inn & Suites · 950 Arrington Rd · (979) 704-6444",
+  "La Quinta Inn & Suites · 1838 Graham Rd · (979) 704-6100",
+  "Fairfield Inn · 4613 South Texas Ave · (979) 268-1552",
+  "Days Inn · 2514 Texas Ave · (979) 696-6988",
+  "TownePlace Suites by Marriott · 1300 University Dr. East · (979) 260-8500",
+  "Ramada College Station · 506 Earl Rudder Fwy. South · (979) 846-0300",
+];
 
 export default function RecruiterGuide() {
-  return <main className="guide-page"><header className="guide-nav"><Link href="/" aria-label="Back to the Engineering Career Fair home page"><Image src="/images/tamu-logo.png" alt="Texas A&M University" width={500} height={112}/><span/><Image src="/images/sec-logo.png" alt="Student Engineers’ Council" width={774} height={331}/></Link><nav><Link href="/student">Students</Link><Link href="/recruiters" aria-current="page">Recruiters</Link><Link href="/">Home</Link></nav></header>
-    <section className="guide-hero"><Link href="/" className="back-link"><ArrowLeft/> Back to the fair</Link><p>Recruiters</p><h1>Complete recruiter guide</h1><span>Current operations and logistics for the 2026 SEC Engineering Career Fair.</span></section>
-    <section className="guide-section"><h2>Dates &amp; itinerary</h2><div className="guide-table">{schedule.map(([date, event, time, location]) => <article key={`${date}-${event}`}><time>{date}</time><div><h3>{event}</h3><p>{time}</p></div><p>{location}</p></article>)}</div><p className="guide-note">Complimentary breakfast is served in the recruiter lounge from 7:00 AM–9:00 AM both fair days. Complimentary hot lunch is served there from 11:00 AM–2:00 PM. A final logistics packet and booth map will be emailed to registered companies.</p></section>
-    <section className="guide-section guide-grid"><div><h2>Parking</h2><h3>General recruiter parking</h3><p>Use Fan Field Parking Lot on Research Parkway, across from Lot 111. A dedicated shuttle runs to Legends Event Center from 6:30 AM–6:30 PM both fair days, about every 10 minutes.</p><h3>Maroon sponsors</h3><p>Maroon Level Sponsors receive reserved Legends Event Center parking. Display the printed Maroon Sponsor Parking Placard and arrive by 10:00 AM; temporary placards are available at the Help Desk.</p></div><div><h2>Booth specifications</h2><p>Each booth is 8′ wide × 6′ deep and includes one 6′ × 30″ draped table and two chairs.</p><p>Bring an extension cord (20 feet recommended) if you pre-purchased electrical access. A maximum of five representatives may staff each booth.</p></div></section>
-    <section className="guide-section guide-grid"><div><h2>Shipping logistics</h2><h3>Inbound</h3><p>Plan delivery by Monday, September 7. Label each shipment with your company name.</p><p>Legends Event Center<br/>ATTN: SEC Career Fair – [Company Name]<br/>2533 Midtown Pkwy<br/>Bryan, TX 77801</p><h3>Outbound</h3><p>Bring pre-printed return labels and schedule carrier pickup for Monday, September 14. Legends holds shipped packages for at most two weeks after the fair.</p></div><div><h2>Interview rooms &amp; job postings</h2><p>Reserve interview rooms through HireAggies; rooms are first-come, first-served. Log in at careercenter.tamu.edu and select “Create New Schedule Request,” or call (979) 845-5139.</p><p>Registered employers may post job openings on HireAggies at no cost.</p></div></section>
-    <section className="guide-section"><h2>Local hotel accommodations</h2><div className="hotel-list">{hotels.map(hotel => <p key={hotel}>{hotel}</p>)}</div></section>
-    <footer className="guide-footer"><CalendarDays/> September 9–10, 2026 <MapPin/> Legends Event Center · Bryan, TX <a href="mailto:careerfair@sec.tamu.edu">careerfair@sec.tamu.edu</a></footer>
-  </main>;
+  return (
+    <main className="guide-page">
+      <header className="guide-nav">
+        <Link
+          href="/"
+          aria-label="Back to the Engineering Career Fair home page"
+        >
+          <Image
+            src="/images/tamu-logo.png"
+            alt="Texas A&M University"
+            width={500}
+            height={112}
+          />
+          <span />
+          <Image
+            src="/images/sec-logo.png"
+            alt="Student Engineers’ Council"
+            width={774}
+            height={331}
+          />
+        </Link>
+        <nav>
+          <Link href="/student">Students</Link>
+          <Link href="/recruiters" aria-current="page">
+            Recruiters
+          </Link>
+          <Link href="/">Home</Link>
+        </nav>
+      </header>
+      <section className="guide-hero">
+        <Link href="/" className="back-link">
+          <ArrowLeft /> Back to the fair
+        </Link>
+        <p>Recruiters</p>
+        <h1>Complete recruiter guide</h1>
+        <span>
+          Current operations and logistics for the 2026 SEC Engineering Career
+          Fair.
+        </span>
+      </section>
+      <section className="guide-section">
+        <h2>Dates &amp; itinerary</h2>
+        <div className="guide-table">
+          {schedule.map(([date, event, time, location]) => (
+            <article key={`${date}-${event}`}>
+              <time>{date}</time>
+              <div>
+                <h3>{event}</h3>
+                <p>{time}</p>
+              </div>
+              <p>{location}</p>
+            </article>
+          ))}
+        </div>
+        <p className="guide-note">
+          Complimentary breakfast is served in the recruiter lounge from 7:00
+          AM–9:00 AM both fair days. Complimentary hot lunch is served there
+          from 11:00 AM–2:00 PM. A final logistics packet and booth map will be
+          emailed to registered companies.
+        </p>
+      </section>
+      <section className="guide-section guide-grid">
+        <div>
+          <h2>Registration &amp; pricing</h2>
+          <p>
+            All fair registrations are managed through HireAggies (Symplicity).
+            Registration opens Wednesday, May 6 at 8:00 AM CST and closes
+            Thursday, August 21 at 11:59 PM CST.
+          </p>
+          <p>
+            Email{" "}
+            <a href="mailto:careerfair@sec.tamu.edu">careerfair@sec.tamu.edu</a>{" "}
+            with your company name for a complete package quote.
+          </p>
+        </div>
+        <div>
+          <h2>Payment</h2>
+          <p>
+            Pay online by credit card or submit a check. Payment is due
+            September 11; a $50 late fee applies afterward.
+          </p>
+          <p>
+            Registered employers receive final pricing, exhibitor instructions,
+            and the booth map in their logistics packet.
+          </p>
+        </div>
+      </section>
+      <section className="guide-section guide-grid">
+        <div>
+          <h2>Parking</h2>
+          <h3>General recruiter parking</h3>
+          <p>
+            Use Fan Field Parking Lot on Research Parkway, across from Lot 111.
+            A dedicated shuttle runs to Legends Event Center from 6:30 AM–6:30
+            PM both fair days, about every 10 minutes.
+          </p>
+          <h3>Maroon sponsors</h3>
+          <p>
+            Maroon Level Sponsors receive reserved Legends Event Center parking.
+            Display the printed Maroon Sponsor Parking Placard and arrive by
+            10:00 AM; temporary placards are available at the Help Desk.
+          </p>
+        </div>
+        <div>
+          <h2>Booth specifications</h2>
+          <p>
+            Each booth is 8′ wide × 6′ deep and includes one 6′ × 30″ draped
+            table and two chairs.
+          </p>
+          <p>
+            Bring an extension cord (20 feet recommended) if you pre-purchased
+            electrical access. A maximum of five representatives may staff each
+            booth.
+          </p>
+        </div>
+      </section>
+      <section className="guide-section guide-grid">
+        <div>
+          <h2>Shipping logistics</h2>
+          <h3>Inbound</h3>
+          <p>
+            Plan delivery by Monday, September 7. Label each shipment with your
+            company name.
+          </p>
+          <p>
+            Legends Event Center
+            <br />
+            ATTN: SEC Career Fair – [Company Name]
+            <br />
+            2533 Midtown Pkwy
+            <br />
+            Bryan, TX 77801
+          </p>
+          <h3>Outbound</h3>
+          <p>
+            Bring pre-printed return labels and schedule carrier pickup for
+            Monday, September 14. Legends holds shipped packages for at most two
+            weeks after the fair.
+          </p>
+        </div>
+        <div>
+          <h2>Interview rooms &amp; job postings</h2>
+          <p>
+            Reserve interview rooms through HireAggies; rooms are first-come,
+            first-served. Log in at careercenter.tamu.edu and select “Create New
+            Schedule Request,” or call (979) 845-5139.
+          </p>
+          <p>
+            Registered employers may post job openings on HireAggies at no cost.
+          </p>
+        </div>
+      </section>
+      <section className="guide-section">
+        <h2>Local hotel accommodations</h2>
+        <div className="hotel-list">
+          {hotels.map((hotel) => (
+            <p key={hotel}>{hotel}</p>
+          ))}
+        </div>
+      </section>
+      <footer className="guide-footer">
+        <CalendarDays /> September 9–10, 2026 <MapPin /> Legends Event Center ·
+        Bryan, TX{" "}
+        <a href="mailto:careerfair@sec.tamu.edu">careerfair@sec.tamu.edu</a>
+      </footer>
+    </main>
+  );
 }

@@ -10,7 +10,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import { recruiterTabs, studentTabs, type Tab } from "@/lib/site-content";
 
 function Tabs({
@@ -125,7 +125,7 @@ const team = [
 
 export default function Home() {
   const [open, setOpen] = useState(false);
-  const [member, setMember] = useState(0);
+  const [teamStart, setTeamStart] = useState(0);
   const [layout, setLayout] = useState<{ id: string; visible: boolean }[]>([]);
   const [heroContent, setHeroContent] = useState({
     headline: "SEC Engineering Career Fair",
@@ -168,6 +168,11 @@ export default function Home() {
       );
     }
   }, []);
+  const moveTeam = (direction: 1 | -1) => {
+    setTeamStart(
+      (start) => (start + direction * 3 + team.length) % team.length,
+    );
+  };
   const sectionProps = (id: string) => {
     const section = layout.find((item) => item.id === id);
     return {
@@ -175,10 +180,14 @@ export default function Home() {
       hidden: section ? !section.visible : false,
     };
   };
-  const activeMember = {
-    ...team[member],
-    photo: images[`team-${member}`] || team[member].photo,
-  };
+  const visibleTeam = Array.from({ length: 3 }, (_, offset) => {
+    const index = (teamStart + offset) % team.length;
+    return {
+      ...team[index],
+      index,
+      photo: images[`team-${index}`] || team[index].photo,
+    };
+  });
   const heroTitle = heroContent.headline.endsWith("Career Fair")
     ? heroContent.headline.slice(0, -"Career Fair".length).trimEnd()
     : heroContent.headline;
@@ -216,12 +225,12 @@ export default function Home() {
           {open ? <X /> : <Menu />}
         </button>
         <nav className={open ? "open" : ""}>
-          <Link href="/student" onClick={() => setOpen(false)}>
+          <a href="#students" onClick={() => setOpen(false)}>
             Students
-          </Link>
-          <Link href="/recruiters" onClick={() => setOpen(false)}>
+          </a>
+          <a href="#recruiters" onClick={() => setOpen(false)}>
             Recruiters
-          </Link>
+          </a>
           <a href="#team" onClick={() => setOpen(false)}>
             The Team
           </a>
@@ -352,64 +361,55 @@ export default function Home() {
           <br />
           the <em>whole show.</em>
         </h2>
-        <div
-          className="team-carousel"
-          aria-roledescription="carousel"
-          aria-label="Career Fair team"
-        >
-          <div className="team-photo">
-            <Image
-              src={activeMember.photo}
-              fill
-              sizes="(max-width: 760px) 100vw, 55vw"
-              style={{ objectFit: "contain", objectPosition: "center" }}
-              alt={`${activeMember.name}, ${activeMember.role}`}
-            />
-          </div>
-          <div className="team-profile">
-            <p className="member-count" aria-live="polite">
-              {String(member + 1).padStart(2, "0")} /{" "}
-              {String(team.length).padStart(2, "0")}
-            </p>
-            <h3>{activeMember.name}</h3>
-            <p className="member-role">{activeMember.role}</p>
-            <p className="member-major">{activeMember.major}</p>
-            <div className="carousel-controls">
-              <button
-                onClick={() =>
-                  setMember((member - 1 + team.length) % team.length)
+        <div className="team-conveyor" aria-label="Career Fair team">
+          <div className="team-track" key={teamStart}>
+            {visibleTeam.map((person, position) => (
+              <article
+                className="team-card"
+                key={person.name}
+                style={
+                  { "--team-delay": `${position * 110}ms` } as CSSProperties
                 }
-                aria-label="Previous team member"
               >
-                <ChevronLeft />
-              </button>
-              <button
-                onClick={() => setMember((member + 1) % team.length)}
-                aria-label="Next team member"
-              >
-                <ChevronRight />
-              </button>
-            </div>
+                <div className="team-card-photo">
+                  <Image
+                    src={person.photo}
+                    fill
+                    sizes="(max-width: 760px) 100vw, 33vw"
+                    style={{ objectFit: "cover", objectPosition: "center 18%" }}
+                    alt={`${person.name}, ${person.role}`}
+                  />
+                </div>
+                <div className="team-card-copy">
+                  <p className="member-count">
+                    {String(person.index + 1).padStart(2, "0")} /{" "}
+                    {String(team.length).padStart(2, "0")}
+                  </p>
+                  <h3>{person.name}</h3>
+                  <p className="member-role">{person.role}</p>
+                  <p className="member-major">{person.major}</p>
+                </div>
+              </article>
+            ))}
           </div>
         </div>
-        <div className="team-dots" role="tablist" aria-label="Team members">
-          {team.map((person, i) => (
+        <div className="team-conveyor-controls">
+          <p>
+            {String(teamStart + 1).padStart(2, "0")}–
+            {String(Math.min(teamStart + 3, team.length)).padStart(2, "0")} of{" "}
+            {String(team.length).padStart(2, "0")}
+          </p>
+          <div className="carousel-controls">
             <button
-              key={person.name}
-              onClick={() => setMember(i)}
-              onKeyDown={(event) => {
-                if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
-                  event.preventDefault();
-                  setMember(
-                    (i + (event.key === "ArrowRight" ? 1 : -1) + team.length) %
-                      team.length,
-                  );
-                }
-              }}
-              aria-label={`Show ${person.name}`}
-              aria-selected={i === member}
-            />
-          ))}
+              onClick={() => moveTeam(-1)}
+              aria-label="Previous team group"
+            >
+              <ChevronLeft />
+            </button>
+            <button onClick={() => moveTeam(1)} aria-label="Next team group">
+              <ChevronRight />
+            </button>
+          </div>
         </div>
       </section>
       <section id="contact" className="contact" {...sectionProps("contact")}>

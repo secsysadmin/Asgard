@@ -16,7 +16,7 @@ typography:
     lineHeight: 0.88
     letterSpacing: "-0.04em"
   body:
-    fontFamily: "DM Sans, Arial, sans-serif"
+    fontFamily: "IBM Plex Sans, Arial, sans-serif"
     fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.6
