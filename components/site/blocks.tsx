@@ -311,7 +311,7 @@ function Event({ data, at }: Props<"event">) {
   const edit = useEdit();
   return (
     <>
-      <div className="event">
+      <div className={data.facts.length > 0 || edit ? "event" : "event event-solo"}>
         <div className="event-main">
           <Text as="h2" value={data.heading} path={[...at, "heading"]} placeholder="Event name" />
           <Rich value={data.body} path={[...at, "body"]} className="lead" />

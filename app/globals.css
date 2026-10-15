@@ -1063,7 +1063,6 @@ a.key-date:hover {
   border-left: 3px solid var(--maroon);
   background: var(--maroon-soft);
   border-radius: 0 var(--radius) var(--radius) 0;
-  max-width: 900px;
 }
 .tone-maroon .note {
   background: rgba(255, 255, 255, 0.08);
@@ -1278,6 +1277,11 @@ a.key-date:hover {
   gap: clamp(28px, 5cqi, 72px);
   align-items: start;
 }
+/* No fact card: let the description and buttons use the full width. */
+.event.event-solo,
+.guide-body .event.event-solo {
+  grid-template-columns: minmax(0, 1fr);
+}
 .event h2 {
   margin-bottom: 16px;
 }
@@ -1354,11 +1358,11 @@ a.key-date:hover {
   aspect-ratio: 4 / 3;
   object-fit: cover;
 }
+/* A single image (e.g. the booth map) spans the whole content column. */
 .photo-strip-1 {
-  grid-template-columns: minmax(0, 760px);
+  grid-template-columns: minmax(0, 1fr);
 }
 .band-event .note {
-  max-width: none;
   margin-top: 32px;
 }
 .photo-strip-1 img {
@@ -1562,11 +1566,14 @@ a.key-date:hover {
   background: rgba(243, 233, 230, 0.5);
   color: var(--maroon);
 }
-.faq-item[open] {
-  background: rgba(243, 233, 230, 0.35);
-}
-.faq-item[open] summary {
+/* Open: the question row stays highlighted; the answer sits on white. */
+.faq-item[open] summary,
+.faq-item[open] summary:hover {
+  background: var(--maroon-soft);
   color: var(--maroon);
+}
+.faq-item[open] .faq-a {
+  padding-top: 18px;
 }
 .faq-a {
   padding: 0 24px 20px;
