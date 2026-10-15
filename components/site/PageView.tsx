@@ -1,6 +1,6 @@
 "use client";
 import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import type { Block, Page, SiteContent } from "@/lib/content/types";
 import { safeHref } from "@/lib/sanitize";
 import { Rich, type Path, useEdit } from "../edit/context";
@@ -109,31 +109,95 @@ function tocGroups(blocks: Block[]): Group[] {
   return groups;
 }
 
+/**
+ * Which section the reader is on. Normally the last section whose top has
+ * passed under the header; at the very bottom of the page, the last section.
+ * Choosing a section (a menu click, search result, or shared link) highlights
+ * it right away and keeps it until the reader scrolls on their own, so short
+ * sections near the end of the page can still be selected.
+ */
 function useActiveSection(ids: string[], enabled: boolean) {
   const [active, setActive] = useState(ids[0] ?? "");
+  const pinned = useRef<string | null>(null);
   const key = ids.join("|");
+
+  // Map any anchor (including an FAQ question inside a section) to its section.
+  const sectionFor = useCallback(
+    (anchor: string) => {
+      if (ids.includes(anchor)) return anchor;
+      const section = document.getElementById(anchor)?.closest("section[id]")?.id;
+      return section && ids.includes(section) ? section : null;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [key],
+  );
+
+  const pin = useCallback(
+    (anchor: string) => {
+      const section = sectionFor(anchor);
+      if (!section) return;
+      pinned.current = section;
+      setActive(section);
+    },
+    [sectionFor],
+  );
+
   useEffect(() => {
     if (!enabled) return;
     const onScroll = () => {
+      if (pinned.current) return setActive(pinned.current);
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
       let current = ids[0] ?? "";
-      for (const id of ids) {
-        const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top < 160) current = id;
-      }
+      if (atBottom) current = ids[ids.length - 1] ?? current;
+      else
+        for (const id of ids) {
+          const el = document.getElementById(id);
+          if (el && el.getBoundingClientRect().top < 160) current = id;
+        }
       setActive(current);
     };
-    onScroll();
+    const release = () => {
+      pinned.current = null;
+    };
+    const onHash = () => pin(decodeHash(location.hash));
+    // Initial highlight once layout has settled.
+    const frame = requestAnimationFrame(() => {
+      if (location.hash) pin(decodeHash(location.hash));
+      onScroll();
+    });
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("hashchange", onHash);
+    // Only the reader's own scrolling releases a pinned section.
+    window.addEventListener("wheel", release, { passive: true });
+    window.addEventListener("touchmove", release, { passive: true });
+    window.addEventListener("keydown", release);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("hashchange", onHash);
+      window.removeEventListener("wheel", release);
+      window.removeEventListener("touchmove", release);
+      window.removeEventListener("keydown", release);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, enabled]);
-  return active;
+  }, [key, enabled, pin]);
+
+  return { active, pin };
+}
+
+function decodeHash(hash: string) {
+  const raw = hash.replace(/^#/, "");
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
 }
 
 function Toc({ groups }: { groups: Group[] }) {
   const edit = useEdit();
   const ids = groups.flatMap((group) => group.items.map((item) => item.id));
-  const active = useActiveSection(ids, !edit);
+  const { active, pin } = useActiveSection(ids, !edit);
   const [open, setOpen] = useState(false);
   const activeLabel = groups.flatMap((group) => group.items).find((item) => item.id === active)?.label ?? "Sections";
   if (!groups.length) return null;
@@ -152,7 +216,14 @@ function Toc({ groups }: { groups: Group[] }) {
             <ul>
               {group.items.map((item) => (
                 <li key={item.id}>
-                  <a href={`#${item.id}`} aria-current={item.id === active ? "true" : undefined} onClick={() => setOpen(false)}>
+                  <a
+                    href={`#${item.id}`}
+                    aria-current={item.id === active ? "true" : undefined}
+                    onClick={() => {
+                      pin(item.id);
+                      setOpen(false);
+                    }}
+                  >
                     {item.label}
                   </a>
                 </li>
