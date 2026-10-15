@@ -420,12 +420,7 @@ function Faq({ block, data, at }: Props<"faq">) {
         label="topic"
         render={(group, gi, p) => (
           <section className="faq-group">
-            <header className="faq-group-head">
-              <Text as="h3" value={group.title} path={[...p, "title"]} placeholder="Topic" />
-              <span className="faq-group-count">
-                {group.items.length} {group.items.length === 1 ? "question" : "questions"}
-              </span>
-            </header>
+            <Text as="h3" className="faq-group-title" value={group.title} path={[...p, "title"]} placeholder="Topic" />
             <List
               className="faq-items"
               items={group.items}

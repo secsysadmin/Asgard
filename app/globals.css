@@ -1491,23 +1491,10 @@ a.key-date:hover {
   display: grid;
   gap: 40px;
 }
-.faq-group-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 14px;
-}
 .faq-group h3 {
+  margin-bottom: 14px;
   font: 500 clamp(24px, 2.6cqi, 30px) / 1.2 var(--display);
   color: var(--maroon);
-}
-.faq-group-count {
-  flex: none;
-  font: 500 12px/1 var(--mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
 }
 /* Each topic's questions sit in their own card, set apart from the heading. */
 .faq-items {
