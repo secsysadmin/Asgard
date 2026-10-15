@@ -18,12 +18,31 @@ function isCurrent(href: string, page: Page) {
   return path === pagePath(page) && page.slug !== "";
 }
 
+/** Closes an open menu when someone taps outside `ref` or presses Escape. */
+function useDismiss(ref: React.RefObject<HTMLElement | null>, open: boolean, close: () => void) {
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: PointerEvent) => {
+      if (!ref.current?.contains(event.target as Node)) close();
+    };
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && close();
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [ref, open, close]);
+}
+
 function Header({ content, page }: { content: SiteContent; page: Page }) {
   const [open, setOpen] = useState(false);
+  const header = useRef<HTMLElement>(null);
+  useDismiss(header, open, useCallback(() => setOpen(false), []));
   const edit = useEdit();
   const { settings } = content;
   return (
-    <header className="site-header">
+    <header ref={header} className="site-header">
       <div className="site-header-inner">
         <SmartLink className="brand" href="/" aria-label={`${settings.siteName} home`}>
           <img src="/images/tamu-logo-white.svg" alt="Texas A&M University" width={183} height={28} />
@@ -199,10 +218,12 @@ function Toc({ groups }: { groups: Group[] }) {
   const ids = groups.flatMap((group) => group.items.map((item) => item.id));
   const { active, pin } = useActiveSection(ids, !edit);
   const [open, setOpen] = useState(false);
+  const nav = useRef<HTMLElement>(null);
+  useDismiss(nav, open, useCallback(() => setOpen(false), []));
   const activeLabel = groups.flatMap((group) => group.items).find((item) => item.id === active)?.label ?? "Sections";
   if (!groups.length) return null;
   return (
-    <nav className={open ? "toc open" : "toc"} aria-label="On this page">
+    <nav ref={nav} className={open ? "toc open" : "toc"} aria-label="On this page">
       <button type="button" className="toc-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
         <span className="toc-toggle-label">On this page</span>
         <span className="toc-toggle-current">{activeLabel}</span>
