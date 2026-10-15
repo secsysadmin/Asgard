@@ -17,7 +17,7 @@ const safeSrc = (src: string) =>
 function conform(input: unknown, shape: unknown, key = ""): unknown {
   if (typeof shape === "string") {
     const value = typeof input === "string" ? input : shape;
-    if (richKeys.has(key)) return sanitizeHtml(value);
+    if (richKeys.has(key)) return sanitizeHtml(value.slice(0, 20_000));
     if (key === "href") return safeHref(value);
     if (key === "src") return safeSrc(value);
     return value.slice(0, 5000);
