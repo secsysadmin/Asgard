@@ -45,8 +45,6 @@ function Header({ content, page }: { content: SiteContent; page: Page }) {
     <header ref={header} className="site-header">
       <div className="site-header-inner">
         <SmartLink className="brand" href="/" aria-label={`${settings.siteName} home`}>
-          <img src="/images/tamu-logo-white.svg" alt="Texas A&M University" width={183} height={28} />
-          <span aria-hidden className="brand-rule" />
           <img src="/images/sec-logo-white.png" alt="Student Engineers’ Council" width={774} height={331} className="brand-sec" />
         </SmartLink>
         {!edit && <SiteSearch content={content} />}
@@ -88,7 +86,6 @@ function Footer({ content }: { content: SiteContent }) {
   return (
     <footer className="site-footer">
       <div className="footer-brand">
-        <img src="/images/tamu-logo-white.svg" alt="Texas A&M University" width={183} height={28} />
         <img src="/images/sec-logo-white.png" alt="Student Engineers’ Council" width={774} height={331} />
         <p>{settings.footerNote}</p>
       </div>
@@ -305,7 +302,7 @@ export function PageView({
         </div>
       )}
       <Header content={content} page={page} />
-      <main id="main" className={`page page-${page.layout}`}>
+      <main id="main" className={`page page-${page.layout}`} data-page={page.slug || "home"}>
         {lead.map(({ block, index }) => render(block, index))}
         {page.layout === "guide" ? (
           <div className="guide">

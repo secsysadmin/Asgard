@@ -1,6 +1,6 @@
 import { sanitizeHtml, safeHref } from "../sanitize";
 import { blockSpecs, richKeys } from "./blocks";
-import { defaultContent } from "./defaults";
+import { defaultContent, teamPage } from "./defaults";
 import type { Block, BlockType, Page, SiteContent } from "./types";
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -87,9 +87,29 @@ function normalizePage(input: unknown, index: number): Page | null {
   };
 }
 
+function moveTeamToOwnPage(content: SiteContent): SiteContent {
+  const { pages, settings } = content;
+  if (!pages.some((page) => page.slug === "team")) {
+    const home = pages[0];
+    const at = home.blocks.findIndex((block) => block.type === "team");
+    const fallback = defaultContent.pages.find((page) => page.slug === "team")!.blocks[1];
+    const members = structuredClone(at >= 0 ? home.blocks.splice(at, 1)[0] : fallback) as Block<"team">;
+    const intro = members.data.intro;
+    const page = teamPage({ ...members, visible: true, nav: "", group: "", data: { ...members.data, intro: "" } });
+    const header = page.blocks[0];
+    if (intro && header.type === "pageHeader") header.data.intro = intro;
+    pages.push(page);
+  }
+  if (!settings.nav.some((link) => link.href.split("#")[0] === "/team")) {
+    const external = settings.nav.findIndex((link) => /^https?:/i.test(link.href));
+    settings.nav.splice(external < 0 ? settings.nav.length : external, 0, { label: "Meet the Team", href: "/team" });
+  }
+  return content;
+}
+
 /** Validate and sanitize untrusted content; falls back to defaults. */
 export function normalizeContent(input: unknown): SiteContent {
-  if (!isObject(input) || input.version !== 2 || !Array.isArray(input.pages)) return structuredClone(defaultContent);
+  if (!isObject(input) || (input.version !== 2 && input.version !== 3) || !Array.isArray(input.pages)) return structuredClone(defaultContent);
   const slugs = new Set<string>();
   const pages = input.pages
     .map((page, index) => normalizePage(page, index))
@@ -100,5 +120,6 @@ export function normalizeContent(input: unknown): SiteContent {
     });
   if (!pages.length || pages[0].slug !== "") return structuredClone(defaultContent);
   const settings = conform(input.settings, defaultContent.settings) as SiteContent["settings"];
-  return { version: 2, settings, pages };
+  const content: SiteContent = { version: 3, settings, pages };
+  return input.version === 2 ? moveTeamToOwnPage(content) : content;
 }

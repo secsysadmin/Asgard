@@ -3,6 +3,7 @@
   --maroon: #500000;
   --maroon-dark: #360000;
   --maroon-soft: #f3e9e6;
+  --maroon-light: #8c3b3b;
   --cream: #f5f1e8;
   --paper: #fbfaf6;
   --white: #ffffff;
@@ -140,16 +141,8 @@ svg {
   margin-right: auto;
 }
 .brand img {
-  height: 30px;
+  height: 40px;
   width: auto;
-}
-.brand .brand-sec {
-  height: 34px;
-}
-.brand-rule {
-  width: 1px;
-  height: 30px;
-  background: rgba(255, 255, 255, 0.4);
 }
 .site-nav {
   display: flex;
@@ -263,13 +256,7 @@ svg {
     min-width: 0;
   }
   .brand img {
-    height: 21px;
-  }
-  .brand .brand-sec {
-    height: 25px;
-  }
-  .brand-rule {
-    height: 24px;
+    height: 32px;
   }
   .menu-toggle span {
     display: none;
@@ -1721,6 +1708,33 @@ a.key-date:hover {
     grid-auto-columns: 72%;
   }
 }
+[data-page="team"] .carousel-controls {
+  display: none;
+}
+[data-page="team"] .team-track {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 40px 24px;
+  overflow: visible;
+  padding-bottom: 0;
+}
+[data-page="team"] .team-head h2 {
+  margin-bottom: 40px;
+}
+@container site (max-width: 1000px) {
+  [data-page="team"] .team-track {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@container site (max-width: 700px) {
+  [data-page="team"] .team-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 16px;
+  }
+  [data-page="team"] .member h3 {
+    font-size: 19px;
+  }
+}
 
 /* Contact */
 .contact {
@@ -1888,7 +1902,7 @@ a.key-date:hover {
 /* ───────────────────────────── Guide layout ───────────────────────────── */
 .guide {
   display: grid;
-  grid-template-columns: 236px minmax(0, 1fr);
+  grid-template-columns: 256px minmax(0, 1fr);
   gap: clamp(28px, 4cqi, 64px);
   padding: 0 var(--gutter);
   align-items: start;
@@ -1908,8 +1922,21 @@ a.key-date:hover {
   margin: 32px 0;
   border: 0;
 }
-.guide-body > .band:last-child {
+.guide-body > .band {
   border-bottom: 0;
+}
+.guide-body > .band:not(:first-child):not(.tone-tint):not(.tone-maroon) {
+  position: relative;
+  border-top: 1px solid var(--line-strong);
+}
+.guide-body > .band:not(:first-child):not(.tone-tint):not(.tone-maroon)::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 64px;
+  height: 3px;
+  background: var(--maroon-light);
 }
 .guide-body .band h2 {
   font-size: clamp(28px, 3.4cqi, 40px);
@@ -1943,50 +1970,54 @@ a.key-date:hover {
   max-height: calc(100vh - var(--header-h) - 48px);
   overflow-y: auto;
   padding: 40px 0 24px;
-  font-size: 14.5px;
+  font-size: 16.5px;
 }
 .toc-toggle {
   display: none;
 }
 .toc-title {
-  margin: 0 0 18px;
-  font: 600 12px/1.2 var(--sans);
+  margin: 0 0 20px;
+  font: 600 13px/1.2 var(--sans);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--maroon-light);
 }
 .toc-group + .toc-group {
-  margin-top: 20px;
+  margin-top: 24px;
 }
 .toc-group > p {
-  margin: 0 0 6px;
-  font: 500 12px/1.3 var(--mono);
+  margin: 0 0 8px;
+  font: 500 13px/1.3 var(--mono);
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--maroon-light);
   letter-spacing: 0.04em;
 }
 .toc ul {
   list-style: none;
   margin: 0;
   padding: 0;
-  border-left: 1px solid var(--line);
+  border-left: 2px solid var(--maroon-soft);
 }
 .toc a {
   display: block;
-  padding: 6px 0 6px 14px;
-  margin-left: -1px;
-  border-left: 2px solid transparent;
+  padding: 7px 10px 7px 14px;
+  margin-left: -2px;
+  border-left: 3px solid transparent;
+  border-radius: 0 var(--radius) var(--radius) 0;
   text-decoration: none;
-  color: var(--ink-soft);
+  color: var(--maroon-light);
+  font-weight: 500;
   line-height: 1.35;
 }
 .toc a:hover {
   color: var(--maroon);
+  background: var(--maroon-soft);
 }
 .toc a[aria-current="true"] {
   color: var(--maroon);
-  font-weight: 600;
-  border-left-color: var(--maroon);
+  font-weight: 700;
+  background: var(--maroon-soft);
+  border-left-color: var(--maroon-light);
 }
 @container site (max-width: 960px) {
   .guide {
@@ -2016,13 +2047,14 @@ a.key-date:hover {
     text-align: left;
   }
   .toc-toggle-label {
-    font: 600 12px/1.2 var(--sans);
+    font: 600 12.5px/1.2 var(--sans);
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--maroon-light);
   }
   .toc-toggle-current {
     flex: 1;
+    font-size: 16.5px;
     font-weight: 600;
     color: var(--maroon);
     overflow: hidden;
@@ -2077,11 +2109,8 @@ a.key-date:hover {
   align-content: start;
 }
 .footer-brand img {
-  height: 30px;
+  height: 44px;
   width: auto;
-}
-.footer-brand img + img {
-  height: 34px;
 }
 .footer-brand p {
   margin: 0;

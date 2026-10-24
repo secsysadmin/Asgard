@@ -167,11 +167,6 @@ const home: Page = {
       note: "",
       gallery: [],
     }),
-    blk("home-team", "team", {
-      heading: "Students running the whole show",
-      intro: "<p>The SEC Career Fair is entirely student-run by a dedicated team of engineers from the Student Engineers’ Council.</p>",
-      members: team,
-    }, { tone: "maroon" }),
     blk("home-contact", "contact", {
       heading: "Get in touch",
       intro: "<p>Questions about the fair, registration, or logistics? Email is the fastest way to reach us.</p>",
@@ -182,6 +177,36 @@ const home: Page = {
     }, { tone: "tint" }),
   ],
 };
+
+// ──────────────────────────────── Team ────────────────────────────────
+export const TEAM_INTRO =
+  "<p>The SEC Career Fair is entirely student-run by a dedicated team of engineers from the Student Engineers’ Council.</p>";
+
+export function teamPage(members: Block): Page {
+  return {
+    id: "team",
+    slug: "team",
+    title: "Meet the Team",
+    description: "Meet the Student Engineers’ Council committee that plans, organizes, and staffs the SEC Engineering Career Fair.",
+    layout: "landing",
+    blocks: [
+      blk("team-header", "pageHeader", {
+        eyebrow: "Student Engineers’ Council",
+        title: "Meet the Team",
+        intro: TEAM_INTRO,
+        facts: [],
+        links: [],
+      }),
+      members,
+    ],
+  };
+}
+
+const teamMembers = blk("home-team", "team", {
+  heading: "Students running the whole show",
+  intro: "",
+  members: team,
+}, { tone: "maroon" });
 
 // ─────────────────────────────── Students ───────────────────────────────
 const students: Page = {
@@ -868,13 +893,14 @@ const discovery: Page = {
 };
 
 export const defaultContent: SiteContent = {
-  version: 2,
+  version: 3,
   settings: {
     siteName: "SEC Engineering Career Fair",
     nav: [
       { label: "Students", href: "/students" },
       { label: "Recruiters", href: "/recruiters" },
       { label: "Career Discovery Fair", href: "/career-discovery-fair" },
+      { label: "Meet the Team", href: "/team" },
       { label: "About SEC", href: "https://home.sec.tamu.edu/" },
     ],
     headerCta: { label: "Contact", href: "/#home-contact" },
@@ -882,5 +908,5 @@ export const defaultContent: SiteContent = {
     contactEmail: EMAIL,
     announcement: "",
   },
-  pages: [home, students, recruiters, discovery],
+  pages: [home, students, recruiters, discovery, teamPage(teamMembers)],
 };

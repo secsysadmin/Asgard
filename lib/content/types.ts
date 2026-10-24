@@ -161,7 +161,7 @@ export type SiteSettings = {
 };
 
 export type SiteContent = {
-  version: 2;
+  version: 3;
   settings: SiteSettings;
   pages: Page[];
 };
