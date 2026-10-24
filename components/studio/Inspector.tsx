@@ -1,5 +1,5 @@
 "use client";
-import { ArrowDown, ArrowUp, ChevronRight, Copy, ImagePlus, Link2, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight, Copy, ImagePlus, Link2, Plus, Trash2, Users } from "lucide-react";
 import { richKeys, blockSpecs } from "@/lib/content/blocks";
 import { slugify } from "@/lib/content/normalize";
 import type { Block, ImageRef, LinkRef, Page } from "@/lib/content/types";
@@ -150,6 +150,7 @@ export function BlockInspector({
   api,
   onDelete,
   onDuplicate,
+  onTeamImport,
 }: {
   block: Block;
   index: number;
@@ -158,6 +159,7 @@ export function BlockInspector({
   api: EditApi;
   onDelete: () => void;
   onDuplicate: () => void;
+  onTeamImport: () => void;
 }) {
   const base: Path = ["pages", pageIndex, "blocks", index];
   const groups = [...new Set(page.blocks.map((b) => b.group).filter(Boolean))];
@@ -223,6 +225,14 @@ export function BlockInspector({
       </section>
       <section className="st-group">
         <h3>Content</h3>
+        {block.type === "team" && (
+          <div className="st-callout">
+            <p>Update many people at once: paste your roster from a spreadsheet and drop in everyone’s headshots.</p>
+            <button type="button" className="st-btn st-btn-small" onClick={onTeamImport}>
+              <Users /> Bulk update team
+            </button>
+          </div>
+        )}
         <Field value={block.data} path={[...base, "data"]} name="data" api={api} />
       </section>
     </div>

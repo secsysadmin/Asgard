@@ -30,14 +30,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { blockSpecs, createBlock, newBlockId } from "@/lib/content/blocks";
 import type { Block, BlockType, ImageRef, LinkRef, SiteContent } from "@/lib/content/types";
 import { blockTitle, templateFor } from "@/lib/studio/content-ops";
-import { move, type Path, setIn, updateIn } from "@/lib/studio/paths";
+import { getIn, move, type Path, setIn, updateIn } from "@/lib/studio/paths";
 import { type MediaItem, uploadFile, altFromFilename } from "@/lib/studio/media";
+import type { Member } from "@/lib/studio/team-import";
 import { EditProvider, type EditApi } from "../edit/context";
 import { PageView, type SectionWrapper } from "../site/PageView";
 import { AddSection, LinkEditor, MediaLibrary, MediaPicker } from "./dialogs";
 import { BlockInspector } from "./Inspector";
 import { HistoryPanel, NewPageDialog, PageSettings, PagesPanel, SitePanel } from "./panels";
 import { RichToolbar } from "./RichToolbar";
+import { TeamImport } from "./TeamImport";
 
 type Panel = "sections" | "pages" | "media" | "site" | "history";
 type Device = "desktop" | "tablet" | "mobile";
@@ -47,6 +49,7 @@ type Dialog =
   | { kind: "link"; path: Path; current: LinkRef }
   | { kind: "add"; index: number }
   | { kind: "page" }
+  | { kind: "team"; path: Path }
   | null;
 
 const DEVICE_WIDTH: Record<Device, number> = { desktop: 1280, tablet: 820, mobile: 390 };
@@ -629,6 +632,7 @@ export function Studio() {
                   api={api}
                   onDelete={() => deleteBlock(blockIndex)}
                   onDuplicate={() => duplicateBlock(blockIndex)}
+                  onTeamImport={() => setDialog({ kind: "team", path: [...pageBase, "blocks", blockIndex, "data", "members"] })}
                 />
               ) : (
                 <div className="st-inspector-body">
@@ -671,6 +675,18 @@ export function Studio() {
             onSave={(link) => {
               api.set(dialog.path, link);
               setDialog(null);
+            }}
+          />
+        )}
+        {dialog?.kind === "team" && (
+          <TeamImport
+            members={(getIn(content, dialog.path) as Member[]) ?? []}
+            onClose={() => setDialog(null)}
+            onLibraryChange={loadLibrary}
+            onApply={(members, summary) => {
+              commit((c) => setIn(c, dialog.path, members));
+              setDialog(null);
+              notify(`Team updated (${summary}). Publish to make it live.`);
             }}
           />
         )}

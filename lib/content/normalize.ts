@@ -107,9 +107,22 @@ function moveTeamToOwnPage(content: SiteContent): SiteContent {
   return content;
 }
 
+function restyleTeamPage(content: SiteContent): SiteContent {
+  const page = content.pages.find((candidate) => candidate.slug === "team");
+  for (const block of page?.blocks ?? []) {
+    if (block.id === "team-header" && block.tone === "plain") block.tone = "maroon";
+    if (block.type === "team" && block.tone === "maroon") {
+      block.tone = "plain";
+      if (block.data.heading === "Students running the whole show") block.data.heading = "";
+    }
+  }
+  return content;
+}
+
 /** Validate and sanitize untrusted content; falls back to defaults. */
 export function normalizeContent(input: unknown): SiteContent {
-  if (!isObject(input) || (input.version !== 2 && input.version !== 3) || !Array.isArray(input.pages)) return structuredClone(defaultContent);
+  const version = isObject(input) ? input.version : null;
+  if (!isObject(input) || (version !== 2 && version !== 3 && version !== 4) || !Array.isArray(input.pages)) return structuredClone(defaultContent);
   const slugs = new Set<string>();
   const pages = input.pages
     .map((page, index) => normalizePage(page, index))
@@ -120,6 +133,8 @@ export function normalizeContent(input: unknown): SiteContent {
     });
   if (!pages.length || pages[0].slug !== "") return structuredClone(defaultContent);
   const settings = conform(input.settings, defaultContent.settings) as SiteContent["settings"];
-  const content: SiteContent = { version: 3, settings, pages };
-  return input.version === 2 ? moveTeamToOwnPage(content) : content;
+  let content: SiteContent = { version: 4, settings, pages };
+  if (version === 2) content = moveTeamToOwnPage(content);
+  if (version === 2 || version === 3) content = restyleTeamPage(content);
+  return content;
 }

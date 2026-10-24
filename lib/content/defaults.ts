@@ -196,17 +196,17 @@ export function teamPage(members: Block): Page {
         intro: TEAM_INTRO,
         facts: [],
         links: [],
-      }),
+      }, { tone: "maroon" }),
       members,
     ],
   };
 }
 
 const teamMembers = blk("home-team", "team", {
-  heading: "Students running the whole show",
+  heading: "",
   intro: "",
   members: team,
-}, { tone: "maroon" });
+});
 
 // ─────────────────────────────── Students ───────────────────────────────
 const students: Page = {
@@ -893,7 +893,7 @@ const discovery: Page = {
 };
 
 export const defaultContent: SiteContent = {
-  version: 3,
+  version: 4,
   settings: {
     siteName: "SEC Engineering Career Fair",
     nav: [

@@ -612,6 +612,9 @@ h4 {
   margin-bottom: 32px;
   max-width: 760px;
 }
+.block-head:empty {
+  display: none;
+}
 .block-intro {
   margin-top: 14px;
   font-size: 17px;
@@ -1721,6 +1724,15 @@ a.key-date:hover {
 [data-page="team"] .team-head h2 {
   margin-bottom: 40px;
 }
+[data-page="team"] .band-team {
+  padding-top: clamp(48px, 6cqi, 80px);
+}
+[data-page="team"] .band-team:not(.tone-maroon) .member-role {
+  color: var(--maroon);
+}
+[data-page="team"] .member-photo {
+  background: var(--cream);
+}
 @container site (max-width: 1000px) {
   [data-page="team"] .team-track {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1867,9 +1879,49 @@ a.key-date:hover {
 .band-pageHeader .fact-icon {
   background: var(--cream);
 }
+.band-pageHeader.tone-maroon {
+  background: var(--maroon);
+}
+.band-pageHeader.tone-maroon h1 {
+  color: var(--white);
+}
+.page-header:not(.page-header-split) .page-header-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-areas: "eyebrow eyebrow" "title intro";
+  column-gap: clamp(32px, 6cqi, 112px);
+  align-items: end;
+}
+.page-header:not(.page-header-split) .eyebrow {
+  grid-area: eyebrow;
+}
+.page-header:not(.page-header-split) h1 {
+  grid-area: title;
+  max-width: none;
+  font-size: clamp(44px, 6.4cqi, 96px);
+  line-height: 0.95;
+}
+.page-header:not(.page-header-split) .page-intro {
+  grid-area: intro;
+  margin-top: 0;
+  padding-bottom: 6px;
+}
+.page-header:not(.page-header-split) .page-header-actions {
+  grid-column: 2;
+}
 @container site (max-width: 900px) {
   .page-header-split {
     grid-template-columns: 1fr;
+  }
+  .page-header:not(.page-header-split) .page-header-main {
+    grid-template-columns: 1fr;
+    grid-template-areas: "eyebrow" "title" "intro";
+  }
+  .page-header:not(.page-header-split) .page-header-actions {
+    grid-column: 1;
+  }
+  .page-header:not(.page-header-split) .page-intro {
+    margin-top: 18px;
   }
 }
 /* Phones: compact buttons and a tighter summary card. */
