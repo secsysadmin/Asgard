@@ -4,20 +4,48 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { blockSpecs, blockTypes } from "@/lib/content/blocks";
 import type { BlockType, ImageRef, LinkRef, SiteContent } from "@/lib/content/types";
 import { altFromFilename, formatBytes, type MediaItem, uploadFile } from "@/lib/studio/media";
+import { pageName } from "./labels";
+import { errorMessage, fetchJson, JSON_HEADERS } from "./request";
 
-export function Modal({
-  title,
-  onClose,
-  children,
-  footer,
-  wide = false,
-}: {
+type ModalProps = {
   title: string;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
   wide?: boolean;
-}) {
+};
+type DropzoneProps = {
+  accept: string;
+  multiple?: boolean;
+  small?: boolean;
+  onFiles: (files: FileList) => void;
+  children: ReactNode;
+};
+type PickerTab = "upload" | "library" | "site";
+type MediaPickerProps = {
+  content: SiteContent;
+  current: ImageRef;
+  onClose: () => void;
+  onSelect: (image: ImageRef) => void;
+  onLibraryChange: () => void;
+  library: MediaItem[];
+  libraryError: string;
+};
+type LinkEditorProps = {
+  content: SiteContent;
+  current: LinkRef;
+  onClose: () => void;
+  onSave: (link: LinkRef) => void;
+};
+type AddSectionProps = { onClose: () => void; onAdd: (type: BlockType) => void };
+type MediaLibraryProps = { library: MediaItem[]; error: string; onChange: () => void };
+
+const PICKER_TABS: PickerTab[] = ["library", "site", "upload"];
+
+const mediaPath = (id: string) => `/api/media/${id}`;
+const isImageMime = (mime: string) => mime.startsWith("image/");
+
+export function Modal({ title, onClose, children, footer, wide = false }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     ref.current?.showModal();
@@ -45,7 +73,28 @@ export function Modal({
   );
 }
 
-/** Every image source referenced anywhere in the content. */
+export function Dropzone({ accept, multiple = false, small = false, onFiles, children }: DropzoneProps) {
+  const [dragging, setDragging] = useState(false);
+  return (
+    <label
+      className={["st-dropzone", small && "st-dropzone-small", dragging && "dragging"].filter(Boolean).join(" ")}
+      onDragOver={(event) => {
+        event.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(event) => {
+        event.preventDefault();
+        setDragging(false);
+        onFiles(event.dataTransfer.files);
+      }}
+    >
+      <input type="file" multiple={multiple} accept={accept} onChange={(event) => event.target.files && onFiles(event.target.files)} />
+      {children}
+    </label>
+  );
+}
+
 function imagesInUse(content: SiteContent): ImageRef[] {
   const found = new Map<string, ImageRef>();
   const walk = (node: unknown) => {
@@ -61,31 +110,19 @@ function imagesInUse(content: SiteContent): ImageRef[] {
   return [...found.values()];
 }
 
-export function MediaPicker({
-  content,
-  current,
-  onClose,
-  onSelect,
-  onLibraryChange,
-  library,
-  libraryError,
-}: {
-  content: SiteContent;
-  current: ImageRef;
-  onClose: () => void;
-  onSelect: (image: ImageRef) => void;
-  onLibraryChange: () => void;
-  library: MediaItem[];
-  libraryError: string;
-}) {
-  const [tab, setTab] = useState<"upload" | "library" | "site">("library");
+export function MediaPicker({ content, current, onClose, onSelect, onLibraryChange, library, libraryError }: MediaPickerProps) {
+  const [tab, setTab] = useState<PickerTab>("library");
   const [choice, setChoice] = useState<ImageRef>(current);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
-  const [dragging, setDragging] = useState(false);
   const inUse = useMemo(() => imagesInUse(content), [content]);
-  const images = library.filter((item) => item.mime.startsWith("image/"));
+  const images = library.filter((item) => isImageMime(item.mime));
+  const tabLabels: Record<PickerTab, string> = {
+    library: `Uploaded (${images.length})`,
+    site: `On this site (${inUse.length})`,
+    upload: "Upload new",
+  };
 
   const upload = async (file?: File) => {
     if (!file) return;
@@ -98,20 +135,21 @@ export function MediaPicker({
       onLibraryChange();
       setTab("library");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Upload failed.");
+      setError(errorMessage(reason, "Upload failed."));
     } finally {
       setBusy(false);
     }
   };
 
   const filter = (text: string) => text.toLowerCase().includes(query.toLowerCase());
+  const withAlt = (image: ImageRef) => ({ src: image.src, alt: image.alt || choice.alt });
   const tile = (image: ImageRef, label: string, key: string) => (
     <button
       type="button"
       key={key}
       className={choice.src === image.src ? "st-tile selected" : "st-tile"}
-      onClick={() => setChoice({ src: image.src, alt: image.alt || choice.alt })}
-      onDoubleClick={() => onSelect({ src: image.src, alt: image.alt || choice.alt })}
+      onClick={() => setChoice(withAlt(image))}
+      onDoubleClick={() => onSelect(withAlt(image))}
       aria-pressed={choice.src === image.src}
     >
       <img src={image.src} alt="" loading="lazy" />
@@ -144,15 +182,9 @@ export function MediaPicker({
       <div className="st-picker">
         <div className="st-picker-main">
           <div className="st-tabs" role="tablist">
-            {(
-              [
-                ["library", `Uploaded (${images.length})`],
-                ["site", `On this site (${inUse.length})`],
-                ["upload", "Upload new"],
-              ] as const
-            ).map(([id, label]) => (
+            {PICKER_TABS.map((id) => (
               <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>
-                {label}
+                {tabLabels[id]}
               </button>
             ))}
             {tab !== "upload" && (
@@ -163,29 +195,16 @@ export function MediaPicker({
             )}
           </div>
           {tab === "upload" || (tab === "library" && !images.length) ? (
-            <label
-              className={dragging ? "st-dropzone dragging" : "st-dropzone"}
-              onDragOver={(event) => {
-                event.preventDefault();
-                setDragging(true);
-              }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(event) => {
-                event.preventDefault();
-                setDragging(false);
-                upload(event.dataTransfer.files[0]);
-              }}
-            >
-              <input type="file" accept="image/*" onChange={(event) => upload(event.target.files?.[0])} />
+            <Dropzone accept="image/*" onFiles={(files) => upload(files[0])}>
               {busy ? <Loader2 className="st-spin" /> : <Upload />}
               <strong>{busy ? "Uploading…" : "Drag a photo here, or click to browse"}</strong>
               <span>JPG, PNG, WebP, GIF, or SVG. Large photos are resized automatically.</span>
               {libraryError && <span className="st-error">{libraryError}</span>}
-            </label>
+            </Dropzone>
           ) : (
             <div className="st-grid">
               {tab === "library"
-                ? images.filter((item) => filter(item.filename + item.alt)).map((item) => tile({ src: `/api/media/${item.id}`, alt: item.alt }, item.filename, item.id))
+                ? images.filter((item) => filter(item.filename + item.alt)).map((item) => tile({ src: mediaPath(item.id), alt: item.alt }, item.filename, item.id))
                 : inUse.filter((image) => filter(image.src + image.alt)).map((image) => tile(image, image.src.split("/").pop() ?? "", image.src))}
             </div>
           )}
@@ -209,17 +228,7 @@ export function MediaPicker({
   );
 }
 
-export function LinkEditor({
-  content,
-  current,
-  onClose,
-  onSave,
-}: {
-  content: SiteContent;
-  current: LinkRef;
-  onClose: () => void;
-  onSave: (link: LinkRef) => void;
-}) {
+export function LinkEditor({ content, current, onClose, onSave }: LinkEditorProps) {
   const [link, setLink] = useState(current);
   const [pageSlug, setPageSlug] = useState("");
   const page = content.pages.find((p) => p.slug === pageSlug);
@@ -273,7 +282,7 @@ export function LinkEditor({
             </option>
             {content.pages.map((p) => (
               <option key={p.id} value={p.slug}>
-                {p.slug ? p.title : "Home"}
+                {pageName(p)}
               </option>
             ))}
           </select>
@@ -298,7 +307,7 @@ export function LinkEditor({
   );
 }
 
-export function AddSection({ onClose, onAdd }: { onClose: () => void; onAdd: (type: BlockType) => void }) {
+export function AddSection({ onClose, onAdd }: AddSectionProps) {
   return (
     <Modal title="Add a section" onClose={onClose} wide>
       <div className="st-blocklib">
@@ -314,19 +323,10 @@ export function AddSection({ onClose, onAdd }: { onClose: () => void; onAdd: (ty
   );
 }
 
-export function MediaLibrary({
-  library,
-  error,
-  onChange,
-}: {
-  library: MediaItem[];
-  error: string;
-  onChange: () => void;
-}) {
+export function MediaLibrary({ library, error, onChange }: MediaLibraryProps) {
   const [busy, setBusy] = useState(0);
   const [message, setMessage] = useState("");
-  const [dragging, setDragging] = useState(false);
-  const upload = async (files: FileList | File[]) => {
+  const upload = async (files: FileList) => {
     const list = [...files];
     setBusy(list.length);
     setMessage("");
@@ -334,7 +334,7 @@ export function MediaLibrary({
       try {
         await uploadFile(file, altFromFilename(file.name));
       } catch (reason) {
-        setMessage(`${file.name}: ${reason instanceof Error ? reason.message : "upload failed"}`);
+        setMessage(`${file.name}: ${errorMessage(reason, "upload failed")}`);
       }
       setBusy((count) => count - 1);
     }
@@ -342,48 +342,47 @@ export function MediaLibrary({
   };
   const remove = async (item: MediaItem) => {
     if (!confirm(`Delete ${item.filename}? Pages still using it will show a broken image.`)) return;
-    await fetch(`/api/media/${item.id}`, { method: "DELETE" });
+    setMessage("");
+    try {
+      await fetchJson(mediaPath(item.id), { method: "DELETE" });
+    } catch (reason) {
+      setMessage(`${item.filename}: ${errorMessage(reason, "couldn’t delete it")}`);
+    }
     onChange();
   };
-  const saveAlt = (item: MediaItem, alt: string) =>
-    fetch(`/api/media/${item.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ alt }) });
+  const saveAlt = async (item: MediaItem, alt: string) => {
+    try {
+      await fetchJson(mediaPath(item.id), { method: "PATCH", headers: JSON_HEADERS, body: JSON.stringify({ alt }) });
+    } catch (reason) {
+      setMessage(`${item.filename}: ${errorMessage(reason, "couldn’t save the alt text")}`);
+    }
+  };
+  const copyLink = (url: string) =>
+    navigator.clipboard.writeText(new URL(url, location.href).pathname).catch(() => setMessage("Couldn’t copy the link. Copy it from the address bar instead."));
   return (
     <div className="st-panel-body">
-      <label
-        className={dragging ? "st-dropzone st-dropzone-small dragging" : "st-dropzone st-dropzone-small"}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          setDragging(false);
-          upload(event.dataTransfer.files);
-        }}
-      >
-        <input type="file" multiple accept="image/*,application/pdf" onChange={(event) => event.target.files && upload(event.target.files)} />
+      <Dropzone small multiple accept="image/*,application/pdf" onFiles={upload}>
         {busy ? <Loader2 className="st-spin" /> : <Upload />}
         <strong>{busy ? `Uploading ${busy}…` : "Upload images or PDFs"}</strong>
         <span>Drop files here or click. PDFs get a link you can paste into any link.</span>
-      </label>
+      </Dropzone>
       {(error || message) && <p className="st-error">{error || message}</p>}
       <ul className="st-media-list">
         {library.map((item) => {
-          const url = `/api/media/${item.id}`;
+          const url = mediaPath(item.id);
           return (
             <li key={item.id}>
-              {item.mime.startsWith("image/") ? <img src={url} alt="" loading="lazy" /> : <FileText className="st-file-icon" />}
+              {isImageMime(item.mime) ? <img src={url} alt="" loading="lazy" /> : <FileText className="st-file-icon" />}
               <div>
                 <strong title={item.filename}>{item.filename}</strong>
                 <small>
                   {formatBytes(item.size)}
                   {item.width ? ` · ${item.width}×${item.height}` : ""}
                 </small>
-                {item.mime.startsWith("image/") ? (
+                {isImageMime(item.mime) ? (
                   <input defaultValue={item.alt} placeholder="Alt text" aria-label={`Alt text for ${item.filename}`} onBlur={(event) => saveAlt(item, event.target.value)} />
                 ) : (
-                  <button type="button" className="st-btn st-btn-quiet st-btn-small" onClick={() => navigator.clipboard.writeText(new URL(url, location.href).pathname)}>
+                  <button type="button" className="st-btn st-btn-quiet st-btn-small" onClick={() => copyLink(url)}>
                     Copy link
                   </button>
                 )}

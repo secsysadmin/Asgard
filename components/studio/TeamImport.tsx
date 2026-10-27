@@ -11,26 +11,30 @@ import {
   portraitAlt,
   rosterToRows,
 } from "@/lib/studio/team-import";
-import { Modal } from "./dialogs";
+import { Dropzone, Modal } from "./dialogs";
+import { errorMessage } from "./request";
 
-const STATUS_LABEL = { new: "New", updated: "Updated", unchanged: "No change", removed: "Removed" } as const;
-
-export function TeamImport({
-  members,
-  onClose,
-  onApply,
-  onLibraryChange,
-}: {
+type TeamImportProps = {
   members: Member[];
   onClose: () => void;
   onApply: (members: Member[], summary: string) => void;
   onLibraryChange: () => void;
-}) {
+};
+type Upload = { entry: PlanEntry; file: File };
+
+const STATUS_LABEL = { new: "New", updated: "Updated", unchanged: "No change", removed: "Removed" } as const;
+const SUMMARY_STATUSES = ["new", "updated", "removed"] as const;
+const COPIED_NOTICE_MS = 2000;
+
+function withPortraitAlt(member: Member, photo: Member["photo"]): Member {
+  return { ...member, photo: photo.src && !photo.alt ? { ...photo, alt: portraitAlt(member.name) } : photo };
+}
+
+export function TeamImport({ members, onClose, onApply, onLibraryChange }: TeamImportProps) {
   const [roster, setRoster] = useState("");
   const [mode, setMode] = useState<ImportMode>("merge");
   const [files, setFiles] = useState<File[]>([]);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
-  const [dragging, setDragging] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
@@ -44,49 +48,52 @@ export function TeamImport({
   const usedFiles = new Set(plan.map((entry) => entry.file).filter(Boolean));
   const unmatched = fileNames.filter((name) => !usedFiles.has(name));
   const counts = plan.reduce<Record<string, number>>((tally, entry) => ({ ...tally, [entry.status]: (tally[entry.status] ?? 0) + 1 }), {});
-  const summary = (["new", "updated", "removed"] as const)
-    .filter((status) => counts[status])
+  const summary = SUMMARY_STATUSES.filter((status) => counts[status])
     .map((status) => `${counts[status]} ${STATUS_LABEL[status].toLowerCase()}`)
     .join(" · ");
   const busy = progress !== null;
 
-  const addFiles = (list: FileList | null) => {
-    if (!list) return;
+  const addFiles = (list: FileList) => {
     const images = [...list].filter((file) => file.type.startsWith("image/"));
     setFiles((current) => [...current.filter((file) => !images.some((added) => added.name === file.name)), ...images]);
   };
 
   const copyRoster = async () => {
-    await navigator.clipboard.writeText(rosterToRows(members));
+    try {
+      await navigator.clipboard.writeText(rosterToRows(members));
+    } catch {
+      setError("Couldn’t copy the team. Check that this page is allowed to use the clipboard.");
+      return;
+    }
     setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
+    window.setTimeout(() => setCopied(false), COPIED_NOTICE_MS);
   };
 
   const apply = async () => {
     const kept = plan.filter((entry) => entry.status !== "removed");
-    const uploads = kept.filter((entry) => entry.file);
+    const filesByName = new Map(files.map((file) => [file.name, file]));
+    const uploads = kept.flatMap<Upload>((entry) => {
+      const file = filesByName.get(entry.file);
+      return file ? [{ entry, file }] : [];
+    });
     setError("");
     setProgress({ done: 0, total: uploads.length });
     const photos = new Map<string, Member["photo"]>();
     try {
-      for (const entry of uploads) {
-        const file = files.find((candidate) => candidate.name === entry.file)!;
+      for (const { entry, file } of uploads) {
         const alt = portraitAlt(entry.member.name);
         const result = await uploadFile(file, alt);
         photos.set(entry.key, { src: result.url, alt });
         setProgress((current) => current && { ...current, done: current.done + 1 });
       }
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "A photo failed to upload. Nothing was changed.");
+      setError(errorMessage(reason, "A photo failed to upload. Nothing was changed."));
       setProgress(null);
       return;
     }
     if (uploads.length) onLibraryChange();
     onApply(
-      kept.map((entry) => {
-        const photo = photos.get(entry.key) ?? entry.member.photo;
-        return { ...entry.member, photo: photo.src && !photo.alt ? { ...photo, alt: portraitAlt(entry.member.name) } : photo };
-      }),
+      kept.map((entry) => withPortraitAlt(entry.member, photos.get(entry.key) ?? entry.member.photo)),
       summary || "No changes",
     );
   };
@@ -187,24 +194,11 @@ export function TeamImport({
               </button>
             )}
           </header>
-          <label
-            className={dragging ? "st-dropzone st-dropzone-small dragging" : "st-dropzone st-dropzone-small"}
-            onDragOver={(event) => {
-              event.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(event) => {
-              event.preventDefault();
-              setDragging(false);
-              addFiles(event.dataTransfer.files);
-            }}
-          >
-            <input type="file" multiple accept="image/*" onChange={(event) => addFiles(event.target.files)} />
+          <Dropzone small multiple accept="image/*" onFiles={addFiles}>
             <ImagePlus />
             <strong>{files.length ? `${files.length} photo${files.length === 1 ? "" : "s"} added` : "Drop all the headshots here, or click to choose"}</strong>
             <span>Photos match people by file name, like nathan-lam.jpg or “Nathan Lam.png”.</span>
-          </label>
+          </Dropzone>
           {unmatched.length > 0 && (
             <p className="st-import-warn">
               Not matched to anyone yet: {unmatched.join(", ")}. Pick a photo for the right person below.
