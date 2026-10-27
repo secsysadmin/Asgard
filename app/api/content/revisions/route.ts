@@ -5,7 +5,8 @@ export async function GET() {
   if (!(await isAuthorized())) return unauthorized();
   try {
     return Response.json(await listRevisions());
-  } catch {
+  } catch (error) {
+    console.error("[Loading revisions]", error);
     return Response.json([], { status: 503 });
   }
 }

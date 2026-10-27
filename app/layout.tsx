@@ -2,8 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { DM_Mono, IBM_Plex_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
-// Self-hosted at build time: no render-blocking request to Google Fonts and
-// no flash of fallback text. globals.css reads these through --display etc.
+type RootLayoutProps = Readonly<{ children: React.ReactNode }>;
+
+const THEME_COLOR = "#500000";
+
 const display = Playfair_Display({
   subsets: ["latin"],
   weight: ["500", "600"],
@@ -25,9 +27,9 @@ export const metadata: Metadata = {
   description: "Texas A&M Student Engineers’ Council Engineering Career Fair",
 };
 
-export const viewport: Viewport = { themeColor: "#500000" };
+export const viewport: Viewport = { themeColor: THEME_COLOR };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
       <body>{children}</body>
