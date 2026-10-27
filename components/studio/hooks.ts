@@ -10,11 +10,11 @@ const COALESCE_WINDOW_MS = 1200;
 const AUTOSAVE_DELAY_MS = 900;
 const EDITABLE_TARGETS = "[contenteditable], input, textarea, select";
 
-export type Tone = "error";
-export type Notify = (text: string, tone?: Tone) => void;
+type Tone = "error";
+type Notify = (text: string, tone?: Tone) => void;
 export type SaveState = "idle" | "saving" | "saved" | "error";
-export type ContentUpdate = SiteContent | ((current: SiteContent) => SiteContent);
-export type Commit = (next: ContentUpdate, coalesceKey?: string) => void;
+type ContentUpdate = SiteContent | ((current: SiteContent) => SiteContent);
+type Commit = (next: ContentUpdate, coalesceKey?: string) => void;
 
 type Toast = { text: string; tone?: Tone };
 type Stack = { current: SiteContent[] };
