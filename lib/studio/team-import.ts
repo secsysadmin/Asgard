@@ -1,9 +1,9 @@
 import type { BlockData } from "../content/types";
 
 export type Member = BlockData["team"]["members"][number];
-export type RosterRow = { name: string; role: string; major: string; photo: string };
+type RosterRow = { name: string; role: string; major: string; photo: string };
 export type ImportMode = "merge" | "replace";
-export type EntryStatus = "new" | "updated" | "unchanged" | "removed";
+type EntryStatus = "new" | "updated" | "unchanged" | "removed";
 export type PlanEntry = { key: string; member: Member; file: string; status: EntryStatus };
 
 const COLUMNS: [keyof RosterRow, RegExp][] = [
@@ -12,6 +12,8 @@ const COLUMNS: [keyof RosterRow, RegExp][] = [
   ["major", /major|degree|discipline|department/],
   ["photo", /photo|image|picture|headshot|file/],
 ];
+
+const blankMember = (): Member => ({ name: "", role: "", major: "", photo: { src: "", alt: "" } });
 
 function splitLine(line: string, delimiter: string): string[] {
   if (delimiter === "\t") return line.split("\t").map((cell) => cell.trim());
@@ -62,11 +64,11 @@ export function parseRoster(text: string): RosterRow[] {
     .filter((row) => row.name);
 }
 
-export function displayName(name: string) {
+function displayName(name: string) {
   return name.replace(/\s*[’'‘`]\s?\d{2}\s*$/, "").trim();
 }
 
-export function nameKey(value: string) {
+function nameKey(value: string) {
   return displayName(value.replace(/\.\w{2,5}$/, ""))
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -78,7 +80,7 @@ export function nameKey(value: string) {
     .join("-");
 }
 
-export function matchFile(name: string, files: string[], explicit = ""): string {
+function matchFile(name: string, files: string[], explicit = ""): string {
   if (explicit) {
     const wanted = explicit.toLowerCase();
     const exact = files.find((file) => file.toLowerCase() === wanted || nameKey(file) === nameKey(explicit));
@@ -96,8 +98,6 @@ export function matchFile(name: string, files: string[], explicit = ""): string 
   });
   return loose.length === 1 ? loose[0] : "";
 }
-
-const blankMember = (): Member => ({ name: "", role: "", major: "", photo: { src: "", alt: "" } });
 
 export function buildPlan(
   existing: Member[],

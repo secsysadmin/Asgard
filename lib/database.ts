@@ -1,5 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 
+let ready: Promise<void> | null = null;
+
 export function deploymentSchema() {
   return process.env.APP_ENV === "production" || process.env.VERCEL_ENV === "production"
     ? "production"
@@ -16,8 +18,7 @@ export function database() {
   return neon(url);
 }
 
-/** DDL for one environment schema. Keep scripts/migrate.mjs and schema.sql in sync. */
-export function schemaStatements(schema: string) {
+function schemaStatements(schema: string) {
   return [
     `create schema if not exists ${schema}`,
     `create table if not exists ${schema}.site_content (
@@ -47,15 +48,13 @@ export function schemaStatements(schema: string) {
   ];
 }
 
-let ready: Promise<void> | null = null;
+async function createTablesInOneRoundTrip() {
+  const sql = database();
+  await sql.transaction(schemaStatements(deploymentSchema()).map((statement) => sql.query(statement)));
+}
 
-/** Creates the CMS tables on first use so a fresh database just works. */
 export function ensureSchema() {
-  ready ??= (async () => {
-    const sql = database();
-    // One HTTP round trip on cold start instead of one per statement.
-    await sql.transaction(schemaStatements(deploymentSchema()).map((statement) => sql.query(statement)));
-  })().catch((error) => {
+  ready ??= createTablesInOneRoundTrip().catch((error) => {
     ready = null;
     throw error;
   });

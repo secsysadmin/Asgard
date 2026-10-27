@@ -1,4 +1,3 @@
-// Immutable helpers for editing the SiteContent tree by path.
 export type Path = (string | number)[];
 
 export function getIn(root: unknown, path: Path): unknown {
