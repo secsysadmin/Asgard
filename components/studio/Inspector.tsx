@@ -4,7 +4,27 @@ import { richKeys, blockSpecs } from "@/lib/content/blocks";
 import { slugify } from "@/lib/content/normalize";
 import type { Block, ImageRef, LinkRef, Page } from "@/lib/content/types";
 import { type EditApi, type Path, Rich } from "../edit/context";
+import { pageName } from "./labels";
+import { PageSettings } from "./panels";
 
+type FieldProps = { value: unknown; path: Path; name: string; api: EditApi };
+type BlockInspectorProps = {
+  block: Block;
+  index: number;
+  pageIndex: number;
+  page: Page;
+  api: EditApi;
+  onDelete: () => void;
+  onDuplicate: () => void;
+  onTeamImport: () => void;
+};
+type PageInspectorProps = { page: Page; pageIndex: number; api: EditApi };
+
+const ITEM_TITLE_MAX_LENGTH = 48;
+const CHILD_FIELD_NAMES = new Map([
+  ["columns", "column"],
+  ["cells", "cell"],
+]);
 const LABELS: Record<string, string> = {
   q: "Question",
   a: "Answer",
@@ -28,21 +48,21 @@ const LABELS: Record<string, string> = {
 const human = (key: string) =>
   LABELS[key] ?? key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
 
-const isImage = (value: unknown): value is ImageRef =>
-  !!value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join() === "alt,src";
-const isLink = (value: unknown): value is LinkRef =>
-  !!value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join() === "href,label";
+const hasExactKeys = (value: unknown, keys: string) =>
+  !!value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join() === keys;
+const isImage = (value: unknown): value is ImageRef => hasExactKeys(value, "alt,src");
+const isLink = (value: unknown): value is LinkRef => hasExactKeys(value, "href,label");
 
 function itemTitle(value: unknown, index: number): string {
   if (typeof value === "string") return value || `Item ${index + 1}`;
   if (value && typeof value === "object") {
     const first = Object.values(value).find((v) => typeof v === "string" && v.trim() && !v.startsWith("<") && !v.startsWith("/"));
-    if (typeof first === "string") return first.length > 48 ? `${first.slice(0, 48)}…` : first;
+    if (typeof first === "string") return first.length > ITEM_TITLE_MAX_LENGTH ? `${first.slice(0, ITEM_TITLE_MAX_LENGTH)}…` : first;
   }
   return `Item ${index + 1}`;
 }
 
-function Field({ value, path, name, api }: { value: unknown; path: Path; name: string; api: EditApi }) {
+function Field({ value, path, name, api }: FieldProps) {
   if (typeof value === "string") {
     if (richKeys.has(name))
       return (
@@ -120,7 +140,7 @@ function Field({ value, path, name, api }: { value: unknown; path: Path; name: s
                   </span>
                 </summary>
                 <div className="st-array-body">
-                  <Field value={item} path={[...path, i]} name={name === "columns" ? "column" : name === "cells" ? "cell" : "item"} api={api} />
+                  <Field value={item} path={[...path, i]} name={CHILD_FIELD_NAMES.get(name) ?? "item"} api={api} />
                 </div>
               </details>
             </li>
@@ -142,25 +162,7 @@ function Field({ value, path, name, api }: { value: unknown; path: Path; name: s
   return null;
 }
 
-export function BlockInspector({
-  block,
-  index,
-  pageIndex,
-  page,
-  api,
-  onDelete,
-  onDuplicate,
-  onTeamImport,
-}: {
-  block: Block;
-  index: number;
-  pageIndex: number;
-  page: Page;
-  api: EditApi;
-  onDelete: () => void;
-  onDuplicate: () => void;
-  onTeamImport: () => void;
-}) {
+export function BlockInspector({ block, index, pageIndex, page, api, onDelete, onDuplicate, onTeamImport }: BlockInspectorProps) {
   const base: Path = ["pages", pageIndex, "blocks", index];
   const groups = [...new Set(page.blocks.map((b) => b.group).filter(Boolean))];
   const idTaken = (id: string) => page.blocks.some((b, i) => i !== index && b.id === id);
@@ -235,6 +237,23 @@ export function BlockInspector({
         )}
         <Field value={block.data} path={[...base, "data"]} name="data" api={api} />
       </section>
+    </div>
+  );
+}
+
+export function PageInspector({ page, pageIndex, api }: PageInspectorProps) {
+  return (
+    <div className="st-inspector-body">
+      <p className="st-kicker">Page</p>
+      <h2 className="st-inspector-title">{pageName(page)}</h2>
+      <ul className="st-howto">
+        <li><strong>Edit text:</strong> click any text on the page and type. Select words to bold, italicize, or link them.</li>
+        <li><strong>Swap images:</strong> click an image, or drag a photo from your computer onto it.</li>
+        <li><strong>Lists:</strong> hover an item for move, duplicate, and delete; drag the handle to reorder.</li>
+        <li><strong>Sections:</strong> drag them in the left panel, or use the bar above each section.</li>
+        <li><strong>Go live:</strong> changes autosave as a draft. Press Publish when you’re ready.</li>
+      </ul>
+      <PageSettings page={page} pageIndex={pageIndex} api={api} />
     </div>
   );
 }

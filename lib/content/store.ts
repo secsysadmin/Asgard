@@ -11,6 +11,19 @@ type Row = {
   published_at: string | null;
 };
 
+type StudioState = {
+  draft: SiteContent;
+  published: SiteContent;
+  draftUpdatedAt: string | null;
+  publishedAt: string | null;
+  hasUnpublishedChanges: boolean;
+};
+
+const MAX_REVISIONS = 30;
+const MAX_REVISION_LABEL_LENGTH = 120;
+
+const freshDefaults = () => structuredClone(defaultContent);
+
 async function readRow(): Promise<Row | null> {
   await ensureSchema();
   const rows = (await database().query(
@@ -19,29 +32,20 @@ async function readRow(): Promise<Row | null> {
   return rows[0] ?? null;
 }
 
-/** Published content for the public site; never throws. */
 export const getPublishedContent = cache(async (): Promise<SiteContent> => {
-  if (!hasDatabase()) return structuredClone(defaultContent);
+  if (!hasDatabase()) return freshDefaults();
   try {
     const row = await readRow();
-    return row?.published ? normalizeContent(row.published) : structuredClone(defaultContent);
+    return row?.published ? normalizeContent(row.published) : freshDefaults();
   } catch (error) {
     console.error("Falling back to default content:", error);
-    return structuredClone(defaultContent);
+    return freshDefaults();
   }
 });
 
-export type StudioState = {
-  draft: SiteContent;
-  published: SiteContent;
-  draftUpdatedAt: string | null;
-  publishedAt: string | null;
-  hasUnpublishedChanges: boolean;
-};
-
 export async function getStudioState(): Promise<StudioState> {
   const row = await readRow();
-  const published = row?.published ? normalizeContent(row.published) : structuredClone(defaultContent);
+  const published = row?.published ? normalizeContent(row.published) : freshDefaults();
   const draft = row?.draft ? normalizeContent(row.draft) : published;
   return {
     draft,
@@ -70,7 +74,6 @@ export async function publish(input: unknown, label = "") {
   const json = JSON.stringify(content);
   const schema = deploymentSchema();
   const sql = database();
-  // Publish, record the revision, and prune old revisions atomically.
   const [published] = (await sql.transaction([
     sql.query(
       `insert into ${schema}.site_content (id, draft, published, draft_updated_at, published_at)
@@ -80,10 +83,12 @@ export async function publish(input: unknown, label = "") {
        returning published_at`,
       [json],
     ),
-    sql.query(`insert into ${schema}.site_revisions (content, label) values ($1::jsonb, $2)`, [json, label.slice(0, 120)]),
-    // Keep the 30 most recent revisions.
+    sql.query(`insert into ${schema}.site_revisions (content, label) values ($1::jsonb, $2)`, [
+      json,
+      label.slice(0, MAX_REVISION_LABEL_LENGTH),
+    ]),
     sql.query(
-      `delete from ${schema}.site_revisions where id not in (select id from ${schema}.site_revisions order by id desc limit 30)`,
+      `delete from ${schema}.site_revisions where id not in (select id from ${schema}.site_revisions order by id desc limit ${MAX_REVISIONS})`,
     ),
   ])) as { published_at: string }[][];
   return { content, publishedAt: published[0]?.published_at ?? null };
@@ -92,7 +97,7 @@ export async function publish(input: unknown, label = "") {
 export async function listRevisions() {
   await ensureSchema();
   return (await database().query(
-    `select id, label, created_at from ${deploymentSchema()}.site_revisions order by id desc limit 30`,
+    `select id, label, created_at from ${deploymentSchema()}.site_revisions order by id desc limit ${MAX_REVISIONS}`,
   )) as { id: number; label: string; created_at: string }[];
 }
 

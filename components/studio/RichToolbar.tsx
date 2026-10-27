@@ -1,10 +1,19 @@
 "use client";
 import type { Editor } from "@tiptap/core";
 import { Bold, Heading3, Italic, Link2, List, ListOrdered, RemoveFormatting, Underline, Unlink } from "lucide-react";
-import { useEffect, useReducer, useRef, useState, useSyncExternalStore } from "react";
+import { type ReactNode, useEffect, useReducer, useRef, useState, useSyncExternalStore } from "react";
 import { RICH_TOOLBAR_ATTR, richStore } from "../edit/RichField";
 
 type Position = { top: number; left: number };
+type ToolButtonProps = { label: string; active?: boolean; onClick: () => void; children: ReactNode };
+type ChainCommand = (chain: ReturnType<Editor["chain"]>) => ReturnType<Editor["chain"]>;
+
+const FALLBACK_HEIGHT = 44;
+const FALLBACK_WIDTH = 360;
+const FIELD_GAP = 10;
+const TOP_BAR_CLEARANCE = 64;
+const VIEWPORT_MARGIN = 12;
+const SUBHEADING_LEVEL = 3;
 
 function normalizeUrl(raw: string) {
   const url = raw.trim();
@@ -14,7 +23,14 @@ function normalizeUrl(raw: string) {
   return `https://${url}`;
 }
 
-/** Floating formatting bar for whichever rich-text field is being edited. */
+function ToolButton({ label, active = false, onClick, children }: ToolButtonProps) {
+  return (
+    <button type="button" title={label} aria-label={label} aria-pressed={active} onMouseDown={(event) => event.preventDefault()} onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+
 export function RichToolbar() {
   const { editor, linkRequests } = useSyncExternalStore(richStore.subscribe, richStore.get, richStore.get);
   const [position, setPosition] = useState<Position | null>(null);
@@ -23,15 +39,15 @@ export function RichToolbar() {
   const [, rerender] = useReducer((n: number) => n + 1, 0);
   const bar = useRef<HTMLDivElement>(null);
 
-  // Follow the field and refresh button states as the selection changes.
   useEffect(() => {
     if (!editor) return;
     const place = () => {
       const rect = editor.view.dom.getBoundingClientRect();
-      const height = bar.current?.offsetHeight ?? 44;
-      const width = bar.current?.offsetWidth ?? 360;
-      const top = rect.top - height - 10 < 64 ? rect.bottom + 10 : rect.top - height - 10;
-      setPosition({ top, left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)) });
+      const height = bar.current?.offsetHeight ?? FALLBACK_HEIGHT;
+      const width = bar.current?.offsetWidth ?? FALLBACK_WIDTH;
+      const above = rect.top - height - FIELD_GAP;
+      const top = above < TOP_BAR_CLEARANCE ? rect.bottom + FIELD_GAP : above;
+      setPosition({ top, left: Math.max(VIEWPORT_MARGIN, Math.min(rect.left, window.innerWidth - width - VIEWPORT_MARGIN)) });
     };
     const onTransaction = () => {
       place();
@@ -48,7 +64,6 @@ export function RichToolbar() {
     };
   }, [editor]);
 
-  // ⌘K from inside the field opens the link input.
   const lastRequest = useRef(linkRequests);
   useEffect(() => {
     if (linkRequests === lastRequest.current || !editor) return;
@@ -59,10 +74,14 @@ export function RichToolbar() {
 
   if (!editor || !position) return null;
 
-  const run = (command: (chain: ReturnType<Editor["chain"]>) => ReturnType<Editor["chain"]>) => command(editor.chain().focus()).run();
+  const run = (command: ChainCommand) => command(editor.chain().focus()).run();
   const startLink = () => {
     setUrl(editor.getAttributes("link").href ?? "");
     setLinking(true);
+  };
+  const stopLinking = () => {
+    setLinking(false);
+    editor.commands.focus();
   };
   const applyLink = () => {
     const href = normalizeUrl(url);
@@ -75,19 +94,6 @@ export function RichToolbar() {
     run((c) => c.extendMarkRange("link").setLink({ href }));
   };
 
-  const button = (label: string, icon: React.ReactNode, action: () => void, active = false) => (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      aria-pressed={active}
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={action}
-    >
-      {icon}
-    </button>
-  );
-
   return (
     <div
       ref={bar}
@@ -97,7 +103,6 @@ export function RichToolbar() {
       aria-label="Text formatting"
       {...{ [RICH_TOOLBAR_ATTR]: "" }}
       onBlur={(event) => {
-        // Leaving both the toolbar and its field ends the editing session.
         const next = event.relatedTarget as Node | null;
         if (bar.current?.contains(next) || editor.view.dom.contains(next)) return;
         setLinking(false);
@@ -119,37 +124,54 @@ export function RichToolbar() {
             onKeyDown={(event) => {
               if (event.key === "Escape") {
                 event.preventDefault();
-                setLinking(false);
-                editor.commands.focus();
+                stopLinking();
               }
             }}
             placeholder="Paste a URL, page path, or email"
             aria-label="Link address"
           />
           <button type="submit">Apply</button>
-          <button
-            type="button"
-            onClick={() => {
-              setLinking(false);
-              editor.commands.focus();
-            }}
-          >
+          <button type="button" onClick={stopLinking}>
             Cancel
           </button>
         </form>
       ) : (
         <>
-          {button("Bold (⌘B)", <Bold />, () => run((c) => c.toggleBold()), editor.isActive("bold"))}
-          {button("Italic (⌘I)", <Italic />, () => run((c) => c.toggleItalic()), editor.isActive("italic"))}
-          {button("Underline (⌘U)", <Underline />, () => run((c) => c.toggleUnderline()), editor.isActive("underline"))}
+          <ToolButton label="Bold (⌘B)" active={editor.isActive("bold")} onClick={() => run((c) => c.toggleBold())}>
+            <Bold />
+          </ToolButton>
+          <ToolButton label="Italic (⌘I)" active={editor.isActive("italic")} onClick={() => run((c) => c.toggleItalic())}>
+            <Italic />
+          </ToolButton>
+          <ToolButton label="Underline (⌘U)" active={editor.isActive("underline")} onClick={() => run((c) => c.toggleUnderline())}>
+            <Underline />
+          </ToolButton>
           <span className="st-sep" />
-          {button("Subheading", <Heading3 />, () => run((c) => c.toggleHeading({ level: 3 })), editor.isActive("heading", { level: 3 }))}
-          {button("Bulleted list", <List />, () => run((c) => c.toggleBulletList()), editor.isActive("bulletList"))}
-          {button("Numbered list", <ListOrdered />, () => run((c) => c.toggleOrderedList()), editor.isActive("orderedList"))}
+          <ToolButton
+            label="Subheading"
+            active={editor.isActive("heading", { level: SUBHEADING_LEVEL })}
+            onClick={() => run((c) => c.toggleHeading({ level: SUBHEADING_LEVEL }))}
+          >
+            <Heading3 />
+          </ToolButton>
+          <ToolButton label="Bulleted list" active={editor.isActive("bulletList")} onClick={() => run((c) => c.toggleBulletList())}>
+            <List />
+          </ToolButton>
+          <ToolButton label="Numbered list" active={editor.isActive("orderedList")} onClick={() => run((c) => c.toggleOrderedList())}>
+            <ListOrdered />
+          </ToolButton>
           <span className="st-sep" />
-          {button("Link (⌘K)", <Link2 />, startLink, editor.isActive("link"))}
-          {editor.isActive("link") && button("Remove link", <Unlink />, () => run((c) => c.extendMarkRange("link").unsetLink()))}
-          {button("Clear formatting", <RemoveFormatting />, () => run((c) => c.unsetAllMarks().clearNodes()))}
+          <ToolButton label="Link (⌘K)" active={editor.isActive("link")} onClick={startLink}>
+            <Link2 />
+          </ToolButton>
+          {editor.isActive("link") && (
+            <ToolButton label="Remove link" onClick={() => run((c) => c.extendMarkRange("link").unsetLink())}>
+              <Unlink />
+            </ToolButton>
+          )}
+          <ToolButton label="Clear formatting" onClick={() => run((c) => c.unsetAllMarks().clearNodes())}>
+            <RemoveFormatting />
+          </ToolButton>
         </>
       )}
     </div>

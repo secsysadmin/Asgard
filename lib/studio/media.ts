@@ -10,29 +10,47 @@ export type MediaItem = {
   created_at?: string;
 };
 
+type PreparedUpload = { blob: Blob; width: number | null; height: number | null; name: string };
+
+type UploadReply = MediaItem & { url: string; error?: string };
+
 const MAX_EDGE = 2200;
 const RESIZABLE = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
+const KILOBYTE = 1000;
+const MEGABYTE = 1_000_000;
+const REENCODE_ABOVE_BYTES = 900_000;
+const WEBP_MIME = "image/webp";
+const WEBP_QUALITY = 0.86;
+const IMAGE_PROCESSING_FAILED = "Couldn’t process that image.";
 
-/** Downscale large photos in the browser and re-encode them as WebP. */
-async function prepare(file: File): Promise<{ blob: Blob; width: number | null; height: number | null; name: string }> {
+async function encodeWebp(bitmap: ImageBitmap, width: number, height: number): Promise<Blob> {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error(IMAGE_PROCESSING_FAILED);
+  context.drawImage(bitmap, 0, 0, width, height);
+  return new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((result) => (result ? resolve(result) : reject(new Error(IMAGE_PROCESSING_FAILED))), WEBP_MIME, WEBP_QUALITY),
+  );
+}
+
+async function prepare(file: File): Promise<PreparedUpload> {
   if (!RESIZABLE.has(file.type)) return { blob: file, width: null, height: null, name: file.name };
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
   const width = Math.round(bitmap.width * scale);
   const height = Math.round(bitmap.height * scale);
-  if (scale === 1 && file.size < 900_000) {
+  if (scale === 1 && file.size < REENCODE_ABOVE_BYTES) {
     bitmap.close();
     return { blob: file, width, height, name: file.name };
   }
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, width, height);
-  bitmap.close();
-  const blob = await new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob((result) => (result ? resolve(result) : reject(new Error("Couldn’t process that image."))), "image/webp", 0.86),
-  );
-  return { blob, width, height, name: file.name.replace(/\.\w+$/, "") + ".webp" };
+  try {
+    const blob = await encodeWebp(bitmap, width, height);
+    return { blob, width, height, name: file.name.replace(/\.\w+$/, "") + ".webp" };
+  } finally {
+    bitmap.close();
+  }
 }
 
 export async function uploadFile(file: File, alt = ""): Promise<MediaItem & { url: string }> {
@@ -47,12 +65,11 @@ export async function uploadFile(file: File, alt = ""): Promise<MediaItem & { ur
     },
     body: blob,
   });
-  const result = await response.json().catch(() => ({}));
+  const result = (await response.json().catch(() => ({}))) as UploadReply;
   if (!response.ok) throw new Error(result.error ?? "Upload failed.");
   return result;
 }
 
-/** Turn "IMG_2041-final.jpg" into a starting point for alt text. */
 export function altFromFilename(name: string) {
   return name
     .replace(/\.\w+$/, "")
@@ -62,5 +79,5 @@ export function altFromFilename(name: string) {
 }
 
 export function formatBytes(bytes: number) {
-  return bytes > 1_000_000 ? `${(bytes / 1_000_000).toFixed(1)} MB` : `${Math.round(bytes / 1000)} KB`;
+  return bytes > MEGABYTE ? `${(bytes / MEGABYTE).toFixed(1)} MB` : `${Math.round(bytes / KILOBYTE)} KB`;
 }

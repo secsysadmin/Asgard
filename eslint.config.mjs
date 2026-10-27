@@ -7,8 +7,7 @@ export default defineConfig([
   ...nextTs,
   {
     rules: {
-      // Images come from the CMS (any size, uploaded or remote) and are served
-      // as-is (images.unoptimized), so next/image adds nothing here.
+      // CMS images are served as-is (images.unoptimized), so next/image adds nothing.
       "@next/next/no-img-element": "off",
     },
   },

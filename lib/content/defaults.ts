@@ -1,17 +1,12 @@
 import type { Block, BlockData, BlockType, Page, SiteContent } from "./types";
 
-// Initial site content, adapted from the live SEC Career Fair site
-// (careerfair.sec.tamu.edu) for the Fall 2026 fair. Admins edit a copy of
-// this document in the studio; these values are only the starting point and
-// the fallback when the database is unavailable.
-
 function blk<K extends BlockType>(
   id: string,
   type: K,
   data: BlockData[K],
   options: Partial<Pick<Block, "nav" | "group" | "tone" | "visible">> = {},
-): Block {
-  return { id, type, visible: true, nav: "", group: "", tone: "plain", ...options, data } as Block;
+): Block<K> {
+  return { id, type, visible: true, nav: "", group: "", tone: "plain", ...options, data } as Block<K>;
 }
 
 const EMAIL = "careerfair@sec.tamu.edu";
@@ -81,7 +76,6 @@ const welcomeSocialPhotos = [1, 2, 3].map((n) =>
   img(`/images/fair/welcome-social-${n}.webp`, "Students and recruiters networking at the Welcome Social"),
 );
 
-// ───────────────────────────────── Home ─────────────────────────────────
 const home: Page = {
   id: "home",
   slug: "",
@@ -178,8 +172,7 @@ const home: Page = {
   ],
 };
 
-// ──────────────────────────────── Team ────────────────────────────────
-export const TEAM_INTRO =
+const TEAM_INTRO =
   "<p>The SEC Career Fair is entirely student-run by a dedicated team of engineers from the Student Engineers’ Council.</p>";
 
 export function teamPage(members: Block): Page {
@@ -202,13 +195,12 @@ export function teamPage(members: Block): Page {
   };
 }
 
-const teamMembers = blk("home-team", "team", {
+export const defaultTeamBlock = blk("home-team", "team", {
   heading: "",
   intro: "",
   members: team,
 });
 
-// ─────────────────────────────── Students ───────────────────────────────
 const students: Page = {
   id: "students",
   slug: "students",
@@ -537,7 +529,6 @@ const students: Page = {
   ],
 };
 
-// ────────────────────────────── Recruiters ──────────────────────────────
 const recruiters: Page = {
   id: "recruiters",
   slug: "recruiters",
@@ -817,7 +808,6 @@ const recruiters: Page = {
   ],
 };
 
-// ─────────────────────────── Career Discovery Fair ───────────────────────────
 const discovery: Page = {
   id: "discovery",
   slug: "career-discovery-fair",
@@ -908,5 +898,5 @@ export const defaultContent: SiteContent = {
     contactEmail: EMAIL,
     announcement: "",
   },
-  pages: [home, students, recruiters, discovery, teamPage(teamMembers)],
+  pages: [home, students, recruiters, discovery, teamPage(defaultTeamBlock)],
 };

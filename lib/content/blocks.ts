@@ -1,16 +1,17 @@
 import type { Block, BlockData, BlockType, ImageRef } from "./types";
 
-const img = (src = "", alt = ""): ImageRef => ({ src, alt });
-
 type BlockSpec<K extends BlockType> = {
   label: string;
   description: string;
-  /** Fields edited with the rich-text editor rather than plain text. */
   starter: () => BlockData[K];
 };
 
-// The block library shown in the studio's "Add section" dialog. `starter`
-// is the content a freshly inserted section begins with.
+const BLOCK_ID_SUFFIX_LENGTH = 6;
+
+const img = (src = "", alt = ""): ImageRef => ({ src, alt });
+
+const blankTableCells = (cells: unknown[]) => cells.map(() => "");
+
 export const blockSpecs: { [K in BlockType]: BlockSpec<K> } = {
   hero: {
     label: "Hero banner",
@@ -192,13 +193,12 @@ export const blockSpecs: { [K in BlockType]: BlockSpec<K> } = {
   },
 };
 
-/** Keys whose string values are rich HTML. Everything else is plain text. */
 export const richKeys = new Set(["summary", "intro", "body", "note", "detail", "a", "address", "announcement"]);
 
 export const blockTypes = Object.keys(blockSpecs) as BlockType[];
 
 export function newBlockId(type: string) {
-  return `${type}-${Math.random().toString(36).slice(2, 8)}`;
+  return `${type}-${Math.random().toString(36).slice(2, 2 + BLOCK_ID_SUFFIX_LENGTH)}`;
 }
 
 export function createBlock(type: BlockType): Block {
@@ -213,7 +213,6 @@ export function createBlock(type: BlockType): Block {
   } as Block;
 }
 
-/** An empty value shaped like `sample`, used when adding list items. */
 export function blankLike<T>(sample: T): T {
   if (typeof sample === "string") return "" as T;
   if (typeof sample === "number") return 0 as T;
@@ -223,8 +222,7 @@ export function blankLike<T>(sample: T): T {
     return Object.fromEntries(
       Object.entries(sample).map(([key, value]) => [
         key,
-        // Keep one blank table cell per column so new rows line up.
-        key === "cells" && Array.isArray(value) ? value.map(() => "") : blankLike(value),
+        key === "cells" && Array.isArray(value) ? blankTableCells(value) : blankLike(value),
       ]),
     ) as T;
   }

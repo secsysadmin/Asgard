@@ -1,18 +1,24 @@
 "use client";
 import { Extension, type Editor } from "@tiptap/core";
 import { Placeholder } from "@tiptap/extensions";
+import type { EditorView } from "@tiptap/pm/view";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useRef, useState } from "react";
 import { safeHref, sanitizeHtml } from "@/lib/sanitize";
 import type { Path } from "@/lib/studio/paths";
+import { cx } from "./classNames";
 import type { EditApi } from "./context";
 
-const cx = (...names: (string | false | undefined | null)[]) => names.filter(Boolean).join(" ");
-
-/* ───────────── Which rich field is being edited (read by the toolbar) ───────────── */
-
 type RichState = { editor: Editor | null; linkRequests: number };
+type Point = { left: number; top: number };
+type Activation = { click: Point | null };
+type Props = { value: string; path: Path; className?: string; placeholder: string; edit: EditApi };
+type ActiveProps = Props & Activation;
+
+export const RICH_TOOLBAR_ATTR = "data-rich-toolbar";
+const BARE_DOMAIN = /^[\w-]+(\.[\w-]+)+(\/\S*)?$/i;
+
 let state: RichState = { editor: null, linkRequests: 0 };
 const listeners = new Set<() => void>();
 const emit = (next: RichState) => {
@@ -28,12 +34,10 @@ export const richStore = {
   },
   activate: (editor: Editor) => emit({ ...state, editor }),
   release: (editor: Editor) => state.editor === editor && emit({ ...state, editor: null }),
-  /** ⌘K inside a field asks the toolbar to open its link input. */
   requestLink: () => emit({ ...state, linkRequests: state.linkRequests + 1 }),
 };
 
-/** Marks the toolbar so focusing it doesn't count as leaving the field. */
-export const RICH_TOOLBAR_ATTR = "data-rich-toolbar";
+const isAllowedLink = (url: string) => !!safeHref(url) || BARE_DOMAIN.test(url);
 
 const StudioShortcuts = Extension.create({
   name: "studioShortcuts",
@@ -48,23 +52,27 @@ const StudioShortcuts = Extension.create({
   },
 });
 
-/** Accept the same destinations the sanitizer allows, plus bare domains. */
-const allowedLink = (url: string) => !!safeHref(url) || /^[\w-]+(\.[\w-]+)+(\/\S*)?$/i.test(url);
+const SanitizerFormatting = StarterKit.configure({
+  heading: { levels: [3] },
+  blockquote: false,
+  code: false,
+  codeBlock: false,
+  horizontalRule: false,
+  strike: false,
+  link: { openOnClick: false, autolink: true, defaultProtocol: "https", isAllowedUri: isAllowedLink },
+});
 
-/* ───────────────────────────── The field ───────────────────────────── */
+// The studio's CSS zoom breaks ProseMirror's scroll math; native scrollIntoView accounts for it.
+function scrollSelectionIntoView(view: EditorView) {
+  const { node } = view.domAtPos(view.state.selection.head);
+  const element = node instanceof Element ? node : node.parentElement;
+  element?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  return true;
+}
 
-type Props = { value: string; path: Path; className?: string; placeholder: string; edit: EditApi };
-type Point = { left: number; top: number };
-
-/**
- * Shows sanitized HTML until it's focused, then swaps in a Tiptap editor with
- * the caret where the person clicked. Long pages stay fast because only the
- * fields someone actually edits create an editor.
- */
 export function RichField(props: Props) {
-  // Set on focus; holds where the person clicked so the caret can land there.
-  const [activation, setActivation] = useState<{ click: Point | null } | null>(null);
-  const click = useRef<Point | null>(null);
+  const [activation, setActivation] = useState<Activation | null>(null);
+  const lastClick = useRef<Point | null>(null);
   if (activation) return <ActiveRichField {...props} click={activation.click} />;
   return (
     <div
@@ -75,43 +83,50 @@ export function RichField(props: Props) {
       aria-label={props.placeholder}
       data-placeholder={props.placeholder}
       onMouseDown={(event) => {
-        click.current = { left: event.clientX, top: event.clientY };
+        lastClick.current = { left: event.clientX, top: event.clientY };
       }}
-      onFocus={() => setActivation({ click: click.current })}
+      onFocus={() => setActivation({ click: lastClick.current })}
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(props.value) }}
     />
   );
 }
 
-function ActiveRichField({ value, path, className, placeholder, edit, click }: Props & { click: Point | null }) {
+function useCaretAtClick(editor: Editor | null, click: Point | null) {
+  const placed = useRef(false);
+  useEffect(() => {
+    if (!editor || placed.current) return;
+    placed.current = true;
+    const frame = requestAnimationFrame(() => {
+      // Focusing an editor whose DOM is not yet attached silently fails.
+      if (!editor.view.dom.isConnected) return;
+      const position = click ? editor.view.posAtCoords(click)?.pos : undefined;
+      editor.commands.focus(position ?? "end", { scrollIntoView: false });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [editor, click]);
+}
+
+function useSyncOutsideEdits(editor: Editor | null, value: string) {
+  useEffect(() => {
+    if (!editor || editor.isFocused) return;
+    const incoming = sanitizeHtml(value);
+    if (incoming !== sanitizeHtml(editor.getHTML())) editor.commands.setContent(incoming, { emitUpdate: false });
+  }, [editor, value]);
+}
+
+function useReleaseOnUnmount(editor: Editor | null) {
+  useEffect(() => () => {
+    if (editor) richStore.release(editor);
+  }, [editor]);
+}
+
+function ActiveRichField({ value, path, className, placeholder, edit, click }: ActiveProps) {
   const editor = useEditor({
     immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        // Only what the public sanitizer keeps: paragraphs, bold/italic/underline,
-        // links, lists, line breaks, and one subheading level.
-        heading: { levels: [3] },
-        blockquote: false,
-        code: false,
-        codeBlock: false,
-        horizontalRule: false,
-        strike: false,
-        link: { openOnClick: false, autolink: true, defaultProtocol: "https", isAllowedUri: allowedLink },
-      }),
-      Placeholder.configure({ placeholder }),
-      StudioShortcuts,
-    ],
+    extensions: [SanitizerFormatting, Placeholder.configure({ placeholder }), StudioShortcuts],
     content: sanitizeHtml(value),
     editorProps: {
-      // The studio shrinks wide previews with CSS zoom, which ProseMirror's own
-      // scroll math doesn't account for. The browser's native scrollIntoView
-      // does, so use it to keep the caret's line visible.
-      handleScrollToSelection: (view) => {
-        const { node } = view.domAtPos(view.state.selection.head);
-        const element = node instanceof Element ? node : node.parentElement;
-        element?.scrollIntoView({ block: "nearest", inline: "nearest" });
-        return true;
-      },
+      handleScrollToSelection: scrollSelectionIntoView,
       attributes: {
         class: cx("rich", className, "ed-rich", "ed-rich-active"),
         role: "textbox",
@@ -122,35 +137,14 @@ function ActiveRichField({ value, path, className, placeholder, edit, click }: P
     onUpdate: ({ editor }) => edit.set(path, editor.isEmpty ? "" : editor.getHTML()),
     onFocus: ({ editor }) => richStore.activate(editor),
     onBlur: ({ editor, event }) => {
-      const next = event.relatedTarget as HTMLElement | null;
-      if (!next?.closest(`[${RICH_TOOLBAR_ATTR}]`)) richStore.release(editor);
+      const next = event.relatedTarget;
+      if (!(next instanceof Element && next.closest(`[${RICH_TOOLBAR_ATTR}]`))) richStore.release(editor);
     },
   });
 
-  // Once the editor is on the page, put the caret where the person clicked.
-  // (Before then its DOM is detached, so focusing would silently fail.)
-  const placed = useRef(false);
-  useEffect(() => {
-    if (!editor || placed.current) return;
-    placed.current = true;
-    const frame = requestAnimationFrame(() => {
-      if (!editor.view.dom.isConnected) return;
-      const position = click ? editor.view.posAtCoords(click)?.pos : undefined;
-      editor.commands.focus(position ?? "end", { scrollIntoView: false });
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [editor, click]);
-
-  // Undo/redo or the inspector can change this field from outside.
-  useEffect(() => {
-    if (!editor || editor.isFocused) return;
-    const incoming = sanitizeHtml(value);
-    if (incoming !== sanitizeHtml(editor.getHTML())) editor.commands.setContent(incoming, { emitUpdate: false });
-  }, [editor, value]);
-
-  useEffect(() => () => {
-    if (editor) richStore.release(editor);
-  }, [editor]);
+  useCaretAtClick(editor, click);
+  useSyncOutsideEdits(editor, value);
+  useReleaseOnUnmount(editor);
 
   return <EditorContent editor={editor} className="ed-rich-host" />;
 }

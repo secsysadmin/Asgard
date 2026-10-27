@@ -1,29 +1,47 @@
 "use client";
 import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from "react";
 import type { Block, Page, SiteContent } from "@/lib/content/types";
 import { safeHref } from "@/lib/sanitize";
 import { Rich, type Path, useEdit } from "../edit/context";
 import { BlockView } from "./blocks";
-import { revealHash } from "./reveal";
-import { SmartLink } from "./SmartLink";
+import { decodeHash, onReaderScroll, revealHash } from "./reveal";
+import { isExternalHref, SmartLink } from "./SmartLink";
 import { SiteSearch } from "./Search";
 
-export function pagePath(page: Page) {
-  return `/${page.slug}`;
-}
+export type SectionWrapper = (block: Block, index: number, node: ReactNode) => ReactNode;
+
+type TocGroup = { title: string; items: { id: string; label: string }[] };
+type LogoProps = { className?: string };
+type HeaderProps = { content: SiteContent; page: Page };
+type FooterProps = { content: SiteContent };
+type TocProps = { groups: TocGroup[] };
+type Props = {
+  content: SiteContent;
+  pageIndex: number;
+  wrap?: SectionWrapper;
+  basePath?: Path;
+};
+
+const LOGO_ALT = "Student Engineers’ Council";
+const LOGO_SRC = "/images/sec-logo-white.png";
+const LOGO_WIDTH = 774;
+const LOGO_HEIGHT = 331;
+const ACTIVE_SECTION_OFFSET_PX = 160;
+const PAGE_BOTTOM_TOLERANCE_PX = 4;
+
+const pagePath = (page: Page) => `/${page.slug}`;
 
 function isCurrent(href: string, page: Page) {
   const path = href.split("#")[0];
   return path === pagePath(page) && page.slug !== "";
 }
 
-/** Closes an open menu when someone taps outside `ref` or presses Escape. */
-function useDismiss(ref: React.RefObject<HTMLElement | null>, open: boolean, close: () => void) {
+function useDismiss(ref: RefObject<HTMLElement | null>, open: boolean, close: () => void) {
   useEffect(() => {
     if (!open) return;
     const onPointer = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) close();
+      if (!(event.target instanceof Node && ref.current?.contains(event.target))) close();
     };
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && close();
     document.addEventListener("pointerdown", onPointer);
@@ -35,7 +53,11 @@ function useDismiss(ref: React.RefObject<HTMLElement | null>, open: boolean, clo
   }, [ref, open, close]);
 }
 
-function Header({ content, page }: { content: SiteContent; page: Page }) {
+function SecLogo({ className }: LogoProps) {
+  return <img src={LOGO_SRC} alt={LOGO_ALT} width={LOGO_WIDTH} height={LOGO_HEIGHT} className={className} />;
+}
+
+function Header({ content, page }: HeaderProps) {
   const [open, setOpen] = useState(false);
   const header = useRef<HTMLElement>(null);
   useDismiss(header, open, useCallback(() => setOpen(false), []));
@@ -45,7 +67,7 @@ function Header({ content, page }: { content: SiteContent; page: Page }) {
     <header ref={header} className="site-header">
       <div className="site-header-inner">
         <SmartLink className="brand" href="/" aria-label={`${settings.siteName} home`}>
-          <img src="/images/sec-logo-white.png" alt="Student Engineers’ Council" width={774} height={331} className="brand-sec" />
+          <SecLogo className="brand-sec" />
         </SmartLink>
         {!edit && <SiteSearch content={content} />}
         <button
@@ -65,7 +87,7 @@ function Header({ content, page }: { content: SiteContent; page: Page }) {
               <li key={i}>
                 <SmartLink href={safeHref(link.href)} aria-current={isCurrent(link.href, page) ? "page" : undefined} onClick={() => setOpen(false)}>
                   {link.label}
-                  {/^https?:/i.test(link.href) && <ArrowUpRight aria-hidden className="nav-external" />}
+                  {isExternalHref(link.href) && <ArrowUpRight aria-hidden className="nav-external" />}
                 </SmartLink>
               </li>
             ))}
@@ -81,12 +103,12 @@ function Header({ content, page }: { content: SiteContent; page: Page }) {
   );
 }
 
-function Footer({ content }: { content: SiteContent }) {
+function Footer({ content }: FooterProps) {
   const { settings } = content;
   return (
     <footer className="site-footer">
       <div className="footer-brand">
-        <img src="/images/sec-logo-white.png" alt="Student Engineers’ Council" width={774} height={331} />
+        <SecLogo />
         <p>{settings.footerNote}</p>
       </div>
       <nav aria-label="Footer">
@@ -112,10 +134,8 @@ function Footer({ content }: { content: SiteContent }) {
   );
 }
 
-type Group = { title: string; items: { id: string; label: string }[] };
-
-function tocGroups(blocks: Block[]): Group[] {
-  const groups: Group[] = [];
+function tocGroups(blocks: Block[]): TocGroup[] {
+  const groups: TocGroup[] = [];
   for (const block of blocks) {
     if (!block.visible || !block.nav) continue;
     const last = groups[groups.length - 1];
@@ -125,20 +145,23 @@ function tocGroups(blocks: Block[]): Group[] {
   return groups;
 }
 
-/**
- * Which section the reader is on. Normally the last section whose top has
- * passed under the header; at the very bottom of the page, the last section.
- * Choosing a section (a menu click, search result, or shared link) highlights
- * it right away and keeps it until the reader scrolls on their own, so short
- * sections near the end of the page can still be selected.
- */
+function sectionUnderHeader(ids: string[]) {
+  const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - PAGE_BOTTOM_TOLERANCE_PX;
+  let current = ids[0] ?? "";
+  if (atBottom) return ids[ids.length - 1] ?? current;
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (el && el.getBoundingClientRect().top < ACTIVE_SECTION_OFFSET_PX) current = id;
+  }
+  return current;
+}
+
 function useActiveSection(ids: string[], enabled: boolean) {
   const [active, setActive] = useState(ids[0] ?? "");
   const pinned = useRef<string | null>(null);
   const key = ids.join("|");
 
-  // Map any anchor (including an FAQ question inside a section) to its section.
-  const sectionFor = useCallback(
+  const sectionContaining = useCallback(
     (anchor: string) => {
       if (ids.includes(anchor)) return anchor;
       const section = document.getElementById(anchor)?.closest("section[id]")?.id;
@@ -150,50 +173,33 @@ function useActiveSection(ids: string[], enabled: boolean) {
 
   const pin = useCallback(
     (anchor: string) => {
-      const section = sectionFor(anchor);
+      const section = sectionContaining(anchor);
       if (!section) return;
       pinned.current = section;
       setActive(section);
     },
-    [sectionFor],
+    [sectionContaining],
   );
 
   useEffect(() => {
     if (!enabled) return;
-    const onScroll = () => {
-      if (pinned.current) return setActive(pinned.current);
-      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
-      let current = ids[0] ?? "";
-      if (atBottom) current = ids[ids.length - 1] ?? current;
-      else
-        for (const id of ids) {
-          const el = document.getElementById(id);
-          if (el && el.getBoundingClientRect().top < 160) current = id;
-        }
-      setActive(current);
-    };
-    const release = () => {
-      pinned.current = null;
-    };
+    const onScroll = () => setActive(pinned.current ?? sectionUnderHeader(ids));
     const onHash = () => pin(decodeHash(location.hash));
-    // Initial highlight once layout has settled.
-    const frame = requestAnimationFrame(() => {
-      if (location.hash) pin(decodeHash(location.hash));
+    const highlightInitialSection = () => {
+      if (location.hash) onHash();
       onScroll();
-    });
+    };
+    const frame = requestAnimationFrame(highlightInitialSection);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("hashchange", onHash);
-    // Only the reader's own scrolling releases a pinned section.
-    window.addEventListener("wheel", release, { passive: true });
-    window.addEventListener("touchmove", release, { passive: true });
-    window.addEventListener("keydown", release);
+    const stopReleasing = onReaderScroll(() => {
+      pinned.current = null;
+    });
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("hashchange", onHash);
-      window.removeEventListener("wheel", release);
-      window.removeEventListener("touchmove", release);
-      window.removeEventListener("keydown", release);
+      stopReleasing();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, enabled, pin]);
@@ -201,16 +207,17 @@ function useActiveSection(ids: string[], enabled: boolean) {
   return { active, pin };
 }
 
-function decodeHash(hash: string) {
-  const raw = hash.replace(/^#/, "");
-  try {
-    return decodeURIComponent(raw);
-  } catch {
-    return raw;
-  }
+function useRevealLinkedAnswer(enabled: boolean) {
+  useEffect(() => {
+    if (!enabled) return;
+    const onHash = () => revealHash(location.hash);
+    if (location.hash) requestAnimationFrame(onHash);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [enabled]);
 }
 
-function Toc({ groups }: { groups: Group[] }) {
+function Toc({ groups }: TocProps) {
   const edit = useEdit();
   const ids = groups.flatMap((group) => group.items.map((item) => item.id));
   const { active, pin } = useActiveSection(ids, !edit);
@@ -254,8 +261,6 @@ function Toc({ groups }: { groups: Group[] }) {
   );
 }
 
-export type SectionWrapper = (block: Block, index: number, node: ReactNode) => ReactNode;
-
 const defaultWrap: SectionWrapper = (block, _index, node) => (
   <section
     key={block.id}
@@ -268,27 +273,10 @@ const defaultWrap: SectionWrapper = (block, _index, node) => (
   </section>
 );
 
-export function PageView({
-  content,
-  pageIndex,
-  wrap = defaultWrap,
-  basePath = ["pages", pageIndex, "blocks"],
-}: {
-  content: SiteContent;
-  pageIndex: number;
-  wrap?: SectionWrapper;
-  basePath?: Path;
-}) {
+export function PageView({ content, pageIndex, wrap = defaultWrap, basePath = ["pages", pageIndex, "blocks"] }: Props) {
   const edit = useEdit();
   const page = content.pages[pageIndex];
-  // Links to an FAQ question (from search or shared URLs) open its answer.
-  useEffect(() => {
-    if (edit) return;
-    const onHash = () => revealHash(location.hash);
-    if (location.hash) requestAnimationFrame(onHash);
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, [edit]);
+  useRevealLinkedAnswer(!edit);
   const render = (block: Block, index: number) => wrap(block, index, <BlockView block={block} at={[...basePath, index, "data"]} />);
   const indexed = page.blocks.map((block, index) => ({ block, index }));
   const lead = page.layout === "guide" && page.blocks[0]?.type === "pageHeader" ? indexed.slice(0, 1) : [];

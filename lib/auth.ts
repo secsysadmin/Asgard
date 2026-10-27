@@ -1,6 +1,4 @@
-// The studio is currently open to anyone with the /admin link.
-// When Google OAuth is added, check the signed-in user here; every studio
-// API route and the /admin page already gate on isAuthorized().
+// The studio is open to anyone with the /admin link: every studio route and /admin gate here.
 export async function isAuthorized() {
   return true;
 }

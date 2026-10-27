@@ -1,9 +1,4 @@
-// Every editable piece of the public site lives in one SiteContent document.
-// Pages are ordered lists of typed blocks; the admin studio edits this
-// document directly and the public renderer reads it unchanged.
-
-/** Sanitized HTML produced by the rich-text editor (see lib/sanitize.ts). */
-export type RichText = string;
+type RichText = string;
 export type ImageRef = { src: string; alt: string };
 export type LinkRef = { label: string; href: string };
 
@@ -23,9 +18,7 @@ export type BlockData = {
     eyebrow: string;
     title: string;
     intro: RichText;
-    /** At-a-glance summary card beside the title (optional). */
     facts: { label: string; value: string }[];
-    /** Buttons for the page's top tasks (optional). */
     links: LinkRef[];
   };
   keyDates: {
@@ -132,11 +125,8 @@ export type Block<T extends BlockType = BlockType> = {
     id: string;
     type: K;
     visible: boolean;
-    /** Label in the page's section navigation; empty hides it from the nav. */
     nav: string;
-    /** Optional heading the nav groups this section under (guide pages). */
     group: string;
-    /** Visual treatment of the band. */
     tone: "plain" | "tint" | "maroon";
     data: BlockData[K];
   };
@@ -144,14 +134,14 @@ export type Block<T extends BlockType = BlockType> = {
 
 export type Page = {
   id: string;
-  slug: string; // "" for the home page
+  slug: string;
   title: string;
   description: string;
   layout: "landing" | "guide";
   blocks: Block[];
 };
 
-export type SiteSettings = {
+type SiteSettings = {
   siteName: string;
   nav: LinkRef[];
   headerCta: LinkRef;

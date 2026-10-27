@@ -1,15 +1,34 @@
 import { randomBytes } from "node:crypto";
 import { isAuthorized, unauthorized } from "@/lib/auth";
 import { database, deploymentSchema, ensureSchema } from "@/lib/database";
-import { validateUpload } from "@/lib/media";
+import { cleanFilename, MAX_ALT_LENGTH, validateUpload } from "@/lib/media";
 import { badRequest, forbidden, safeDecode, sameOrigin, serverError } from "@/lib/request";
+
+const MEDIA_LIBRARY_LIMIT = 500;
+const MAX_FILENAME_LENGTH = 120;
+const MAX_IMAGE_DIMENSION = 20_000;
+const MEDIA_ID_BYTES = 9;
+const DEFAULT_FILENAME = "upload";
+
+function uploadMime(request: Request) {
+  return (request.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+}
+
+function uploadFilename(request: Request) {
+  return cleanFilename(safeDecode(request.headers.get("x-filename"), DEFAULT_FILENAME)).slice(0, MAX_FILENAME_LENGTH) || DEFAULT_FILENAME;
+}
+
+function imageDimension(request: Request, header: string) {
+  const value = Math.round(Number(request.headers.get(header)));
+  return value > 0 && value < MAX_IMAGE_DIMENSION ? value : null;
+}
 
 export async function GET() {
   if (!(await isAuthorized())) return unauthorized();
   try {
     await ensureSchema();
     const rows = await database().query(
-      `select id, filename, mime, alt, size, width, height, created_at from ${deploymentSchema()}.media_files order by created_at desc limit 500`,
+      `select id, filename, mime, alt, size, width, height, created_at from ${deploymentSchema()}.media_files order by created_at desc limit ${MEDIA_LIBRARY_LIMIT}`,
     );
     return Response.json(rows);
   } catch (error) {
@@ -17,23 +36,18 @@ export async function GET() {
   }
 }
 
-// Body is the raw file; metadata travels in headers so no multipart parsing is needed.
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return forbidden();
   if (!(await isAuthorized())) return unauthorized();
-  const mime = (request.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+  const mime = uploadMime(request);
   const bytes = Buffer.from(await request.arrayBuffer());
   const problem = validateUpload(mime, bytes);
   if (problem) return badRequest(problem);
-  const filename = safeDecode(request.headers.get("x-filename"), "upload").replace(/[^\w.\- ]+/g, "").slice(0, 120) || "upload";
-  const alt = safeDecode(request.headers.get("x-alt")).slice(0, 300);
-  const dimension = (header: string) => {
-    const value = Math.round(Number(request.headers.get(header)));
-    return value > 0 && value < 20_000 ? value : null;
-  };
-  const width = dimension("x-width");
-  const height = dimension("x-height");
-  const id = randomBytes(9).toString("base64url");
+  const filename = uploadFilename(request);
+  const alt = safeDecode(request.headers.get("x-alt")).slice(0, MAX_ALT_LENGTH);
+  const width = imageDimension(request, "x-width");
+  const height = imageDimension(request, "x-height");
+  const id = randomBytes(MEDIA_ID_BYTES).toString("base64url");
   try {
     await ensureSchema();
     await database().query(

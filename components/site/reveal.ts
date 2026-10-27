@@ -1,35 +1,51 @@
-// Scrolls to an in-page anchor, opening it first if it's a collapsed FAQ answer.
+const SETTLE_TIMEOUT_MS = 2500;
+
+type FocusVisibleOptions = FocusOptions & { focusVisible?: boolean };
+const SUMMARY_FOCUS: FocusVisibleOptions = { preventScroll: true, focusVisible: false };
+
+export function decodeHash(hash: string) {
+  const raw = hash.replace(/^#/, "");
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
+export function onReaderScroll(listener: () => void) {
+  window.addEventListener("wheel", listener, { passive: true });
+  window.addEventListener("touchmove", listener, { passive: true });
+  window.addEventListener("keydown", listener);
+  return () => {
+    window.removeEventListener("wheel", listener);
+    window.removeEventListener("touchmove", listener);
+    window.removeEventListener("keydown", listener);
+  };
+}
+
+function keepAlignedWhilePageSettles(el: HTMLElement) {
+  let settled = false;
+  let skippedInitialReport = false;
+  const observer = new ResizeObserver(() => {
+    if (!skippedInitialReport) skippedInitialReport = true;
+    else if (!settled) el.scrollIntoView({ block: "start" });
+  });
+  const stop = () => {
+    settled = true;
+    observer.disconnect();
+    stopListening();
+  };
+  observer.observe(document.body);
+  const stopListening = onReaderScroll(stop);
+  window.setTimeout(stop, SETTLE_TIMEOUT_MS);
+}
 
 export function revealHash(hash: string) {
-  let id = hash.replace(/^#/, "");
-  try {
-    id = decodeURIComponent(id);
-  } catch {
-    // Malformed escape sequence: look the raw value up instead.
-  }
+  const id = decodeHash(hash);
   const el = id ? document.getElementById(id) : null;
   if (!el) return;
   if (el instanceof HTMLDetailsElement) el.open = true;
   el.scrollIntoView({ behavior: "smooth", block: "start" });
-  if (el instanceof HTMLDetailsElement) el.querySelector("summary")?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
-  // Images above the target can finish loading after the jump and push it
-  // down; keep it aligned until the page settles or the reader scrolls.
-  let settled = false;
-  const stop = () => {
-    settled = true;
-    observer.disconnect();
-    window.removeEventListener("wheel", stop);
-    window.removeEventListener("touchmove", stop);
-    window.removeEventListener("keydown", stop);
-  };
-  let first = true; // ResizeObserver reports once on observe; skip it.
-  const observer = new ResizeObserver(() => {
-    if (first) first = false;
-    else if (!settled) el.scrollIntoView({ block: "start" });
-  });
-  observer.observe(document.body);
-  window.addEventListener("wheel", stop, { passive: true });
-  window.addEventListener("touchmove", stop, { passive: true });
-  window.addEventListener("keydown", stop);
-  window.setTimeout(stop, 2500);
+  if (el instanceof HTMLDetailsElement) el.querySelector("summary")?.focus(SUMMARY_FOCUS);
+  keepAlignedWhilePageSettles(el);
 }
