@@ -23,12 +23,47 @@ import {
 import { memo, type RefObject, useEffect, useRef, useState } from "react";
 import { faqItemId } from "@/lib/content/anchors";
 import type { Block, BlockData, BlockType, LinkRef } from "@/lib/content/types";
+import { cx } from "../edit/classNames";
 import { Img, List, Lnk, MaybeLink, type Path, Rich, Text, useEdit } from "../edit/context";
 
 type Props<K extends BlockType> = { block: Extract<Block, { type: K }>; data: BlockData[K]; at: Path };
+type HeadProps = { heading: string; intro?: string; at: Path };
+type NoteProps = { value: string; at: Path };
+type FactListProps = { facts: { label: string; value: string }[]; at: Path };
+type ActionsProps = { links: LinkRef[]; at: Path; className?: string; icon?: LucideIcon };
+type BlockViewProps = { block: Block; at: Path };
 
-/* Shared heading used by most sections. */
-function Head({ heading, intro, at }: { heading: string; intro?: string; at: Path }) {
+const MAX_CARD_COLUMNS = 3;
+const MAX_PHOTO_STRIP_COLUMNS = 3;
+const TUCK_MIN_OVERHANG_PX = 96;
+const CAROUSEL_PAGE_FRACTION = 0.9;
+const LEAVES_SITE = /^(https?:|mailto:|tel:)/i;
+
+const FACT_ICONS: [RegExp, LucideIcon][] = [
+  [/time|hour/i, Clock],
+  [/date|when|day/i, CalendarDays],
+  [/location|venue|where|place/i, MapPin],
+  [/dress|attire|wear/i, Shirt],
+  [/regist|rsvp|sign.?up|ticket/i, ClipboardCheck],
+  [/platform|virtual|online/i, Monitor],
+  [/cost|price|fee|pay/i, CircleDollarSign],
+  [/format|who|audience/i, Users],
+  [/shuttle|bus|getting there|parking/i, Bus],
+  [/ship|deliver|package/i, Package],
+];
+const factIcon = (label: string) => FACT_ICONS.find(([pattern]) => pattern.test(label))?.[1] ?? Info;
+
+function linkIcon(href: string) {
+  if (LEAVES_SITE.test(href)) return ArrowUpRight;
+  return href.startsWith("#") ? ArrowDown : ArrowRight;
+}
+
+function cardColumns(count: number) {
+  if (count === 4) return 2;
+  return Math.min(Math.max(count, 1), MAX_CARD_COLUMNS);
+}
+
+function Head({ heading, intro, at }: HeadProps) {
   return (
     <header className="block-head">
       <Text as="h2" value={heading} path={[...at, "heading"]} placeholder="Section heading" />
@@ -37,7 +72,7 @@ function Head({ heading, intro, at }: { heading: string; intro?: string; at: Pat
   );
 }
 
-function Note({ value, at }: { value: string; at: Path }) {
+function Note({ value, at }: NoteProps) {
   const edit = useEdit();
   if (!value && !edit) return null;
   return <Rich value={value} path={[...at, "note"]} className="note" placeholder="Optional note (leave empty to hide)" />;
@@ -84,24 +119,7 @@ function Hero({ data, at }: Props<"hero">) {
   );
 }
 
-// Icons for fact cards, chosen from the label so editors never pick one.
-const FACT_ICONS: [RegExp, LucideIcon][] = [
-  [/time|hour/i, Clock],
-  [/date|when|day/i, CalendarDays],
-  [/location|venue|where|place/i, MapPin],
-  [/dress|attire|wear/i, Shirt],
-  [/regist|rsvp|sign.?up|ticket/i, ClipboardCheck],
-  [/platform|virtual|online/i, Monitor],
-  [/cost|price|fee|pay/i, CircleDollarSign],
-  [/format|who|audience/i, Users],
-  [/shuttle|bus|getting there|parking/i, Bus],
-  [/ship|deliver|package/i, Package],
-];
-const factIcon = (label: string) => FACT_ICONS.find(([pattern]) => pattern.test(label))?.[1] ?? Info;
-
-
-/** The icon card of label/value facts used by event sections and page headers. */
-function FactList({ facts, at }: { facts: { label: string; value: string }[]; at: Path }) {
+function FactList({ facts, at }: FactListProps) {
   const edit = useEdit();
   if (!facts.length && !edit) return null;
   return (
@@ -129,8 +147,7 @@ function FactList({ facts, at }: { facts: { label: string; value: string }[]; at
   );
 }
 
-/** A row of buttons; the first is solid, the rest outlined. */
-function Actions({ links, at, className = "actions" }: { links: LinkRef[]; at: Path; className?: string }) {
+function Actions({ links, at, className = "actions", icon }: ActionsProps) {
   const edit = useEdit();
   if (!links.length && !edit) return null;
   return (
@@ -140,8 +157,7 @@ function Actions({ links, at, className = "actions" }: { links: LinkRef[]; at: P
       path={at}
       label="button"
       render={(link, i, p) => {
-        // ↗ leaves the site, ↓ jumps within this page, → goes to another page here.
-        const Icon = /^(https?:|mailto:|tel:)/i.test(link.href) ? ArrowUpRight : link.href.startsWith("#") ? ArrowDown : ArrowRight;
+        const Icon = icon ?? linkIcon(link.href);
         return (
           <Lnk className={i === 0 ? "button" : "button button-quiet"} value={link} path={p}>
             <Icon aria-hidden />
@@ -352,7 +368,7 @@ function Cards({ data, at }: Props<"cards">) {
     <>
       <Head heading={data.heading} intro={data.intro} at={at} />
       <List
-        className={`cards cards-${data.items.length === 4 ? 2 : Math.min(Math.max(data.items.length, 1), 3)}`}
+        className={`cards cards-${cardColumns(data.items.length)}`}
         items={data.items}
         path={[...at, "items"]}
         label="card"
@@ -371,11 +387,6 @@ function Cards({ data, at }: Props<"cards">) {
   );
 }
 
-/**
- * True when an event's fact card runs well past its description while the two
- * sit side by side. The photos then move up under the description to fill
- * that space instead of leaving a gap above a full-width strip.
- */
 function useTuckPhotos(ref: RefObject<HTMLDivElement | null>, enabled: boolean) {
   const [tuck, setTuck] = useState(false);
   useEffect(() => {
@@ -385,7 +396,7 @@ function useTuckPhotos(ref: RefObject<HTMLDivElement | null>, enabled: boolean) 
     if (!el || !main || !facts || !enabled) return;
     const observer = new ResizeObserver(() => {
       const sideBySide = facts.getBoundingClientRect().left >= main.getBoundingClientRect().right;
-      setTuck(sideBySide && facts.offsetHeight - main.offsetHeight > 96);
+      setTuck(sideBySide && facts.offsetHeight - main.offsetHeight > TUCK_MIN_OVERHANG_PX);
     });
     [el, main, facts].forEach((node) => observer.observe(node));
     return () => observer.disconnect();
@@ -399,7 +410,7 @@ function Event({ data, at }: Props<"event">) {
   const tuck = useTuckPhotos(event, data.gallery.length > 1);
   const gallery = (data.gallery.length > 0 || edit) && (
     <List
-      className={`photo-strip photo-strip-${Math.min(data.gallery.length, 3)}`}
+      className={`photo-strip photo-strip-${Math.min(data.gallery.length, MAX_PHOTO_STRIP_COLUMNS)}`}
       items={data.gallery}
       path={[...at, "gallery"]}
       label="photo"
@@ -412,7 +423,7 @@ function Event({ data, at }: Props<"event">) {
   );
   return (
     <>
-      <div ref={event} className={["event", !(data.facts.length > 0 || edit) && "event-solo", tuck && "event-tuck"].filter(Boolean).join(" ")}>
+      <div ref={event} className={cx("event", !(data.facts.length > 0 || edit) && "event-solo", tuck && "event-tuck")}>
         <div className="event-main">
           <Text as="h2" value={data.heading} path={[...at, "heading"]} placeholder="Event name" />
           <Rich value={data.body} path={[...at, "body"]} className="lead" />
@@ -428,7 +439,6 @@ function Event({ data, at }: Props<"event">) {
 }
 
 function Steps({ data, at }: Props<"steps">) {
-  const edit = useEdit();
   return (
     <>
       <Head heading={data.heading} intro={data.intro} at={at} />
@@ -447,19 +457,7 @@ function Steps({ data, at }: Props<"steps">) {
           </li>
         )}
       />
-      {(data.links.length > 0 || edit) && (
-        <List
-          className="actions"
-          items={data.links}
-          path={[...at, "links"]}
-          label="button"
-          render={(link, i, p) => (
-            <Lnk className={i === 0 ? "button" : "button button-quiet"} value={link} path={p}>
-              <ArrowUpRight aria-hidden />
-            </Lnk>
-          )}
-        />
-      )}
+      <Actions links={data.links} at={[...at, "links"]} icon={ArrowUpRight} />
     </>
   );
 }
@@ -549,7 +547,7 @@ function Table({ data, at }: Props<"table">) {
                 {data.columns.map((column, c) => {
                   const Cell = c === 0 ? "th" : "td";
                   return (
-                    <Cell key={c} data-label={column} {...(c === 0 ? { scope: "row" } : {})}>
+                    <Cell key={c} data-label={column} scope={c === 0 ? "row" : undefined}>
                       <Text value={row.cells[c] ?? ""} path={[...p, "cells", c]} placeholder="—" />
                     </Cell>
                   );
@@ -601,7 +599,7 @@ function Team({ data, at }: Props<"team">) {
   const track = useRef<HTMLDivElement>(null);
   const scroll = (direction: 1 | -1) => {
     const el = track.current?.querySelector(".team-track");
-    if (el) el.scrollBy({ left: direction * el.clientWidth * 0.9, behavior: "smooth" });
+    if (el) el.scrollBy({ left: direction * el.clientWidth * CAROUSEL_PAGE_FRACTION, behavior: "smooth" });
   };
   return (
     <div className="team" ref={track}>
@@ -732,12 +730,14 @@ const renderers: { [K in BlockType]: (props: Props<K>) => React.ReactNode } = {
   callout: Callout,
 };
 
-/** Re-renders only when its block or position changes, so typing in one
- *  section of the studio doesn't re-render every other section. */
+function sameBlockAndPosition(prev: BlockViewProps, next: BlockViewProps) {
+  return prev.block === next.block && prev.at.join("/") === next.at.join("/");
+}
+
 export const BlockView = memo(
-  function BlockView({ block, at }: { block: Block; at: Path }) {
+  function BlockView({ block, at }: BlockViewProps) {
     const Render = renderers[block.type] as (props: Props<BlockType>) => React.ReactNode;
-    return <Render block={block as never} data={block.data as never} at={at} />;
+    return <Render block={block} data={block.data} at={at} />;
   },
-  (prev, next) => prev.block === next.block && prev.at.join("/") === next.at.join("/"),
+  sameBlockAndPosition,
 );

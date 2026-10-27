@@ -7,6 +7,7 @@ import {
   isValidElement,
   type ReactElement,
   type ReactNode,
+  type SyntheticEvent,
   useContext,
   useLayoutEffect,
   useRef,
@@ -15,14 +16,13 @@ import {
 import { ArrowDown, ArrowUp, Copy, GripVertical, ImagePlus, Link2, Plus, Trash2 } from "lucide-react";
 import { safeHref, sanitizeHtml } from "@/lib/sanitize";
 import type { ImageRef, LinkRef } from "@/lib/content/types";
-import { SmartLink } from "../site/SmartLink";
-import { RichField } from "./RichField";
-
 import type { Path } from "@/lib/studio/paths";
+import { SmartLink } from "../site/SmartLink";
+import { cx } from "./classNames";
+import { RichField } from "./RichField";
 
 export type { Path };
 
-/** Operations the studio exposes to editable regions of the rendered page. */
 export type EditApi = {
   set(path: Path, value: unknown): void;
   insertItem(listPath: Path, index: number): void;
@@ -30,51 +30,23 @@ export type EditApi = {
   moveItem(listPath: Path, from: number, to: number): void;
   duplicateItem(listPath: Path, index: number): void;
   pickImage(path: Path, current: ImageRef): void;
-  /** Upload a file dropped straight onto an image and use it there. */
   dropImage(path: Path, file: File, current: ImageRef): void;
   editLink(path: Path, current: LinkRef): void;
 };
 
-const EditContext = createContext<EditApi | null>(null);
-export const EditProvider = EditContext.Provider;
-export const useEdit = () => useContext(EditContext);
-
-const cx = (...names: (string | false | undefined | null)[]) => names.filter(Boolean).join(" ");
-
 type TagName = keyof React.JSX.IntrinsicElements;
+type ItemElementProps = React.HTMLAttributes<HTMLElement>;
+type DragState = { from: number; over: number };
 
-/* ─────────────────────────────── Plain text ─────────────────────────────── */
-
-export function Text({
-  value,
-  path,
-  as = "span",
-  className,
-  placeholder = "Type here",
-  multiline = false,
-}: {
+type TextProps = {
   value: string;
   path: Path;
   as?: TagName;
   className?: string;
   placeholder?: string;
   multiline?: boolean;
-}) {
-  const edit = useEdit();
-  const Tag = as as "span";
-  if (!edit) return value ? <Tag className={className}>{value}</Tag> : null;
-  return <EditableText {...{ value, path, Tag, className, placeholder, multiline, edit }} />;
-}
-
-function EditableText({
-  value,
-  path,
-  Tag,
-  className,
-  placeholder,
-  multiline,
-  edit,
-}: {
+};
+type EditableTextProps = {
   value: string;
   path: Path;
   Tag: "span";
@@ -82,12 +54,75 @@ function EditableText({
   placeholder: string;
   multiline: boolean;
   edit: EditApi;
-}) {
+};
+type RichProps = { value: string; path: Path; className?: string; placeholder?: string };
+type ImgProps = {
+  value: ImageRef;
+  path: Path;
+  className?: string;
+  frameClassName?: string;
+  zoom?: boolean;
+  loading?: "lazy" | "eager";
+};
+type ZoomableImageProps = { image: ReactNode; value: ImageRef; frameClassName?: string };
+type EditableImgProps = { value: ImageRef; path: Path; className?: string; frameClassName?: string; edit: EditApi };
+type LightboxProps = { image: ImageRef; onClose: () => void };
+type LnkProps = { value: LinkRef; path: Path; className?: string; children?: ReactNode; placeholder?: string };
+type MaybeLinkProps = { href: string; className?: string; children: ReactNode };
+type ListProps<T> = {
+  items: T[];
+  path: Path;
+  render: (item: T, index: number, at: Path) => ReactElement;
+  as?: TagName;
+  className?: string;
+  label?: string;
+  min?: number;
+  containerProps?: React.HTMLAttributes<HTMLElement>;
+};
+type ItemToolsProps = {
+  index: number;
+  count: number;
+  min: number;
+  label: string;
+  path: Path;
+  edit: EditApi;
+  onArm: (index: number | null) => void;
+};
+
+const DEFAULT_TEXT_PLACEHOLDER = "Type here";
+const DEFAULT_RICH_PLACEHOLDER = "Write something…";
+const DEFAULT_LINK_PLACEHOLDER = "Link text";
+const FULL_ROW_SPAN = 99;
+
+const EditContext = createContext<EditApi | null>(null);
+export const EditProvider = EditContext.Provider;
+export const useEdit = () => useContext(EditContext);
+
+const stopEvent = (event: SyntheticEvent) => {
+  event.preventDefault();
+  event.stopPropagation();
+};
+
+export function Text({
+  value,
+  path,
+  as = "span",
+  className,
+  placeholder = DEFAULT_TEXT_PLACEHOLDER,
+  multiline = false,
+}: TextProps) {
+  const edit = useEdit();
+  const Tag = as as "span";
+  if (!edit) return value ? <Tag className={className}>{value}</Tag> : null;
+  return <EditableText {...{ value, path, Tag, className, placeholder, multiline, edit }} />;
+}
+
+function EditableText({ value, path, Tag, className, placeholder, multiline, edit }: EditableTextProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  // The element is uncontrolled while focused so the caret never jumps.
   useLayoutEffect(() => {
     const el = ref.current;
-    if (el && document.activeElement !== el && el.innerText !== value) el.innerText = value;
+    const isBeingTyped = document.activeElement === el;
+    if (el && !isBeingTyped && el.innerText !== value) el.innerText = value;
   }, [value]);
   return (
     <Tag
@@ -111,19 +146,7 @@ function EditableText({
   );
 }
 
-/* ─────────────────────────────── Rich text ─────────────────────────────── */
-
-export function Rich({
-  value,
-  path,
-  className,
-  placeholder = "Write something…",
-}: {
-  value: string;
-  path: Path;
-  className?: string;
-  placeholder?: string;
-}) {
+export function Rich({ value, path, className, placeholder = DEFAULT_RICH_PLACEHOLDER }: RichProps) {
   const edit = useEdit();
   if (!edit) {
     const html = sanitizeHtml(value);
@@ -132,56 +155,45 @@ export function Rich({
   return <RichField {...{ value, path, className, placeholder, edit }} />;
 }
 
-/* ──────────────────────────────── Images ──────────────────────────────── */
-
-export function Img({
-  value,
-  path,
-  className,
-  frameClassName,
-  zoom = false,
-  loading = "lazy",
-}: {
-  value: ImageRef;
-  path: Path;
-  className?: string;
-  frameClassName?: string;
-  zoom?: boolean;
-  loading?: "lazy" | "eager";
-}) {
+export function Img({ value, path, className, frameClassName, zoom = false, loading = "lazy" }: ImgProps) {
   const edit = useEdit();
+  if (edit) return <EditableImg {...{ value, path, className, frameClassName, edit }} />;
+  if (!value.src) return null;
+  const image = (
+    <img
+      className={className}
+      src={value.src}
+      alt={value.alt}
+      loading={loading}
+      decoding="async"
+      fetchPriority={loading === "eager" ? "high" : undefined}
+    />
+  );
+  if (zoom) return <ZoomableImage {...{ image, value, frameClassName }} />;
+  return frameClassName ? <span className={frameClassName}>{image}</span> : image;
+}
+
+function ZoomableImage({ image, value, frameClassName }: ZoomableImageProps) {
   const [open, setOpen] = useState(false);
-  if (!edit) {
-    if (!value.src) return null;
-    const image = (
-      <img
-        className={className}
-        src={value.src}
-        alt={value.alt}
-        loading={loading}
-        decoding="async"
-        fetchPriority={loading === "eager" ? "high" : undefined}
-      />
-    );
-    if (!zoom) return frameClassName ? <span className={frameClassName}>{image}</span> : image;
-    return (
-      <>
-        <button type="button" className={cx("zoomable", frameClassName)} onClick={() => setOpen(true)} aria-label={`Enlarge image: ${value.alt}`}>
-          {image}
-          <span className="zoom-hint" aria-hidden>Click to enlarge</span>
-        </button>
-        {open && <Lightbox image={value} onClose={() => setOpen(false)} />}
-      </>
-    );
-  }
+  return (
+    <>
+      <button type="button" className={cx("zoomable", frameClassName)} onClick={() => setOpen(true)} aria-label={`Enlarge image: ${value.alt}`}>
+        {image}
+        <span className="zoom-hint" aria-hidden>Click to enlarge</span>
+      </button>
+      {open && <Lightbox image={value} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+function EditableImg({ value, path, className, frameClassName, edit }: EditableImgProps) {
   return (
     <span
       className={cx("ed-img", frameClassName, !value.src && "ed-img-empty")}
       title="Drop an image here to replace it"
       onDragOver={(event) => {
         if (!event.dataTransfer.types.includes("Files")) return;
-        event.preventDefault();
-        event.stopPropagation();
+        stopEvent(event);
         event.currentTarget.classList.add("ed-img-drop");
       }}
       onDragLeave={(event) => event.currentTarget.classList.remove("ed-img-drop")}
@@ -189,8 +201,7 @@ export function Img({
         const file = event.dataTransfer.files[0];
         event.currentTarget.classList.remove("ed-img-drop");
         if (!file) return;
-        event.preventDefault();
-        event.stopPropagation();
+        stopEvent(event);
         edit.dropImage(path, file, value);
       }}
     >
@@ -199,8 +210,7 @@ export function Img({
         type="button"
         className="ed-img-button"
         onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
+          stopEvent(event);
           edit.pickImage(path, value);
         }}
       >
@@ -210,7 +220,7 @@ export function Img({
   );
 }
 
-function Lightbox({ image, onClose }: { image: ImageRef; onClose: () => void }) {
+function Lightbox({ image, onClose }: LightboxProps) {
   const ref = useRef<HTMLDialogElement>(null);
   useLayoutEffect(() => {
     ref.current?.showModal();
@@ -227,21 +237,7 @@ function Lightbox({ image, onClose }: { image: ImageRef; onClose: () => void }) 
   );
 }
 
-/* ──────────────────────────────── Links ──────────────────────────────── */
-
-export function Lnk({
-  value,
-  path,
-  className,
-  children,
-  placeholder = "Link text",
-}: {
-  value: LinkRef;
-  path: Path;
-  className?: string;
-  children?: ReactNode;
-  placeholder?: string;
-}) {
+export function Lnk({ value, path, className, children, placeholder = DEFAULT_LINK_PLACEHOLDER }: LnkProps) {
   const edit = useEdit();
   if (!edit) {
     const href = safeHref(value.href);
@@ -262,8 +258,7 @@ export function Lnk({
         className={cx("ed-link-button", !value.href && "ed-link-missing")}
         title={value.href ? `Links to ${value.href}` : "Set where this link goes"}
         onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
+          stopEvent(event);
           edit.editLink(path, value);
         }}
       >
@@ -274,103 +269,92 @@ export function Lnk({
   );
 }
 
-/** A plain href attached to a non-link element (schedule rows, key dates). */
-export function MaybeLink({ href, className, children }: { href: string; className?: string; children: ReactNode }) {
+export function MaybeLink({ href, className, children }: MaybeLinkProps) {
   const edit = useEdit();
-  href = safeHref(href);
-  if (!href || edit) return <span className={className}>{children}</span>;
+  const safe = safeHref(href);
+  if (!safe || edit) return <span className={className}>{children}</span>;
   return (
-    <SmartLink className={className} href={href}>
+    <SmartLink className={className} href={safe}>
       {children}
     </SmartLink>
   );
 }
 
-/* ──────────────────────────────── Lists ──────────────────────────────── */
+function dropClass(drag: DragState | null, index: number) {
+  if (!drag || drag.over !== index || drag.from === index) return null;
+  return drag.from < index ? "ed-drop-after" : "ed-drop-before";
+}
 
-export function List<T>({
-  items,
-  path,
-  render,
-  as = "div",
-  className,
-  label = "item",
-  min = 0,
-  containerProps,
-}: {
-  items: T[];
-  path: Path;
-  render: (item: T, index: number, at: Path) => ReactElement;
-  as?: TagName;
-  className?: string;
-  label?: string;
-  min?: number;
-  /** Extra attributes for the list element itself (e.g. a scroll region's label). */
-  containerProps?: React.HTMLAttributes<HTMLElement>;
-}) {
+function ItemTools({ index, count, min, label, path, edit, onArm }: ItemToolsProps) {
+  const name = `${label} ${index + 1}`;
+  return (
+    <span className="ed-item-tools" contentEditable={false} onClick={(event) => event.stopPropagation()}>
+      <button type="button" className="ed-grip" title={`Drag to reorder ${label}`} aria-label={`Drag ${name}`} onPointerDown={() => onArm(index)} onPointerUp={() => onArm(null)}>
+        <GripVertical />
+      </button>
+      <button type="button" title="Move earlier" aria-label={`Move ${name} earlier`} disabled={index === 0} onClick={() => edit.moveItem(path, index, index - 1)}>
+        <ArrowUp />
+      </button>
+      <button type="button" title="Move later" aria-label={`Move ${name} later`} disabled={index === count - 1} onClick={() => edit.moveItem(path, index, index + 1)}>
+        <ArrowDown />
+      </button>
+      <button type="button" title="Duplicate" aria-label={`Duplicate ${name}`} onClick={() => edit.duplicateItem(path, index)}>
+        <Copy />
+      </button>
+      <button type="button" title="Delete" aria-label={`Delete ${name}`} disabled={count <= min} onClick={() => edit.removeItem(path, index)}>
+        <Trash2 />
+      </button>
+    </span>
+  );
+}
+
+export function List<T>({ items, path, render, as = "div", className, label = "item", min = 0, containerProps }: ListProps<T>) {
   const edit = useEdit();
   const [armed, setArmed] = useState<number | null>(null);
-  const [drag, setDrag] = useState<{ from: number; over: number } | null>(null);
+  const [drag, setDrag] = useState<DragState | null>(null);
   const Tag = as as "div";
   if (!edit) return <Tag className={className} {...containerProps}>{items.map((item, i) => <Fragment key={i}>{render(item, i, [...path, i])}</Fragment>)}</Tag>;
 
   const isRow = as === "tbody";
+  const endDrag = () => {
+    setDrag(null);
+    setArmed(null);
+  };
+  const dragHandlers = (i: number): ItemElementProps => ({
+    draggable: armed === i,
+    onDragStart: (event) => {
+      event.stopPropagation();
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", `${label} ${i + 1}`);
+      setDrag({ from: i, over: i });
+    },
+    onDragOver: (event) => {
+      if (!drag) return;
+      stopEvent(event);
+      if (drag.over !== i) setDrag({ ...drag, over: i });
+    },
+    onDrop: (event) => {
+      if (!drag) return;
+      stopEvent(event);
+      if (drag.from !== i) edit.moveItem(path, drag.from, i);
+      endDrag();
+    },
+    onDragEnd: endDrag,
+  });
+
   const rendered = items.map((item, i) => {
     const element = render(item, i, [...path, i]);
-    if (!isValidElement<{ className?: string; children?: ReactNode }>(element)) return element;
-    const controls = (
-      <span className="ed-item-tools" contentEditable={false} onClick={(event) => event.stopPropagation()}>
-        <button type="button" className="ed-grip" title={`Drag to reorder ${label}`} aria-label={`Drag ${label} ${i + 1}`} onPointerDown={() => setArmed(i)} onPointerUp={() => setArmed(null)}>
-          <GripVertical />
-        </button>
-        <button type="button" title="Move earlier" aria-label={`Move ${label} ${i + 1} earlier`} disabled={i === 0} onClick={() => edit.moveItem(path, i, i - 1)}>
-          <ArrowUp />
-        </button>
-        <button type="button" title="Move later" aria-label={`Move ${label} ${i + 1} later`} disabled={i === items.length - 1} onClick={() => edit.moveItem(path, i, i + 1)}>
-          <ArrowDown />
-        </button>
-        <button type="button" title="Duplicate" aria-label={`Duplicate ${label} ${i + 1}`} onClick={() => edit.duplicateItem(path, i)}>
-          <Copy />
-        </button>
-        <button type="button" title="Delete" aria-label={`Delete ${label} ${i + 1}`} disabled={items.length <= min} onClick={() => edit.removeItem(path, i)}>
-          <Trash2 />
-        </button>
-      </span>
-    );
-    const dropping = drag && drag.over === i && drag.from !== i ? (drag.from < i ? "ed-drop-after" : "ed-drop-before") : null;
+    if (!isValidElement<ItemElementProps>(element)) return element;
+    const tools = <ItemTools index={i} count={items.length} min={min} label={label} path={path} edit={edit} onArm={setArmed} />;
     return cloneElement(
       element,
       {
         key: i,
-        className: cx(element.props.className, "ed-item", dropping, drag?.from === i && "ed-dragging"),
-        draggable: armed === i,
-        onDragStart: (event: React.DragEvent) => {
-          event.stopPropagation();
-          event.dataTransfer.effectAllowed = "move";
-          event.dataTransfer.setData("text/plain", `${label} ${i + 1}`);
-          setDrag({ from: i, over: i });
-        },
-        onDragOver: (event: React.DragEvent) => {
-          if (!drag) return;
-          event.preventDefault();
-          event.stopPropagation();
-          if (drag.over !== i) setDrag({ ...drag, over: i });
-        },
-        onDrop: (event: React.DragEvent) => {
-          if (!drag) return;
-          event.preventDefault();
-          event.stopPropagation();
-          if (drag.from !== i) edit.moveItem(path, drag.from, i);
-          setDrag(null);
-          setArmed(null);
-        },
-        onDragEnd: () => {
-          setDrag(null);
-          setArmed(null);
-        },
-      } as Record<string, unknown>,
+        className: cx(element.props.className, "ed-item", dropClass(drag, i), drag?.from === i && "ed-dragging"),
+        ...dragHandlers(i),
+      },
       ...Children.toArray(element.props.children),
-      isRow ? <td key="tools" className="ed-row-tools">{controls}</td> : <Fragment key="tools">{controls}</Fragment>,
+      isRow ? <td key="tools" className="ed-row-tools">{tools}</td> : <Fragment key="tools">{tools}</Fragment>,
     );
   });
 
@@ -384,7 +368,7 @@ export function List<T>({
       {rendered}
       {isRow ? (
         <tr className="ed-add-row">
-          <td colSpan={99}>{add}</td>
+          <td colSpan={FULL_ROW_SPAN}>{add}</td>
         </tr>
       ) : (
         add
