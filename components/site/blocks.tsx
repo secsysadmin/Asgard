@@ -90,34 +90,38 @@ function Hero({ data, at }: Props<"hero">) {
         </>
       )}
       <div className="hero-copy">
-        <h1>
-          <Text value={data.title} path={[...at, "title"]} placeholder="Headline" />
-          {(data.emphasis || edit) && (
-            <>
-              {" "}
-              <em>
-                <Text value={data.emphasis} path={[...at, "emphasis"]} placeholder="Emphasis" />
-              </em>
-            </>
-          )}
-        </h1>
-        <Text as="p" className="hero-organizer" value={data.eyebrow} path={[...at, "eyebrow"]} placeholder="Organizer" />
-        <Rich value={data.summary} path={[...at, "summary"]} className="hero-summary" placeholder="Supporting sentence" />
-        <ul className="hero-meta">
-          <li>
-            <CalendarDays aria-hidden /> <Text value={data.dates} path={[...at, "dates"]} placeholder="Dates" />
-          </li>
-          <li>
-            <MapPin aria-hidden /> <Text value={data.location} path={[...at, "location"]} placeholder="Location" />
-          </li>
-        </ul>
-        <div className="hero-actions">
-          <Lnk className="button button-light" value={data.primary} path={[...at, "primary"]}>
-            <ArrowRight aria-hidden />
-          </Lnk>
-          <Lnk className="button button-outline-light" value={data.secondary} path={[...at, "secondary"]}>
-            <ArrowRight aria-hidden />
-          </Lnk>
+        <div className="hero-message">
+          <h1>
+            <Text value={data.title} path={[...at, "title"]} placeholder="Headline" />
+            {(data.emphasis || edit) && (
+              <>
+                {" "}
+                <em>
+                  <Text value={data.emphasis} path={[...at, "emphasis"]} placeholder="Emphasis" />
+                </em>
+              </>
+            )}
+          </h1>
+          <Text as="p" className="hero-organizer" value={data.eyebrow} path={[...at, "eyebrow"]} placeholder="Organizer" />
+          <Rich value={data.summary} path={[...at, "summary"]} className="hero-summary" placeholder="Supporting sentence" />
+        </div>
+        <div className="hero-details">
+          <ul className="hero-meta">
+            <li>
+              <CalendarDays aria-hidden /> <Text value={data.dates} path={[...at, "dates"]} placeholder="Dates" />
+            </li>
+            <li>
+              <MapPin aria-hidden /> <Text value={data.location} path={[...at, "location"]} placeholder="Location" />
+            </li>
+          </ul>
+          <div className="hero-actions">
+            <Lnk className="button button-light" value={data.primary} path={[...at, "primary"]}>
+              <ArrowRight aria-hidden />
+            </Lnk>
+            <Lnk className="button button-outline-light" value={data.secondary} path={[...at, "secondary"]}>
+              <ArrowRight aria-hidden />
+            </Lnk>
+          </div>
         </div>
       </div>
     </div>
