@@ -12,13 +12,13 @@ colors:
   brass: "#c7a66a"
 typography:
   display:
-    fontFamily: "Playfair Display, Georgia, serif"
+    fontFamily: "Source Serif 4, Georgia, serif"
     fontSize: "clamp(3rem, 6vw, 7.875rem)"
     fontWeight: 500
     lineHeight: 0.88
     letterSpacing: "-0.04em"
   body:
-    fontFamily: "IBM Plex Sans, Arial, sans-serif"
+    fontFamily: "Source Sans 3, Arial, sans-serif"
     fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.6
@@ -55,13 +55,13 @@ Maroon is the institutional anchor; warm white and cream carry the main surfaces
 
 ## Typography
 
-Playfair Display provides a measured editorial voice for page and section headings. IBM Plex Sans carries body copy and functional information; DM Mono is reserved for metadata such as times and dates.
+Source Serif 4 gives page and section headings a sturdy editorial voice. Source Sans 3 carries body copy and functional information; DM Mono is reserved for metadata such as times and dates. The hero retains its Playfair Display and IBM Plex Sans typography.
 
 ## Layout
 
 Public pages use a fluid gutter (6% of the page, 20–96px) and alternate expansive editorial moments with dense operational sections. Responsive rules are container queries on the `.site` wrapper, so the studio's device previews behave like real devices. Guide pages pair a sticky "On this page" sidebar (a dropdown under 960px) with the content column. The studio uses a top bar, a left panel rail, a centered canvas, and a right inspector.
 
-The fair-week dates use a horizontal timeline that becomes vertical on narrower screens. Event statistics use large Playfair numerals and stable labels.
+The fair-week dates use a horizontal timeline that becomes vertical on narrower screens. Event statistics use large Source Serif numerals and stable labels.
 
 ## Elevation & Depth
 

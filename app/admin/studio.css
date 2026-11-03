@@ -1,5 +1,7 @@
 /* ───────────────────────── Site Studio (admin) ───────────────────────── */
 .studio {
+  --display: var(--hero-display);
+  --sans: var(--hero-sans);
   --st-bg: #f3f1ed;
   --st-panel: #ffffff;
   --st-line: #e3ded6;
@@ -16,6 +18,11 @@
   color: var(--st-text);
   font: 400 14px/1.45 var(--sans);
   overflow: hidden;
+}
+.studio .site {
+  --display: var(--font-display), Georgia, serif;
+  --sans: var(--font-sans), Arial, sans-serif;
+  font: 400 16px/1.6 var(--sans);
 }
 .st-top svg,
 .st-left svg,

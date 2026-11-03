@@ -1,21 +1,35 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Mono, IBM_Plex_Sans, Playfair_Display } from "next/font/google";
+import { DM_Mono, IBM_Plex_Sans, Playfair_Display, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 
 type RootLayoutProps = Readonly<{ children: React.ReactNode }>;
 
 const THEME_COLOR = "#500000";
 
-const display = Playfair_Display({
+const heroDisplay = Playfair_Display({
   subsets: ["latin"],
   weight: ["500", "600"],
   style: ["normal", "italic"],
+  variable: "--font-hero-display",
+  display: "swap",
+});
+const heroSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-hero-sans",
+  display: "swap",
+});
+const display = Source_Serif_4({
+  subsets: ["latin"],
+  weight: "variable",
+  style: ["normal"],
   variable: "--font-display",
   display: "swap",
 });
-const sans = IBM_Plex_Sans({
+const sans = Source_Sans_3({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "variable",
   style: ["normal", "italic"],
   variable: "--font-sans",
   display: "swap",
@@ -31,7 +45,7 @@ export const viewport: Viewport = { themeColor: THEME_COLOR };
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${display.variable} ${sans.variable} ${heroDisplay.variable} ${heroSans.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );

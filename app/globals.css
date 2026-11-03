@@ -16,6 +16,8 @@
   --line-strong: rgba(31, 26, 23, 0.24);
   --focus: #b3541e;
   --display: var(--font-display), Georgia, serif;
+  --hero-display: var(--font-hero-display), Georgia, serif;
+  --hero-sans: var(--font-hero-sans), Arial, sans-serif;
   --sans: var(--font-sans), Arial, sans-serif;
   --mono: var(--font-mono), ui-monospace, monospace;
   --radius: 6px;
@@ -739,6 +741,9 @@ h4 {
   border: 0;
 }
 .hero {
+  --sans: var(--hero-sans);
+  --display: var(--hero-display);
+  font-family: var(--hero-sans);
   position: relative;
   min-height: min(720px, 82vh);
   display: flex;
@@ -773,7 +778,7 @@ h4 {
 }
 .hero h1 {
   color: var(--white);
-  font: 500 clamp(46px, 7.4cqi, 104px) / 0.95 var(--display);
+  font: 500 clamp(46px, 7.4cqi, 104px) / 0.95 var(--hero-display);
   letter-spacing: -0.035em;
 }
 .hero h1 em {
@@ -848,14 +853,14 @@ h4 {
   padding-bottom: 72px;
 }
 .hero-with-video h1 {
-  font: 500 clamp(18px, 1.6cqi, 23px) / 1.3 var(--sans);
+  font: 500 clamp(18px, 1.6cqi, 23px) / 1.3 var(--hero-sans);
   letter-spacing: 0.04em;
   text-wrap: balance;
 }
 .hero-with-video h1 em {
   margin-top: 12px;
   color: var(--white);
-  font: italic 500 clamp(60px, 9cqi, 112px) / 1.08 var(--display);
+  font: italic 500 clamp(60px, 9cqi, 112px) / 1.08 var(--hero-display);
   letter-spacing: -0.03em;
   font-style: italic;
 }
