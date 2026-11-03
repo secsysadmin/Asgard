@@ -89,7 +89,7 @@ function Suggestions({ onPick }: SuggestionsProps) {
         {SUGGESTIONS.map((suggestion) => (
           <li key={suggestion}>
             <button type="button" onClick={() => onPick(suggestion)}>
-              {suggestion}
+              {suggestion} <ArrowRight aria-hidden />
             </button>
           </li>
         ))}
@@ -240,11 +240,16 @@ export function SiteSearch({ content }: Props) {
           onClose={() => setOpen(false)}
           onClick={(event) => event.target === dialog.current && close()}
         >
+          <div className="search-heading">
+            <p>SEC Engineering Career Fair</p>
+            <h2>Search the fair</h2>
+          </div>
           <div className="search-box">
             <SearchIcon aria-hidden />
             <input
               ref={input}
               type="search"
+              aria-label="Search the site"
               role="combobox"
               aria-expanded={results.length > 0}
               aria-controls={listId}

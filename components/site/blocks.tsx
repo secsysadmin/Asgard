@@ -91,10 +91,6 @@ function Hero({ data, at }: Props<"hero">) {
       )}
       <div className="hero-copy">
         <div className="hero-message">
-          <div className="hero-eyebrow">
-            {data.emphasis && <Text value={data.title} path={[...at, "title"]} placeholder="Headline" />}
-            <Text value={data.eyebrow} path={[...at, "eyebrow"]} placeholder="Organizer" />
-          </div>
           <h1>
             {data.emphasis ? <Text value={data.emphasis} path={[...at, "emphasis"]} placeholder="Emphasis" /> : <Text value={data.title} path={[...at, "title"]} placeholder="Headline" />}
           </h1>
