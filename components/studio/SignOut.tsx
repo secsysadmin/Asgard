@@ -2,7 +2,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function SignOut() {
+type SignOutProps = { disabled?: boolean };
+
+export function SignOut({ disabled = false }: SignOutProps) {
   const router = useRouter();
   const [error, setError] = useState("");
   async function signOut() {
@@ -15,5 +17,5 @@ export function SignOut() {
       setError("Could not sign out. Please try again.");
     }
   }
-  return <><button type="button" className="st-btn" onClick={signOut}>Sign out</button>{error && <span role="alert">{error}</span>}</>;
+  return <><button type="button" className="st-btn" onClick={signOut} disabled={disabled}>Sign out</button>{error && <span role="alert">{error}</span>}</>;
 }

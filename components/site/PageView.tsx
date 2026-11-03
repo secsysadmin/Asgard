@@ -94,7 +94,7 @@ function Header({ content, page }: HeaderProps) {
         </button>
         <nav id="site-nav" className={open ? "site-nav open" : "site-nav"} aria-label="Main">
           <ul>
-            {settings.nav.map((link, i) => (
+            {settings.nav.filter((link) => !settings.hiddenNav.includes(link.href)).map((link, i) => (
               <li key={i}>
                 <SmartLink href={safeHref(link.href)} aria-current={isCurrent(link.href, page) ? "page" : undefined} onClick={() => setOpen(false)}>
                   {link.label}
@@ -127,7 +127,7 @@ function Footer({ content }: FooterProps) {
           <li>
             <SmartLink href="/">Home</SmartLink>
           </li>
-          {settings.nav.map((link, i) => (
+          {settings.nav.filter((link) => !settings.hiddenNav.includes(link.href)).map((link, i) => (
             <li key={i}>
               <SmartLink href={safeHref(link.href)}>{link.label}</SmartLink>
             </li>

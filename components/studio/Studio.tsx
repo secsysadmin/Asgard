@@ -24,6 +24,7 @@ import {
   TriangleAlert,
   Undo2,
   Upload,
+  X,
 } from "lucide-react";
 import { type MouseEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { blockSpecs, createBlock, newBlockId } from "@/lib/content/blocks";
@@ -82,10 +83,10 @@ const MIN_ZOOM = 0.4;
 const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 function saveStatus(saveState: SaveState, unpublished: boolean) {
-  if (saveState === "error") return { icon: <TriangleAlert />, text: "Not saved — retrying on next edit", tone: "error" };
+  if (saveState === "error") return { icon: <TriangleAlert />, text: "Draft not saved", tone: "error" };
   if (saveState === "saving") return { icon: <Loader2 className="st-spin" />, text: "Saving draft…", tone: "" };
-  if (unpublished) return { icon: <Pencil />, text: "Draft saved · not published yet", tone: "draft" };
-  return { icon: <Check />, text: "Live site is up to date", tone: "ok" };
+  if (unpublished) return { icon: <Pencil />, text: "Draft saved · ready to publish", tone: "draft" };
+  return { icon: <Check />, text: "All changes are live", tone: "ok" };
 }
 
 function SectionFrame({ block, index, count, selected, actions, children }: SectionFrameProps) {
@@ -153,6 +154,7 @@ export function Studio() {
   const [selected, setSelected] = useState<string | null>(null);
   const [panel, setPanel] = useState<Panel>("sections");
   const [panelOpen, setPanelOpen] = useState(true);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
   const [device, setDevice] = useState<Device>("desktop");
   const [preview, setPreview] = useState(false);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -161,10 +163,16 @@ export function Studio() {
 
   const { toast, notify } = useToast();
   const { content, contentRef, history, load, commit, undo, redo } = useEditHistory();
-  const { saveState, markSaved } = useDraftAutosave(content, contentRef, notify);
+  const { saveState, isSaved, markSaved, retrySave } = useDraftAutosave(content, contentRef, notify);
   const { library, libraryError, loadLibrary } = useMediaLibrary();
   const canvasWidth = useElementWidth(canvas, INITIAL_CANVAS_WIDTH, !!content);
-  useUndoShortcuts(undo, redo);
+  useUndoShortcuts(undo, redo, !publishing);
+
+  useEffect(() => {
+    if (!window.matchMedia("(max-width: 820px)").matches) return;
+    const timer = window.setTimeout(() => setDevice("mobile"), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     fetchJson<LoadedContent>("/api/content")
@@ -237,8 +245,8 @@ export function Studio() {
   const blockIndex = page.blocks.findIndex((block) => block.id === selected);
   const selectedBlock = blockIndex >= 0 ? page.blocks[blockIndex] : null;
   const unpublished = !sameJson(content, published);
-  const dirty = saveState === "saving";
-  const status = saveStatus(saveState, unpublished);
+  const dirty = !isSaved;
+  const status = saveStatus(dirty && saveState === "saved" ? "saving" : saveState, unpublished);
   const zoom = Math.min(1, Math.max(MIN_ZOOM, canvasWidth / DEVICE_WIDTH[device]));
 
   const openPage = (index: number) => {
@@ -264,9 +272,10 @@ export function Studio() {
     setSelected(copy.id);
   };
   const deleteBlock = (index: number) => {
-    if (!confirm(`Delete “${blockTitle(page.blocks[index])}”? You can undo this.`)) return;
+    if (!confirm(`Delete “${blockTitle(page.blocks[index])}” from this draft? The live site changes only after you publish. You can undo before publishing.`)) return;
     setBlocks((blocks) => blocks.filter((_, i) => i !== index));
     setSelected(null);
+    notify("Section deleted from draft. Publish to update the live site.");
   };
 
   const sectionActions: SectionActions = {
@@ -281,10 +290,18 @@ export function Studio() {
     move: (from, to) => {
       if (to >= 0 && to < page.blocks.length) setBlocks((blocks) => move(blocks, from, to));
     },
-    toggleVisible: (index) => api.set([...pageBase, "blocks", index, "visible"], !page.blocks[index].visible),
+    toggleVisible: (index) => {
+      const visible = !page.blocks[index].visible;
+      api.set([...pageBase, "blocks", index, "visible"], visible);
+      notify(`Section ${visible ? "shown" : "hidden"} in draft. Publish to update the live site.`);
+    },
     duplicate: duplicateBlock,
     remove: deleteBlock,
     insertAt: (index) => setDialog({ kind: "add", index }),
+    manageTeam: (index) => {
+      setSelected(page.blocks[index].id);
+      setDialog({ kind: "team", path: [...pageBase, "blocks", index, "data", "members"] });
+    },
   };
 
   const wrap: SectionWrapper = (block, index, node) => (
@@ -294,6 +311,7 @@ export function Studio() {
   );
 
   const publish = async () => {
+    if (publishing || dirty || !unpublished) return;
     setPublishing(true);
     try {
       const body = await fetchJson<{ content: SiteContent }>("/api/content/publish", {
@@ -303,7 +321,7 @@ export function Studio() {
       });
       setPublished(body.content);
       markSaved(content);
-      notify("Published. The live site now shows your changes.");
+      notify("Published. Refresh the live page to see your changes.");
     } catch (error) {
       notify(errorMessage(error, "Publishing failed."), "error");
     } finally {
@@ -331,6 +349,7 @@ export function Studio() {
           <FileText />
           <select
             value={pageIndex}
+            disabled={publishing}
             onChange={(event) => {
               openPage(Number(event.target.value));
               canvas.current?.scrollTo({ top: 0 });
@@ -344,10 +363,10 @@ export function Studio() {
           </select>
         </label>
         <div className="st-top-group">
-          <button type="button" className="st-icon" onClick={undo} disabled={!history.canUndo} title="Undo (⌘Z)" aria-label="Undo">
+          <button type="button" className="st-icon" onClick={undo} disabled={publishing || !history.canUndo} title="Undo (⌘Z)" aria-label="Undo">
             <Undo2 />
           </button>
-          <button type="button" className="st-icon" onClick={redo} disabled={!history.canRedo} title="Redo (⌘⇧Z)" aria-label="Redo">
+          <button type="button" className="st-icon" onClick={redo} disabled={publishing || !history.canRedo} title="Redo (⌘⇧Z)" aria-label="Redo">
             <Redo2 />
           </button>
         </div>
@@ -362,21 +381,23 @@ export function Studio() {
           {status.icon}
           {status.text}
         </span>
+        {saveState === "error" && <button type="button" className="st-btn st-btn-small" onClick={() => void retrySave()}>Retry save</button>}
         <span className="st-spacer" />
-        <button type="button" className="st-btn" aria-pressed={preview} onClick={() => setPreview(!preview)}>
+        <button type="button" className="st-btn" aria-pressed={preview} disabled={publishing} onClick={() => setPreview(!preview)}>
           {preview ? <Pencil /> : <Eye />} {preview ? "Back to editing" : "Preview"}
         </button>
+        {!preview && <button type="button" className="st-btn st-inspector-toggle" aria-expanded={inspectorOpen} aria-controls="studio-inspector" disabled={publishing} onClick={() => setInspectorOpen(!inspectorOpen)}><Settings2 /> {inspectorOpen ? "Close details" : "Details"}</button>}
         <a className="st-btn" href={`/${page.slug}`} target="_blank" rel="noreferrer">
           <Laptop /> View live
         </a>
-        <SignOut />
-        <button type="button" className="st-btn st-btn-primary" onClick={publish} disabled={publishing || !unpublished || dirty}>
+        <SignOut disabled={publishing || dirty} />
+        <button type="button" className="st-btn st-btn-primary" onClick={publish} disabled={publishing || !unpublished || dirty} title={dirty ? "Wait until the draft is saved" : !unpublished ? "There are no unpublished changes" : "Publish all draft changes to the live site"}>
           {publishing ? <Loader2 className="st-spin" /> : <Upload />} Publish
         </button>
       </header>
 
       <EditProvider value={api}>
-        <div className="st-body">
+        <div className="st-body" inert={publishing} aria-busy={publishing}>
           {!preview && (
             <aside className="st-left">
               <nav className="st-rail" aria-label="Studio panels">
@@ -385,6 +406,8 @@ export function Studio() {
                     key={id}
                     type="button"
                     aria-pressed={panel === id && panelOpen}
+                    aria-expanded={panel === id && panelOpen}
+                    aria-controls="studio-panel"
                     title={panel === id && panelOpen ? "Click again to collapse" : undefined}
                     onClick={() => {
                       setPanelOpen(panel !== id || !panelOpen);
@@ -396,7 +419,8 @@ export function Studio() {
                   </button>
                 ))}
               </nav>
-              <div className="st-panel" hidden={!panelOpen}>
+              <div id="studio-panel" className="st-panel" hidden={!panelOpen}>
+                <button type="button" className="st-btn st-btn-small st-panel-close" onClick={() => setPanelOpen(false)}><X /> Close panel</button>
                 {panel === "sections" && <SectionsPanel blocks={page.blocks} selected={selected} actions={sectionActions} />}
                 {panel === "pages" && (
                   <PagesPanel
@@ -454,7 +478,7 @@ export function Studio() {
           </main>
 
           {!preview && (
-            <aside className="st-right" aria-label="Inspector">
+            <aside id="studio-inspector" className={inspectorOpen ? "st-right st-right-open" : "st-right"} aria-label="Inspector">
               {selectedBlock ? (
                 <BlockInspector
                   key={selectedBlock.id}
@@ -473,7 +497,7 @@ export function Studio() {
             </aside>
           )}
         </div>
-        <RichToolbar />
+        {!publishing && <RichToolbar />}
 
         {dialog?.kind === "image" && (
           <MediaPicker
@@ -495,7 +519,15 @@ export function Studio() {
             current={dialog.current}
             onClose={() => setDialog(null)}
             onSave={(link) => {
-              api.set(dialog.path, link);
+              commit((current) => {
+                let next = setIn(current, dialog.path, link);
+                if (dialog.path[0] === "settings" && dialog.path[1] === "nav" && current.settings.hiddenNav.includes(dialog.current.href)) {
+                  const oldHrefStillUsed = next.settings.nav.some((item) => item.href === dialog.current.href);
+                  const hiddenNav = [...new Set([...current.settings.hiddenNav.filter((href) => href !== dialog.current.href || oldHrefStillUsed), link.href].filter(Boolean))];
+                  next = { ...next, settings: { ...next.settings, hiddenNav } };
+                }
+                return next;
+              });
               setDialog(null);
             }}
           />

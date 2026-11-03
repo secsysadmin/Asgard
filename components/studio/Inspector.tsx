@@ -254,8 +254,9 @@ export function PageInspector({ page, pageIndex, api }: PageInspectorProps) {
         <li><strong>Edit text:</strong> click any text on the page and type. Select words to bold, italicize, or link them.</li>
         <li><strong>Swap images:</strong> click an image, or drag a photo from your computer onto it.</li>
         <li><strong>Lists:</strong> hover an item for move, duplicate, and delete; drag the handle to reorder.</li>
-        <li><strong>Sections:</strong> drag them in the left panel, or use the bar above each section.</li>
-        <li><strong>Go live:</strong> changes autosave as a draft. Press Publish when you’re ready.</li>
+        <li><strong>Sections:</strong> use Hide, Show, or Delete in the Sections panel. Hidden sections stay in your draft.</li>
+        <li><strong>Menu links:</strong> open Pages to hide or show a page in the main menu.</li>
+        <li><strong>Go live:</strong> wait for the draft to save, then press Publish. Refresh the live page to see the changes.</li>
       </ul>
       <PageSettings page={page} pageIndex={pageIndex} api={api} />
     </div>

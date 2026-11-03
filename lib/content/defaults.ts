@@ -863,6 +863,7 @@ export const defaultContent: SiteContent = {
       { label: "Meet the Team", href: "/team" },
       { label: "About SEC", href: "https://home.sec.tamu.edu/" },
     ],
+    hiddenNav: [],
     headerCta: { label: "Contact", href: "/#home-contact" },
     footerNote: "Planned, organized, and staffed by the Student Engineers’ Council at Texas A&M University.",
     contactEmail: EMAIL,

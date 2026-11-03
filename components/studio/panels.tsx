@@ -1,5 +1,5 @@
 "use client";
-import { Eye, EyeOff, GripVertical, Plus, Trash2, Undo2 } from "lucide-react";
+import { Eye, EyeOff, GripVertical, Plus, Trash2, Undo2, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { blockSpecs, createBlock, newBlockId } from "@/lib/content/blocks";
 import { RESERVED_SLUGS, slugify } from "@/lib/content/normalize";
@@ -19,6 +19,7 @@ export type SectionActions = {
   duplicate: (index: number) => void;
   remove: (index: number) => void;
   insertAt: (index: number) => void;
+  manageTeam: (index: number) => void;
 };
 type SectionsPanelProps = { blocks: Block[]; selected: string | null; actions: SectionActions };
 type PageSettingsProps = { page: Page; pageIndex: number; api: EditApi };
@@ -62,7 +63,7 @@ export function SectionsPanel({ blocks, selected, actions }: SectionsPanelProps)
     <>
       <div className="st-panel-head">
         <h2>Sections</h2>
-        <p>Drag to reorder. Click to edit.</p>
+        <p>Hide keeps a section for later. Delete removes it. Publish to update the live site.</p>
       </div>
       <ol className="st-outline">
         {blocks.map((block, index) => (
@@ -104,18 +105,19 @@ export function SectionsPanel({ blocks, selected, actions }: SectionsPanelProps)
                 <small>
                   {blockSpecs[block.type].label}
                   {block.group ? ` · ${block.group}` : ""}
+                  {block.visible ? " · Visible in draft" : " · Hidden in draft"}
                 </small>
               </span>
             </button>
-            <button
-              type="button"
-              className="st-icon"
-              aria-label={block.visible ? `Hide ${blockTitle(block)}` : `Show ${blockTitle(block)}`}
-              title={block.visible ? "Hide" : "Show"}
-              onClick={() => actions.toggleVisible(index)}
-            >
-              {block.visible ? <Eye /> : <EyeOff />}
-            </button>
+            <div className="st-outline-actions">
+              <button type="button" aria-label={`${block.visible ? "Hide" : "Show"} section ${blockTitle(block)}`} onClick={() => actions.toggleVisible(index)}>
+                {block.visible ? <EyeOff /> : <Eye />} {block.visible ? "Hide" : "Show"}
+              </button>
+              <button type="button" className="st-outline-delete" aria-label={`Delete section ${blockTitle(block)}`} onClick={() => actions.remove(index)}>
+                <Trash2 /> Delete
+              </button>
+            </div>
+            {block.type === "team" && <button type="button" className="st-outline-team" onClick={() => actions.manageTeam(index)}><Users /> Update team</button>}
           </li>
         ))}
       </ol>
@@ -163,10 +165,35 @@ export function PagesPanel({ content, pageIndex, onSelect, onAdd, commit, api }:
   const page = content.pages[pageIndex];
   const [slug, setSlug] = useState(page.slug);
   const error = slugError(content, slug, pageIndex);
+  const pageHref = `/${page.slug}`;
+  const hasMenuLink = content.settings.nav.some((link) => link.href === pageHref);
+  const isInMenu = hasMenuLink && !content.settings.hiddenNav.includes(pageHref);
+  const toggleMenu = () => {
+    commit((current) => {
+      const { settings } = current;
+      const nav = [...settings.nav];
+      if (!nav.some((link) => link.href === pageHref)) {
+        const external = nav.findIndex((link) => /^https?:/i.test(link.href));
+        nav.splice(external < 0 ? nav.length : external, 0, { label: page.title, href: pageHref });
+      }
+      const hiddenNav = isInMenu
+        ? [...settings.hiddenNav.filter((href) => href !== pageHref), pageHref]
+        : settings.hiddenNav.filter((href) => href !== pageHref);
+      return { ...current, settings: { ...settings, nav, hiddenNav } };
+    });
+  };
   const deletePage = () => {
-    if (!confirm(`Delete the “${page.title}” page? It will disappear from the live site when you publish.`)) return;
+    if (!confirm(`Delete the “${page.title}” page? Its menu links will also be removed. This reaches the live site when you publish. You can undo before publishing.`)) return;
     onSelect(0);
-    commit((c) => ({ ...c, pages: c.pages.filter((_, i) => i !== pageIndex) }));
+    commit((c) => ({
+      ...c,
+      pages: c.pages.filter((_, i) => i !== pageIndex),
+      settings: {
+        ...c.settings,
+        nav: c.settings.nav.filter((link) => link.href.split("#")[0] !== pageHref),
+        hiddenNav: c.settings.hiddenNav.filter((href) => href.split("#")[0] !== pageHref),
+      },
+    }));
   };
   return (
     <>
@@ -188,25 +215,35 @@ export function PagesPanel({ content, pageIndex, onSelect, onAdd, commit, api }:
         <Plus /> New page
       </button>
       {pageIndex > 0 && (
-        <section className="st-group">
-          <h3>This page’s address</h3>
-          <label className="st-field">
-            <span>URL</span>
-            <div className="st-prefix">
-              <span>/</span>
-              <input value={slug} onChange={(event) => setSlug(slugify(event.target.value))} />
+        <>
+          <section className="st-group">
+            <h3>Menu visibility</h3>
+            <p className="st-muted">{isInMenu ? "This page is in the main menu." : "This page is hidden from the main menu."} The page remains accessible by its direct link and search.</p>
+            <button type="button" className="st-btn st-btn-small" onClick={toggleMenu}>
+              {isInMenu ? <EyeOff /> : <Eye />} {isInMenu ? "Hide from menu" : hasMenuLink ? "Show in menu" : "Add to menu"}
+            </button>
+            <p className="st-help">Publish to update the live header and footer.</p>
+          </section>
+          <section className="st-group">
+            <h3>This page’s address</h3>
+            <label className="st-field">
+              <span>URL</span>
+              <div className="st-prefix">
+                <span>/</span>
+                <input value={slug} onChange={(event) => setSlug(slugify(event.target.value))} />
+              </div>
+              {error ? <small className="st-error">{error}</small> : <small>Changing this breaks old links to the page.</small>}
+            </label>
+            <div className="st-row">
+              <button type="button" className="st-btn st-btn-small" disabled={!!error || slug === page.slug} onClick={() => api.set(["pages", pageIndex, "slug"], slug)}>
+                Save URL
+              </button>
+              <button type="button" className="st-btn st-btn-small st-btn-danger-quiet" onClick={deletePage}>
+                <Trash2 /> Delete page
+              </button>
             </div>
-            {error ? <small className="st-error">{error}</small> : <small>Changing this breaks old links to the page.</small>}
-          </label>
-          <div className="st-row">
-            <button type="button" className="st-btn st-btn-small" disabled={!!error || slug === page.slug} onClick={() => api.set(["pages", pageIndex, "slug"], slug)}>
-              Save URL
-            </button>
-            <button type="button" className="st-btn st-btn-small st-btn-danger-quiet" onClick={deletePage}>
-              <Trash2 /> Delete page
-            </button>
-          </div>
-        </section>
+          </section>
+        </>
       )}
     </>
   );
@@ -314,6 +351,17 @@ export function SitePanel({ content, api }: SitePanelProps) {
             render={(link, _i, p) => (
               <li>
                 <Lnk value={link} path={p} />
+                <button
+                  type="button"
+                  className="st-menu-visibility"
+                  onClick={() => api.set(["settings", "hiddenNav"], settings.hiddenNav.includes(link.href)
+                    ? settings.hiddenNav.filter((href) => href !== link.href)
+                    : [...settings.hiddenNav, link.href])}
+                  aria-label={`${settings.hiddenNav.includes(link.href) ? "Show" : "Hide"} ${link.label || "link"} in menu`}
+                  disabled={!link.href}
+                >
+                  {settings.hiddenNav.includes(link.href) ? "Show in menu" : "Hide from menu"}
+                </button>
               </li>
             )}
           />

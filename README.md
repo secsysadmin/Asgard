@@ -32,10 +32,10 @@ Guide pages have a sticky "On this page" menu that tracks your position as you s
 - **Images**: click an image to choose one from the media library or upload a new one, or drag a photo from your computer straight onto it. Large photos are resized automatically. Always fill in the alt text.
 - **Links and buttons**: click **Edit link** to set the destination. You can pick any page or section, or paste a URL.
 - **Lists** (schedule rows, FAQs, cards, team members, and so on): hover an item to move, duplicate, or delete it, or drag its handle. **+ Add** creates a new one.
-- **Sections**: drag them in the left **Sections** panel (or press Alt+↑/↓). The bar above each section on the canvas can move, hide, duplicate, or delete it. **+ Add section** opens the block library.
+- **Sections**: use **Hide** or **Show** to temporarily remove a section, or **Delete** to remove it from the draft. Undo restores a deleted section before publishing. Drag sections in the left panel (or press Alt+↑/↓) to reorder them. **+ Add section** opens the block library; **Update team** edits a team roster.
 - **Inspector** (right panel): section settings (visibility, menu label and group, background, anchor), plus a form for every field, including URLs and alt text.
-- **Pages**: add, rename, or delete pages, or change their URLs. **Site**: header menu, header button, announcement bar, footer.
-- **Saving**: edits autosave as a draft that only the studio can see. **Publish** makes them live. **History** restores any earlier publish. ⌘Z / ⌘⇧Z undo and redo.
+- **Pages**: add, rename, or delete pages, change their URLs, or hide and restore their menu links. A page hidden from the menu remains available through its direct URL and search. **Site** also controls the header menu, header button, announcement bar, and footer.
+- **Saving**: edits autosave as a draft that only the studio can see. Wait for the saved status, then select **Publish** to make all draft changes live. If saving fails, select **Retry save**. **History** restores any earlier publish. ⌘Z / ⌘⇧Z undo and redo.
 - **Preview**: toggle desktop, tablet, or phone width, or use **Preview** to see the page without editing controls.
 
 ## How it works

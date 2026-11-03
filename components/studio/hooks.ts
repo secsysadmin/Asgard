@@ -85,44 +85,67 @@ export function useEditHistory() {
 export function useDraftAutosave(content: SiteContent | null, contentRef: RefObject<SiteContent | null>, notify: Notify) {
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const savedJson = useRef("");
+  const inFlight = useRef(false);
 
   const markSaved = useCallback((value: SiteContent) => {
     savedJson.current = JSON.stringify(value);
     setSaveState("saved");
   }, []);
 
+  const saveLatest = useCallback(async function saveLatest() {
+    if (inFlight.current || !contentRef.current) return;
+    const json = JSON.stringify(contentRef.current);
+    if (json === savedJson.current) {
+      setSaveState("saved");
+      return;
+    }
+    inFlight.current = true;
+    setSaveState("saving");
+    try {
+      await fetchJson("/api/content", { method: "PUT", headers: JSON_HEADERS, body: json });
+      savedJson.current = json;
+    } catch (error) {
+      inFlight.current = false;
+      setSaveState("error");
+      notify(errorMessage(error, "Couldn’t save the draft."), "error");
+      return;
+    }
+    inFlight.current = false;
+    if (contentRef.current && JSON.stringify(contentRef.current) !== json) {
+      void saveLatest();
+    } else {
+      setSaveState("saved");
+    }
+  }, [contentRef, notify]);
+
   useEffect(() => {
     if (!content) return;
     const json = JSON.stringify(content);
-    if (json === savedJson.current) return;
+    if (json === savedJson.current && !inFlight.current) {
+      setSaveState("saved");
+      return;
+    }
     setSaveState("saving");
-    const timer = window.setTimeout(async () => {
-      try {
-        await fetchJson("/api/content", { method: "PUT", headers: JSON_HEADERS, body: json });
-        savedJson.current = json;
-        setSaveState("saved");
-      } catch (error) {
-        setSaveState("error");
-        notify(errorMessage(error, "Couldn’t save the draft."), "error");
-      }
-    }, AUTOSAVE_DELAY_MS);
+    const timer = window.setTimeout(() => void saveLatest(), AUTOSAVE_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [content, notify]);
+  }, [content, saveLatest]);
 
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
-      if (contentRef.current && JSON.stringify(contentRef.current) !== savedJson.current) event.preventDefault();
+      if (inFlight.current || (contentRef.current && JSON.stringify(contentRef.current) !== savedJson.current)) event.preventDefault();
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [contentRef]);
 
-  return { saveState, markSaved };
+  const isSaved = !!content && saveState === "saved" && JSON.stringify(content) === savedJson.current && !inFlight.current;
+  return { saveState, isSaved, markSaved, retrySave: saveLatest };
 }
 
-export function useUndoShortcuts(undo: () => void, redo: () => void) {
+export function useUndoShortcuts(undo: () => void, redo: () => void, enabled = true) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (!enabled) return;
       if (!(event.metaKey || event.ctrlKey)) return;
       if ((event.target as HTMLElement).closest(EDITABLE_TARGETS)) return;
       const key = event.key.toLowerCase();
@@ -138,7 +161,7 @@ export function useUndoShortcuts(undo: () => void, redo: () => void) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [undo, redo]);
+  }, [undo, redo, enabled]);
 }
 
 export function useMediaLibrary() {

@@ -54,7 +54,7 @@ const optionalText = (value: unknown, maxLength: number) => (typeof value === "s
 
 function conformString(value: string, key: string) {
   if (richKeys.has(key)) return sanitizeHtml(value.slice(0, MAX_RICH_TEXT_LENGTH));
-  if (key === "href") return safeHref(value);
+  if (key === "href" || key === "hiddenNav") return safeHref(value);
   if (key === "src" || key.endsWith("Src")) return safeSrc(value);
   return value.slice(0, MAX_TEXT_LENGTH);
 }
@@ -187,6 +187,7 @@ export function normalizeContent(input: unknown): SiteContent {
   const pages = uniqueBy(input.pages.map((page, index) => normalizePage(page, index)), (page) => page.slug);
   if (!pages.length || pages[0].slug !== "") return structuredClone(defaultContent);
   const settings = conform(input.settings, defaultContent.settings) as SiteContent["settings"];
+  settings.hiddenNav = [...new Set(settings.hiddenNav.filter((href) => typeof href === "string" && !!safeHref(href)))];
   let content: SiteContent = { version: CONTENT_VERSION, settings, pages };
   if (version === VERSION_WITH_TEAM_ON_HOME) content = moveTeamToOwnPage(content);
   if (version === VERSION_WITH_TEAM_ON_HOME || version === VERSION_WITH_OLD_TEAM_STYLE) content = restyleTeamPage(content);

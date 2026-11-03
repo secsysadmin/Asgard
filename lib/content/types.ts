@@ -145,6 +145,7 @@ export type Page = {
 type SiteSettings = {
   siteName: string;
   nav: LinkRef[];
+  hiddenNav: string[];
   headerCta: LinkRef;
   footerNote: string;
   contactEmail: string;
