@@ -63,15 +63,15 @@ Guide pages have a sticky "On this page" menu that tracks your position as you s
 
 ## Hero video assets
 
-The home hero uses the supplied **[FINAL] CF Brand New Day.mp4**, retaining all 758 frames at 24 fps. Browser assets live in `public/video/`; the 129 MiB editing master stays out of the repo. The decorative background is silent, so the audio and timecode streams are removed.
+The home hero uses the supplied **[FINAL] CF Brand New Day.mp4**, starting at 10 seconds on the crowd scene and retaining the remaining footage at 24 fps. Browser assets live in `public/video/`; the 129 MiB editing master stays out of the repo. The decorative background is silent, so the audio and timecode streams are removed.
 
 - 1080p and 720p AV1 WebM versions are preferred by browsers that can decode AV1; H.264 MP4 versions provide the fallback. Phones (up to 960px) request the 720p version only.
-- Encodes use FFmpeg: SVT-AV1 / 10-bit (1080p: preset 5 / CRF 32; 720p v2: preset 6 / CRF 38), or x264 preset slow / CRF 23 / 8-bit, with a 96-frame GOP. MP4s use `+faststart` so playback can begin before the entire file downloads.
+- Encodes use FFmpeg: SVT-AV1 / 10-bit (1080p v3: preset 6 / CRF 32; 720p v3: preset 6 / CRF 38), or x264 preset slow / CRF 23 / 8-bit, with a 96-frame GOP. MP4s use `+faststart` so playback can begin before the entire file downloads.
 - A frame from the supplied film is the high-priority still poster. Video loading starts only after hydration, when visible. Reduced motion and `saveData` skip video downloads. Playback pauses off screen or in a hidden tab. No playback controls are displayed.
-- Versioned filenames (`.v1.*`, `.v2.*`) receive one-year immutable caching and support byte-range requests. **Bump the filename version and update `lib/content/hero-video.ts` when replacing an asset.** Do not overwrite a deployed version.
-- Saved home heroes missing the new video field are upgraded on read, so existing Neon content receives the film as well. Site Studio exposes all source URLs; clearing the MP4 source switches back to a photo hero. The image field is the video poster.
+- Versioned filenames (`.v1.*`, `.v2.*`, `.v3.*`) receive one-year immutable caching and support byte-range requests. **Bump the filename version and update `lib/content/hero-video.ts` when replacing an asset.** Do not overwrite a deployed version.
+- Saved home heroes that reference the original bundled footage are upgraded on read, so existing Neon content receives the trimmed film as well; custom video URLs are preserved. Site Studio exposes all source URLs; clearing the MP4 source switches back to a photo hero. The image field is the video poster.
 
-The final AV1 files are 10.0 MiB (1080p) and 4.7 MiB (720p v2), about 92% and 96% smaller than the master. Sampled VMAF scores (every twelfth frame) were 96.66 and 95.88 respectively; the 720p comparison uses a 720p reference. H.264 fallbacks are 16.0 / 7.9 MiB; sampled 1080p VMAF was 95.02. These are high-quality lossy encodes, not lossless copies.
+The v3 video files omit the opening titles and loading footage. They are 21.58 seconds long: the AV1 versions are 9.2 MiB at 1080p and 3.8 MiB at 720p, with sampled VMAF scores of 97.08 and 95.77 against the trimmed source. The still poster comes from the same starting frame. Original v1 and v2 files remain available for previously cached pages; only the new versioned URLs are selected for the home hero.
 
 ## Deploying (Vercel + Neon)
 

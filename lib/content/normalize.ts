@@ -28,8 +28,14 @@ const TEAM_HREF = "/team";
 const TEAM_NAV_LABEL = "Meet the Team";
 const TEAM_HEADER_ID = "team-header";
 const HOME_HERO_ID = "home-hero";
-const LEGACY_MOBILE_VIDEO = "/video/career-fair-720.v1.webm";
-const LEGACY_HERO_IMAGE = /^\/images\/career-fair-hero\.(png|webp)$/;
+const LEGACY_HERO_VIDEOS = new Map([
+  ["/video/career-fair-1080.v1.mp4", careerFairVideo.src],
+  ["/video/career-fair-720.v1.mp4", careerFairVideo.mobileSrc],
+  ["/video/career-fair-1080.v1.webm", careerFairVideo.webmSrc],
+  ["/video/career-fair-720.v1.webm", careerFairVideo.mobileWebmSrc],
+  ["/video/career-fair-720.v2.webm", careerFairVideo.mobileWebmSrc],
+]);
+const LEGACY_HERO_IMAGE = /^(?:\/images\/career-fair-hero\.(?:png|webp)|\/video\/career-fair-poster\.v1\.jpg)$/;
 const LEGACY_TEAM_HEADING = "Students running the whole show";
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -73,11 +79,15 @@ function upgradeHomeHero(input: Record<string, unknown>, data: Record<string, un
   if (input.type !== "hero" || input.id !== HOME_HERO_ID || !isObject(input.data)) return;
   if (input.data.video === undefined) {
     data.video = { ...careerFairVideo };
-    if (isObject(data.image) && typeof data.image.src === "string" && LEGACY_HERO_IMAGE.test(data.image.src)) {
-      data.image = { ...careerFairPoster };
+  } else if (isObject(data.video)) {
+    for (const [field, value] of Object.entries(data.video)) {
+      if (typeof value === "string" && LEGACY_HERO_VIDEOS.has(value)) {
+        data.video[field] = LEGACY_HERO_VIDEOS.get(value);
+      }
     }
-  } else if (isObject(data.video) && data.video.mobileWebmSrc === LEGACY_MOBILE_VIDEO) {
-    data.video.mobileWebmSrc = careerFairVideo.mobileWebmSrc;
+  }
+  if (isObject(data.image) && typeof data.image.src === "string" && LEGACY_HERO_IMAGE.test(data.image.src)) {
+    data.image = { ...careerFairPoster };
   }
 }
 
