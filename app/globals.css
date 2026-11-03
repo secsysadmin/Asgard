@@ -809,18 +809,15 @@ h4 {
 }
 
 .hero-with-video {
-  display: grid;
-  grid-template-columns: minmax(0, 0.44fr) minmax(0, 0.56fr);
-  align-items: stretch;
+  display: flex;
+  align-items: center;
   min-height: 620px;
   background: var(--maroon-dark);
 }
 .hero-with-video .hero-copy {
-  grid-column: 1;
-  grid-row: 1;
-  align-self: center;
-  padding: 64px clamp(28px, 3.5cqi, 56px) 64px var(--gutter);
-  max-width: none;
+  z-index: 1;
+  padding: 72px var(--gutter);
+  max-width: 820px;
   min-width: 0;
 }
 .hero-with-video h1 {
@@ -858,13 +855,18 @@ h4 {
   font-size: 15px;
 }
 .hero-with-video .hero-media {
-  position: relative;
-  grid-column: 2;
-  grid-row: 1;
-  min-width: 0;
-  min-height: 100%;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-  background: var(--maroon-dark);
+}
+.hero-with-video::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(24, 4, 4, 0.64);
+  pointer-events: none;
 }
 .hero-with-video .hero-image,
 .hero-video {
@@ -876,38 +878,12 @@ h4 {
   object-position: center;
 }
 .hero-video {
-  object-fit: contain;
+  object-fit: cover;
   pointer-events: none;
 }
 .hero-with-video .hero-image {
-  object-fit: contain;
+  object-fit: cover;
 }
-.hero-playback {
-  position: absolute;
-  right: 20px;
-  bottom: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 4px;
-  background: var(--maroon-dark);
-  color: var(--white);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.hero-playback svg {
-  width: 16px;
-  height: 16px;
-}
-.hero-playback:hover {
-  background: var(--maroon);
-}
-.hero-playback:focus-visible,
 .hero-with-video .button:focus-visible {
   outline-color: var(--sand);
   outline-offset: 4px;
@@ -918,19 +894,10 @@ h4 {
 }
 @container site (max-width: 960px) {
   .hero-with-video {
-    grid-template-columns: minmax(0, 1fr);
-    min-height: 0;
-  }
-  .hero-with-video .hero-media {
-    grid-column: 1;
-    grid-row: 1;
-    aspect-ratio: 16 / 9;
-    min-height: 0;
+    min-height: 620px;
   }
   .hero-with-video .hero-copy {
-    grid-column: 1;
-    grid-row: 2;
-    padding: 40px var(--gutter) 48px;
+    padding: 56px var(--gutter);
   }
   .hero-with-video h1 {
     font-size: clamp(22px, 3.3cqi, 30px);
@@ -944,10 +911,6 @@ h4 {
   }
   .hero-with-video .hero-actions .button {
     width: auto;
-  }
-  .hero-playback {
-    right: 12px;
-    bottom: 12px;
   }
 }
 

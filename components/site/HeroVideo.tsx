@@ -1,7 +1,6 @@
 "use client";
 
-import { Pause, Play } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { BlockData } from "@/lib/content/types";
 import { Img, type Path } from "../edit/context";
 
@@ -15,11 +14,7 @@ const AV1_TYPE = 'video/webm; codecs="av01.0.08M.10"';
 const VISIBILITY_THRESHOLD = 0.05;
 const VIDEO_WIDTH = 1920;
 const VIDEO_HEIGHT = 1080;
-const PLAY_LABEL = "Play background video";
-const PAUSE_LABEL = "Pause background video";
-const PLAY_TEXT = "Play video";
-const PAUSE_TEXT = "Pause video";
-const RETRY_TEXT = "Retry video";
+const PLAYBACK_INTERRUPTED = "AbortError";
 
 function mp4Source(sources: VideoSources) {
   return (window.matchMedia(MOBILE_MEDIA).matches && sources.mobileSrc) || sources.src;
@@ -32,18 +27,16 @@ function loadVideoSource(video: HTMLVideoElement, sources: VideoSources) {
   video.src = webm && video.canPlayType(AV1_TYPE) ? webm : mp4Source(sources);
 }
 
-function playVideo(video: HTMLVideoElement, onFailure: () => void) {
+function playVideo(video: HTMLVideoElement) {
   void video.play().catch((error: unknown) => {
+    if (error instanceof DOMException && error.name === PLAYBACK_INTERRUPTED) return;
     console.warn("Hero video playback could not start", error);
-    onFailure();
+    video.hidden = true;
   });
 }
 
 export function HeroVideo({ data, at }: HeroVideoProps) {
   const video = useRef<HTMLVideoElement>(null);
-  const manualPause = useRef(false);
-  const [playing, setPlaying] = useState(false);
-  const [failed, setFailed] = useState(false);
   const sources = data.video;
 
   useEffect(() => {
@@ -61,12 +54,12 @@ export function HeroVideo({ data, at }: HeroVideoProps) {
         }
         return;
       }
-      if (!visible || document.hidden || manualPause.current) {
+      if (!visible || document.hidden) {
         el.pause();
         return;
       }
       loadVideoSource(el, sources);
-      playVideo(el, () => setFailed(true));
+      playVideo(el);
     };
     const observer = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
@@ -92,27 +85,11 @@ export function HeroVideo({ data, at }: HeroVideoProps) {
     if (!el) return;
     if (el.currentSrc.endsWith(".webm")) {
       el.src = mp4Source(sources);
-      playVideo(el, () => setFailed(true));
+      playVideo(el);
       return;
     }
     console.warn("Hero video could not load", el.error?.code);
-    setFailed(true);
-  };
-
-  const togglePlayback = () => {
-    const el = video.current;
-    if (!el) return;
-    manualPause.current = playing;
-    if (playing) {
-      el.pause();
-      return;
-    }
-    if (el.error) {
-      el.removeAttribute("src");
-      el.load();
-    }
-    loadVideoSource(el, sources);
-    playVideo(el, () => setFailed(true));
+    el.hidden = true;
   };
 
   return (
@@ -129,19 +106,9 @@ export function HeroVideo({ data, at }: HeroVideoProps) {
         playsInline
         preload="none"
         aria-hidden="true"
-        onPlay={() => { setPlaying(true); setFailed(false); }}
-        onPause={() => setPlaying(false)}
+        onPlaying={() => { if (video.current) video.current.hidden = false; }}
         onError={handleError}
       />
-      <button
-        type="button"
-        className="hero-playback"
-        aria-label={playing ? PAUSE_LABEL : PLAY_LABEL}
-        onClick={togglePlayback}
-      >
-        {playing ? <Pause aria-hidden /> : <Play aria-hidden />}
-        <span>{playing ? PAUSE_TEXT : failed ? RETRY_TEXT : PLAY_TEXT}</span>
-      </button>
     </div>
   );
 }

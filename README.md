@@ -67,7 +67,7 @@ The home hero uses the supplied **[FINAL] CF Brand New Day.mp4**, retaining all 
 
 - 1080p and 720p AV1 WebM versions are preferred by browsers that can decode AV1; H.264 MP4 versions provide the fallback. Phones (up to 960px) request the 720p version only.
 - Encodes use FFmpeg: SVT-AV1 preset 5 / CRF 32 / 10-bit, or x264 preset slow / CRF 23 / 8-bit, with a 96-frame GOP. MP4s use `+faststart` so playback can begin before the entire file downloads.
-- A frame from the supplied film is the high-priority still poster. Video loading starts only after hydration, when visible. Reduced motion and `saveData` skip video downloads unless the visitor explicitly plays it. Playback pauses off screen or in a hidden tab; a manual pause stays paused.
+- A frame from the supplied film is the high-priority still poster. Video loading starts only after hydration, when visible. Reduced motion and `saveData` skip video downloads. Playback pauses off screen or in a hidden tab. No playback controls are displayed.
 - Versioned filenames (`.v1.*`) receive one-year immutable caching and support byte-range requests. **Bump the filename version and update `lib/content/hero-video.ts` when replacing an asset.** Do not overwrite a deployed version.
 - Saved home heroes missing the new video field are upgraded on read, so existing Neon content receives the film as well. Site Studio exposes all source URLs; clearing the MP4 source switches back to a photo hero. The image field is the video poster.
 

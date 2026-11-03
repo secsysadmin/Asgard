@@ -83,9 +83,7 @@ Guide pages are the core information architecture: grouped section navigation, f
 
 ### Home hero film
 
-The home hero pairs a solid dark-maroon copy panel with the supplied career fair film. IBM Plex Sans carries a medium-weight event name and a 600-weight, upright “Career Fair” headline (54–96px, -0.04em tracking), matching the film's direct sans-serif titles. Organizer text uses sand, supporting copy uses cream, and dates and location remain compact, distinct rows. Playfair remains the display face elsewhere.
-
-The video preserves its complete frame and embedded SEC branding rather than cropping to fill the panel. At 960px and below, the 16:9 film sits above the copy. The playback control stays on the film with a solid maroon surface and a visible keyboard focus ring. Reduced motion and data saving use the still poster until the visitor chooses Play.
+The home hero uses the career fair film as a full-bleed background with cover sizing at every viewport. A dark overlay keeps the white IBM Plex Sans headline and cream supporting copy readable through bright shots. The event title uses a medium-weight first line and an upright 600-weight “Career Fair” headline. Dates, location, and audience actions sit over the footage; no playback button is displayed. Reduced motion and data saving show the still poster. Playfair remains the display face elsewhere.
 
 ## Do's and Don'ts
 
