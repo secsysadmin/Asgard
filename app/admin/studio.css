@@ -586,6 +586,7 @@
 }
 .tone-maroon .ed-text:empty::before,
 .tone-maroon .ed-rich:empty::before,
+.stats .ed-text:empty::before,
 .hero .ed-text:empty::before {
   color: rgba(255, 255, 255, 0.55);
 }
@@ -834,7 +835,8 @@
 .ed-add-row td {
   padding: 8px 12px !important;
 }
-.tone-maroon .ed-add {
+.tone-maroon .ed-add,
+.stats .ed-add {
   color: #fff;
   border-color: rgba(255, 255, 255, 0.5);
 }
