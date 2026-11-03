@@ -1049,6 +1049,7 @@ h4 {
   text-transform: uppercase;
   color: var(--ink-soft);
 }
+#home-dates .key-dates-heading { text-align: center; }
 .key-dates-list {
   position: relative;
   list-style: none;
@@ -1125,6 +1126,7 @@ a.key-date:hover::before { background: var(--brass); }
 }
 a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opacity: 1; }
 @container site (max-width: 960px) {
+  #home-dates .key-dates-heading { text-align: left; }
   .key-dates-list { grid-template-columns: 1fr; }
   .key-dates-list::before { top: 8px; bottom: 18px; left: 5px; right: auto; border-top: 0; border-left: 1px solid var(--line-strong); }
   .key-dates-list:has(> li:first-of-type:last-of-type)::before,
@@ -2029,6 +2031,19 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: clamp(28px, 6cqi, 96px);
 }
+#home-about, #home-contact { padding-block: clamp(56px, 6cqi, 80px); }
+#home-dates { padding-block: clamp(48px, 4cqi, 64px); }
+#home-dates, #home-about, #home-contact { border-bottom: 0; }
+#home-about .stats { gap: 20px 0; }
+#home-about .stats > div { padding: 22px clamp(16px, 2cqi, 32px) 4px; border-left: 1px solid var(--line-strong); }
+#home-about .stats > div:first-child { padding-left: 0; border-left: 0; }
+#home-about .stats dd { font: 600 13px/1.4 var(--mono); letter-spacing: 0.03em; text-transform: uppercase; }
+#home-about .about > div:first-child, #home-contact .contact {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(16px, 2cqi, 32px);
+}
+#home-about .about > div:first-child > h2, #home-contact .contact > div:first-child { grid-column: 1 / 6; }
+#home-about .about > div:first-child .lead, #home-contact .contact > .contact-grid { grid-column: 7 / -1; }
 .contact h2 {
   margin-bottom: 14px;
 }
@@ -2185,6 +2200,12 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   grid-column: 2;
 }
 @container site (max-width: 900px) {
+  #home-about .about > div:first-child, #home-contact .contact {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  #home-about .about > div:first-child > h2, #home-about .about > div:first-child .lead,
+  #home-contact .contact > div:first-child, #home-contact .contact > .contact-grid { grid-column: 1; }
   .page-header-split {
     grid-template-columns: 1fr;
   }
@@ -2508,6 +2529,8 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   .stats {
     grid-template-columns: 1fr;
   }
+  #home-about .stats > div { padding: 18px 0 0; border-left: 0; border-top: 1px solid var(--line); }
+  #home-about .stats > div:first-child { padding-top: 22px; border-top: 0; }
   .facts > div {
     grid-template-columns: 1fr;
     gap: 2px;
