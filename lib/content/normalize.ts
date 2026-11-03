@@ -1,18 +1,19 @@
 import { sanitizeHtml, safeHref } from "../sanitize";
 import { blockSpecs, newBlockId, richKeys } from "./blocks";
-import { defaultContent, defaultTeamBlock, teamPage } from "./defaults";
+import { defaultContent, defaultTeamBlock, HOME_ABOUT_BODY, teamPage } from "./defaults";
 import { careerFairPoster, careerFairVideo } from "./hero-video";
 import type { Block, BlockType, Page, SiteContent } from "./types";
 
 export const RESERVED_SLUGS = new Set(["admin", "api", "student", "_next", "images"]);
 
-const CONTENT_VERSION = 7;
+const CONTENT_VERSION = 8;
+const VERSION_WITH_SEC_HEADING = 7;
 const VERSION_WITH_SECTION_COLORS = 6;
 const VERSION_WITH_HERO_DETAILS = 5;
 const VERSION_WITH_EVENT_SECTION = 4;
 const VERSION_WITH_TEAM_ON_HOME = 2;
 const VERSION_WITH_OLD_TEAM_STYLE = 3;
-const SUPPORTED_VERSIONS = new Set<unknown>([VERSION_WITH_TEAM_ON_HOME, VERSION_WITH_OLD_TEAM_STYLE, VERSION_WITH_EVENT_SECTION, VERSION_WITH_HERO_DETAILS, VERSION_WITH_SECTION_COLORS, CONTENT_VERSION]);
+const SUPPORTED_VERSIONS = new Set<unknown>([VERSION_WITH_TEAM_ON_HOME, VERSION_WITH_OLD_TEAM_STYLE, VERSION_WITH_EVENT_SECTION, VERSION_WITH_HERO_DETAILS, VERSION_WITH_SECTION_COLORS, VERSION_WITH_SEC_HEADING, CONTENT_VERSION]);
 const MAX_RICH_TEXT_LENGTH = 20_000;
 const MAX_TEXT_LENGTH = 5000;
 const MAX_LIST_ITEMS = 200;
@@ -33,6 +34,7 @@ const TEAM_HEADER_ID = "team-header";
 const HOME_HERO_ID = "home-hero";
 const LEGACY_HOME_HEADING = "Career Fair";
 const HOME_HEADING = "SEC Career Fair";
+const LEGACY_HOME_ABOUT_BODY = "<p>The SEC Engineering Career Fair is planned, organized, and staffed entirely by the Student Engineers’ Council. Each fall, thousands of engineering students meet hundreds of companies hiring for internships, co-ops, and full-time positions across every engineering discipline.</p>";
 const DEFAULT_EVENT_HEADING = "Date, time & location";
 const DEFAULT_EVENT_BODY = "<p>Join us in person at Legends Event Center, or online through HireAggies the day after.</p>";
 const LEGACY_HERO_VIDEOS = new Map([
@@ -223,14 +225,18 @@ export function normalizeContent(input: unknown): SiteContent {
   if (version === VERSION_WITH_TEAM_ON_HOME) content = moveTeamToOwnPage(content);
   if (version === VERSION_WITH_TEAM_ON_HOME || version === VERSION_WITH_OLD_TEAM_STYLE) content = restyleTeamPage(content);
   if (version === VERSION_WITH_TEAM_ON_HOME || version === VERSION_WITH_OLD_TEAM_STYLE || version === VERSION_WITH_EVENT_SECTION) moveEventDetailsToHero(content);
-  if (version !== CONTENT_VERSION && version !== VERSION_WITH_SECTION_COLORS) {
+  if (version !== CONTENT_VERSION && version !== VERSION_WITH_SEC_HEADING && version !== VERSION_WITH_SECTION_COLORS) {
     const blocks = content.pages[0].blocks;
     const index = blocks.findIndex((block) => block.id === "home-contact" && block.type === "contact" && block.tone === "tint");
     if (index > 0 && blocks[index - 1].id === "home-about" && blocks[index - 1].tone === "tint") blocks[index].tone = "plain";
   }
-  if (version !== CONTENT_VERSION) {
+  if (version !== CONTENT_VERSION && version !== VERSION_WITH_SEC_HEADING) {
     const hero = content.pages[0].blocks.find((block) => block.id === HOME_HERO_ID && block.type === "hero");
     if (hero?.type === "hero" && hero.data.emphasis === LEGACY_HOME_HEADING) hero.data.emphasis = HOME_HEADING;
+  }
+  if (version !== CONTENT_VERSION) {
+    const about = content.pages[0].blocks.find((block) => block.id === "home-about" && block.type === "about");
+    if (about?.type === "about" && about.data.body === LEGACY_HOME_ABOUT_BODY) about.data.body = HOME_ABOUT_BODY;
   }
   return content;
 }

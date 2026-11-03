@@ -77,6 +77,8 @@ const welcomeSocialPhotos = [1, 2, 3].map((n) =>
   img(`/images/fair/welcome-social-${n}.webp`, "Students and recruiters networking at the Welcome Social"),
 );
 
+export const HOME_ABOUT_BODY = "<p>The Student Engineers’ Council connects Aggie engineers with hundreds of employers hiring for internships, co-ops and full-time roles.</p>";
+
 const home: Page = {
   id: "home",
   slug: "",
@@ -112,7 +114,7 @@ const home: Page = {
     }),
     blk("home-about", "about", {
       heading: "About the fair",
-      body: "<p>The SEC Engineering Career Fair is planned, organized, and staffed entirely by the Student Engineers’ Council. Each fall, thousands of engineering students meet hundreds of companies hiring for internships, co-ops, and full-time positions across every engineering discipline.</p>",
+      body: HOME_ABOUT_BODY,
       stats: [
         { value: "500+", label: "Companies attending" },
         { value: "12,000+", label: "Students attending" },
@@ -841,7 +843,7 @@ const discovery: Page = {
 };
 
 export const defaultContent: SiteContent = {
-  version: 7,
+  version: 8,
   settings: {
     siteName: "SEC Engineering Career Fair",
     nav: [
