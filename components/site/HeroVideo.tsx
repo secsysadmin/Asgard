@@ -14,6 +14,7 @@ const AV1_TYPE = 'video/webm; codecs="av01.0.08M.10"';
 const VISIBILITY_THRESHOLD = 0.05;
 const VIDEO_WIDTH = 1920;
 const VIDEO_HEIGHT = 1080;
+const PLAYBACK_RATE = 0.8;
 const PLAYBACK_INTERRUPTED = "AbortError";
 
 function mp4Source(sources: VideoSources) {
@@ -42,6 +43,8 @@ export function HeroVideo({ data, at }: HeroVideoProps) {
   useEffect(() => {
     const el = video.current;
     if (!el) return;
+    el.defaultPlaybackRate = PLAYBACK_RATE;
+    el.playbackRate = PLAYBACK_RATE;
     const motion = window.matchMedia(REDUCED_MOTION_MEDIA);
     const connection = (navigator as Navigator & { connection?: Connection }).connection;
     let visible = false;

@@ -28,6 +28,7 @@ const LOGO_SRC = "/images/sec-logo-white.png";
 const LOGO_WIDTH = 774;
 const LOGO_HEIGHT = 331;
 const ACTIVE_SECTION_OFFSET_PX = 160;
+const HEADER_SOLID_SCROLL_PX = 24;
 const PAGE_BOTTOM_TOLERANCE_PX = 4;
 
 const pagePath = (page: Page) => `/${page.slug}`;
@@ -63,8 +64,18 @@ function Header({ content, page }: HeaderProps) {
   useDismiss(header, open, useCallback(() => setOpen(false), []));
   const edit = useEdit();
   const { settings } = content;
+  const firstBlock = page.blocks[0];
+  const overlay = !edit && page.slug === "" && firstBlock?.visible && firstBlock.type === "hero" && !!firstBlock.data.video?.src;
+  useEffect(() => {
+    const node = header.current;
+    if (!node || !overlay) return;
+    const update = () => node.classList.toggle("site-header-scrolled", window.scrollY > HEADER_SOLID_SCROLL_PX);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, [overlay]);
   return (
-    <header ref={header} className="site-header">
+    <header ref={header} className={overlay ? "site-header site-header-overlay" : "site-header"}>
       <div className="site-header-inner">
         <SmartLink className="brand" href="/" aria-label={`${settings.siteName} home`}>
           <SecLogo className="brand-sec" />

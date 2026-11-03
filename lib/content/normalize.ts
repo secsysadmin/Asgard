@@ -28,6 +28,7 @@ const TEAM_HREF = "/team";
 const TEAM_NAV_LABEL = "Meet the Team";
 const TEAM_HEADER_ID = "team-header";
 const HOME_HERO_ID = "home-hero";
+const LEGACY_MOBILE_VIDEO = "/video/career-fair-720.v1.webm";
 const LEGACY_HERO_IMAGE = /^\/images\/career-fair-hero\.(png|webp)$/;
 const LEGACY_TEAM_HEADING = "Students running the whole show";
 
@@ -69,10 +70,14 @@ function conform(input: unknown, shape: unknown, key = ""): unknown {
 }
 
 function upgradeHomeHero(input: Record<string, unknown>, data: Record<string, unknown>) {
-  if (input.type !== "hero" || input.id !== HOME_HERO_ID || !isObject(input.data) || input.data.video !== undefined) return;
-  data.video = { ...careerFairVideo };
-  if (isObject(data.image) && typeof data.image.src === "string" && LEGACY_HERO_IMAGE.test(data.image.src)) {
-    data.image = { ...careerFairPoster };
+  if (input.type !== "hero" || input.id !== HOME_HERO_ID || !isObject(input.data)) return;
+  if (input.data.video === undefined) {
+    data.video = { ...careerFairVideo };
+    if (isObject(data.image) && typeof data.image.src === "string" && LEGACY_HERO_IMAGE.test(data.image.src)) {
+      data.image = { ...careerFairPoster };
+    }
+  } else if (isObject(data.video) && data.video.mobileWebmSrc === LEGACY_MOBILE_VIDEO) {
+    data.video.mobileWebmSrc = careerFairVideo.mobileWebmSrc;
   }
 }
 
