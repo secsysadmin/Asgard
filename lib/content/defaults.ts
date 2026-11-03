@@ -88,7 +88,7 @@ const home: Page = {
     blk("home-hero", "hero", {
       eyebrow: "Texas A&M University · Student Engineers’ Council",
       title: "SEC Engineering",
-      emphasis: "Career Fair",
+      emphasis: "SEC Career Fair",
       summary: "<p>The premier recruiting event for the College of Engineering at Texas A&amp;M.</p>",
       dates: "September 9–10, 2026",
       hours: "9:00 AM – 5:00 PM",
@@ -841,7 +841,7 @@ const discovery: Page = {
 };
 
 export const defaultContent: SiteContent = {
-  version: 6,
+  version: 7,
   settings: {
     siteName: "SEC Engineering Career Fair",
     nav: [
