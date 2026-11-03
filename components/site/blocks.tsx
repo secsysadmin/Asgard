@@ -25,6 +25,7 @@ import { faqItemId } from "@/lib/content/anchors";
 import type { Block, BlockData, BlockType, LinkRef } from "@/lib/content/types";
 import { cx } from "../edit/classNames";
 import { Img, List, Lnk, MaybeLink, type Path, Rich, Text, useEdit } from "../edit/context";
+import { HeroVideo } from "./HeroVideo";
 
 type Props<K extends BlockType> = { block: Extract<Block, { type: K }>; data: BlockData[K]; at: Path };
 type HeadProps = { heading: string; intro?: string; at: Path };
@@ -81,11 +82,14 @@ function Note({ value, at }: NoteProps) {
 function Hero({ data, at }: Props<"hero">) {
   const edit = useEdit();
   return (
-    <div className="hero">
-      <Img value={data.image} path={[...at, "image"]} className="hero-image" frameClassName="hero-media" loading="eager" />
-      <div className="hero-shade" aria-hidden />
+    <div className={`hero${data.video?.src ? " hero-with-video" : ""}`}>
+      {data.video?.src ? <HeroVideo data={data} at={at} /> : (
+        <>
+          <Img value={data.image} path={[...at, "image"]} className="hero-image" frameClassName="hero-media" loading="eager" />
+          <div className="hero-shade" aria-hidden />
+        </>
+      )}
       <div className="hero-copy">
-        <Text as="p" className="eyebrow light" value={data.eyebrow} path={[...at, "eyebrow"]} placeholder="Eyebrow" />
         <h1>
           <Text value={data.title} path={[...at, "title"]} placeholder="Headline" />
           {(data.emphasis || edit) && (
@@ -97,6 +101,7 @@ function Hero({ data, at }: Props<"hero">) {
             </>
           )}
         </h1>
+        <Text as="p" className="hero-organizer" value={data.eyebrow} path={[...at, "eyebrow"]} placeholder="Organizer" />
         <Rich value={data.summary} path={[...at, "summary"]} className="hero-summary" placeholder="Supporting sentence" />
         <ul className="hero-meta">
           <li>

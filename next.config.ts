@@ -9,11 +9,19 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
 ];
 
+const VERSIONED_MEDIA_CACHE = "public, max-age=31536000, immutable";
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: { unoptimized: true },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      {
+        source: "/video/:file(.*\\.v[0-9]+\\.(?:mp4|webm|jpg))",
+        headers: [{ key: "Cache-Control", value: VERSIONED_MEDIA_CACHE }],
+      },
+    ];
   },
   async redirects() {
     return [

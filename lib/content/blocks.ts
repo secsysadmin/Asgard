@@ -15,7 +15,7 @@ const blankTableCells = (cells: unknown[]) => cells.map(() => "");
 export const blockSpecs: { [K in BlockType]: BlockSpec<K> } = {
   hero: {
     label: "Hero banner",
-    description: "Full-width photo with headline, dates, and two buttons.",
+    description: "Photo or background video with headline, dates, and two buttons.",
     starter: () => ({
       eyebrow: "Texas A&M · Student Engineers’ Council",
       title: "New headline",
@@ -24,6 +24,7 @@ export const blockSpecs: { [K in BlockType]: BlockSpec<K> } = {
       dates: "Date",
       location: "Location",
       image: img("/images/career-fair-hero.webp", "Students at the career fair"),
+      video: { src: "", mobileSrc: "", webmSrc: "", mobileWebmSrc: "" },
       primary: { label: "Primary action", href: "/students" },
       secondary: { label: "Secondary action", href: "/recruiters" },
     }),

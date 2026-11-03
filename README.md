@@ -61,6 +61,18 @@ Guide pages have a sticky "On this page" menu that tracks your position as you s
 - Every studio API route checks `isAuthorized()`, rejects cross-site requests, and requires JSON bodies. Uploads are checked against their real file contents; SVGs with scripts or external links are refused and served sandboxed.
 - Security headers (no framing, `nosniff`, referrer and permissions policies) are set for every route in `next.config.ts`.
 
+## Hero video assets
+
+The home hero uses the supplied **[FINAL] CF Brand New Day.mp4**, retaining all 758 frames at 24 fps. Browser assets live in `public/video/`; the 129 MiB editing master stays out of the repo. The decorative background is silent, so the audio and timecode streams are removed.
+
+- 1080p and 720p AV1 WebM versions are preferred by browsers that can decode AV1; H.264 MP4 versions provide the fallback. Phones (up to 960px) request the 720p version only.
+- Encodes use FFmpeg: SVT-AV1 preset 5 / CRF 32 / 10-bit, or x264 preset slow / CRF 23 / 8-bit, with a 96-frame GOP. MP4s use `+faststart` so playback can begin before the entire file downloads.
+- A frame from the supplied film is the high-priority still poster. Video loading starts only after hydration, when visible. Reduced motion and `saveData` skip video downloads unless the visitor explicitly plays it. Playback pauses off screen or in a hidden tab; a manual pause stays paused.
+- Versioned filenames (`.v1.*`) receive one-year immutable caching and support byte-range requests. **Bump the filename version and update `lib/content/hero-video.ts` when replacing an asset.** Do not overwrite a deployed version.
+- Saved home heroes missing the new video field are upgraded on read, so existing Neon content receives the film as well. Site Studio exposes all source URLs; clearing the MP4 source switches back to a photo hero. The image field is the video poster.
+
+The final AV1 files are 10.0 MiB (1080p) and 6.2 MiB (720p), 92.3% and 95.2% smaller than the master. Sampled VMAF scores (every twelfth frame) were 96.66 and 96.85 respectively; the 720p comparison uses a 720p reference. H.264 fallbacks are 16.0 / 7.9 MiB; sampled 1080p VMAF was 95.02. These are high-quality lossy encodes, not lossless copies.
+
 ## Deploying (Vercel + Neon)
 
 1. Set `DATABASE_URL` (Neon).

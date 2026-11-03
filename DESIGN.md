@@ -81,6 +81,12 @@ The public header is solid maroon with white logos: horizontal links above 1100p
 
 Guide pages are the core information architecture: grouped section navigation, fact cards with icons, flowchart steps, and FAQ topic cards make logistics scannable.
 
+### Home hero film
+
+The home hero pairs a solid dark-maroon copy panel with the supplied career fair film. IBM Plex Sans carries a medium-weight event name and a 600-weight, upright “Career Fair” headline (54–96px, -0.04em tracking), matching the film's direct sans-serif titles. Organizer text uses sand, supporting copy uses cream, and dates and location remain compact, distinct rows. Playfair remains the display face elsewhere.
+
+The video preserves its complete frame and embedded SEC branding rather than cropping to fill the panel. At 960px and below, the 16:9 film sits above the copy. The playback control stays on the film with a solid maroon surface and a visible keyboard focus ring. Reduced motion and data saving use the still poster until the visitor chooses Play.
+
 ## Do's and Don'ts
 
 - Do use a maroon, cream, ink, and warm-sand relationship; keep sand focused on moments of emphasis.

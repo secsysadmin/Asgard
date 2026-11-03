@@ -1,6 +1,7 @@
 import { sanitizeHtml, safeHref } from "../sanitize";
 import { blockSpecs, newBlockId, richKeys } from "./blocks";
 import { defaultContent, defaultTeamBlock, teamPage } from "./defaults";
+import { careerFairPoster, careerFairVideo } from "./hero-video";
 import type { Block, BlockType, Page, SiteContent } from "./types";
 
 export const RESERVED_SLUGS = new Set(["admin", "api", "student", "_next", "images"]);
@@ -26,6 +27,8 @@ const TEAM_SLUG = "team";
 const TEAM_HREF = "/team";
 const TEAM_NAV_LABEL = "Meet the Team";
 const TEAM_HEADER_ID = "team-header";
+const HOME_HERO_ID = "home-hero";
+const LEGACY_HERO_IMAGE = /^\/images\/career-fair-hero\.(png|webp)$/;
 const LEGACY_TEAM_HEADING = "Students running the whole show";
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -45,7 +48,7 @@ const optionalText = (value: unknown, maxLength: number) => (typeof value === "s
 function conformString(value: string, key: string) {
   if (richKeys.has(key)) return sanitizeHtml(value.slice(0, MAX_RICH_TEXT_LENGTH));
   if (key === "href") return safeHref(value);
-  if (key === "src") return safeSrc(value);
+  if (key === "src" || key.endsWith("Src")) return safeSrc(value);
   return value.slice(0, MAX_TEXT_LENGTH);
 }
 
@@ -65,10 +68,19 @@ function conform(input: unknown, shape: unknown, key = ""): unknown {
   return input;
 }
 
+function upgradeHomeHero(input: Record<string, unknown>, data: Record<string, unknown>) {
+  if (input.type !== "hero" || input.id !== HOME_HERO_ID || !isObject(input.data) || input.data.video !== undefined) return;
+  data.video = { ...careerFairVideo };
+  if (isObject(data.image) && typeof data.image.src === "string" && LEGACY_HERO_IMAGE.test(data.image.src)) {
+    data.image = { ...careerFairPoster };
+  }
+}
+
 function normalizeBlock(input: unknown): Block | null {
   if (!isObject(input) || !isBlockType(input.type)) return null;
   const type = input.type;
   const data = conform(input.data, blockSpecs[type].starter()) as Record<string, unknown>;
+  upgradeHomeHero(input, data);
   if (type === "callout" && !CALLOUT_TONES.includes(data.tone)) data.tone = "info";
   return {
     id: typeof input.id === "string" && BLOCK_ID.test(input.id) ? input.id : newBlockId(type),

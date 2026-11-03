@@ -1,4 +1,5 @@
 import type { Block, BlockData, BlockType, Page, SiteContent } from "./types";
+import { careerFairPoster, careerFairVideo } from "./hero-video";
 
 function blk<K extends BlockType>(
   id: string,
@@ -91,7 +92,8 @@ const home: Page = {
       summary: "<p>The premier recruiting event for the College of Engineering at Texas A&amp;M.</p>",
       dates: "September 9–10, 2026",
       location: "Legends Event Center · Bryan, TX",
-      image: img("/images/career-fair-hero.webp", "Engineering students in professional attire arriving at the career fair"),
+      image: { ...careerFairPoster },
+      video: { ...careerFairVideo },
       primary: { label: "I’m a student", href: "/students" },
       secondary: { label: "I’m a recruiter", href: "/recruiters" },
     }),

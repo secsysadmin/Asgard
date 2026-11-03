@@ -11,6 +11,7 @@ export type BlockData = {
     dates: string;
     location: string;
     image: ImageRef;
+    video: { src: string; mobileSrc: string; webmSrc: string; mobileWebmSrc: string };
     primary: LinkRef;
     secondary: LinkRef;
   };

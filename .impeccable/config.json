@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "components/site/HeroVideo.tsx"
+        ],
+        "createdAt": "2026-11-03T17:18:26.043Z",
+        "reason": "Agent verified: Img is the CMS image component, accepts ImageRef via value, and renders a real bundled poster; it is not a native img missing src."
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "components/site/blocks.tsx"
+        ],
+        "createdAt": "2026-11-03T17:18:26.099Z",
+        "reason": "Agent verified: all flagged tags are the existing CMS Img component taking ImageRef via value; its implementation renders img src from value.src and handles empty editor images."
+      }
+    ]
+  }
+}
