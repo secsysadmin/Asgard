@@ -1092,18 +1092,21 @@ a.key-date:hover::before { background: var(--brass); }
 }
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  column-gap: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: 20px 28px;
   margin: 0;
   border-top: 1px solid var(--line-strong);
 }
 .stats > div {
+  container-type: inline-size;
+  min-width: 0;
   padding: 22px 20px 4px 0;
 }
 .stats dt {
-  font: 500 clamp(48px, 5.5cqi, 80px) / 1 var(--display);
+  font: 500 clamp(36px, 26cqi, 72px) / 1.08 var(--display);
   color: var(--maroon);
   letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
 }
 .stats dd {
   margin: 10px 0 0;
@@ -2434,6 +2437,9 @@ a.key-date:hover::before { background: var(--brass); }
   .hero-actions .button {
     width: 100%;
     justify-content: space-between;
+  }
+  .stats {
+    grid-template-columns: 1fr;
   }
   .facts > div {
     grid-template-columns: 1fr;
