@@ -6,10 +6,11 @@ import type { Block, BlockType, Page, SiteContent } from "./types";
 
 export const RESERVED_SLUGS = new Set(["admin", "api", "student", "_next", "images"]);
 
-const CONTENT_VERSION = 4;
+const CONTENT_VERSION = 5;
+const VERSION_WITH_EVENT_SECTION = 4;
 const VERSION_WITH_TEAM_ON_HOME = 2;
 const VERSION_WITH_OLD_TEAM_STYLE = 3;
-const SUPPORTED_VERSIONS = new Set<unknown>([VERSION_WITH_TEAM_ON_HOME, VERSION_WITH_OLD_TEAM_STYLE, CONTENT_VERSION]);
+const SUPPORTED_VERSIONS = new Set<unknown>([VERSION_WITH_TEAM_ON_HOME, VERSION_WITH_OLD_TEAM_STYLE, VERSION_WITH_EVENT_SECTION, CONTENT_VERSION]);
 const MAX_RICH_TEXT_LENGTH = 20_000;
 const MAX_TEXT_LENGTH = 5000;
 const MAX_LIST_ITEMS = 200;
@@ -28,6 +29,8 @@ const TEAM_HREF = "/team";
 const TEAM_NAV_LABEL = "Meet the Team";
 const TEAM_HEADER_ID = "team-header";
 const HOME_HERO_ID = "home-hero";
+const DEFAULT_EVENT_HEADING = "Date, time & location";
+const DEFAULT_EVENT_BODY = "<p>Join us in person at Legends Event Center, or online through HireAggies the day after.</p>";
 const LEGACY_HERO_VIDEOS = new Map([
   ["/video/career-fair-1080.v1.mp4", careerFairVideo.src],
   ["/video/career-fair-720.v1.mp4", careerFairVideo.mobileSrc],
@@ -54,7 +57,7 @@ const optionalText = (value: unknown, maxLength: number) => (typeof value === "s
 
 function conformString(value: string, key: string) {
   if (richKeys.has(key)) return sanitizeHtml(value.slice(0, MAX_RICH_TEXT_LENGTH));
-  if (key === "href" || key === "hiddenNav") return safeHref(value);
+  if (key === "href" || key.endsWith("Href") || key === "hiddenNav") return safeHref(value);
   if (key === "src" || key.endsWith("Src")) return safeSrc(value);
   return value.slice(0, MAX_TEXT_LENGTH);
 }
@@ -181,6 +184,30 @@ function restyleTeamPage(content: SiteContent): SiteContent {
   return content;
 }
 
+function moveEventDetailsToHero(content: SiteContent) {
+  const home = content.pages[0];
+  const hero = home.blocks.find((block) => block.id === HOME_HERO_ID && block.type === "hero");
+  const event = home.blocks.find((block) => block.id === "home-location" && block.type === "event");
+  if (!hero || hero.type !== "hero" || !event || event.type !== "event") return;
+  const dates = event.data.facts.find((item) => /^in-person dates$/i.test(item.label));
+  const hours = event.data.facts.find((item) => /^hours$/i.test(item.label));
+  const venue = event.data.facts.find((item) => /^venue$/i.test(item.label));
+  const virtual = event.data.facts.find((item) => /^virtual fair$/i.test(item.label));
+  const directions = event.data.links.find((item) => /^get directions$/i.test(item.label));
+  const virtualLink = event.data.links.find((item) => /^hireaggies login$/i.test(item.label));
+  hero.data.dates = dates?.value || hero.data.dates;
+  hero.data.hours = hours?.value ?? "";
+  hero.data.location = venue?.value || hero.data.location || directions?.label || "";
+  hero.data.virtual = virtual?.value ? `Virtual fair: ${virtual.value}` : virtualLink?.label ?? "";
+  hero.data.directionsHref = directions?.href ?? "";
+  hero.data.virtualHref = virtualLink?.href ?? "";
+  event.data.facts = event.data.facts.filter((item) => item !== dates && item !== hours && item !== venue && item !== virtual);
+  event.data.links = event.data.links.filter((item) => item !== directions && item !== virtualLink);
+  if (event.data.body === DEFAULT_EVENT_BODY) event.data.body = "";
+  const hasCustomContent = event.data.heading !== DEFAULT_EVENT_HEADING || event.data.body || event.data.note || event.data.gallery.length || event.data.facts.length || event.data.links.length;
+  if (!hasCustomContent) home.blocks = home.blocks.filter((block) => block !== event);
+}
+
 export function normalizeContent(input: unknown): SiteContent {
   if (!isObject(input) || !SUPPORTED_VERSIONS.has(input.version) || !Array.isArray(input.pages)) return structuredClone(defaultContent);
   const version = input.version;
@@ -191,5 +218,6 @@ export function normalizeContent(input: unknown): SiteContent {
   let content: SiteContent = { version: CONTENT_VERSION, settings, pages };
   if (version === VERSION_WITH_TEAM_ON_HOME) content = moveTeamToOwnPage(content);
   if (version === VERSION_WITH_TEAM_ON_HOME || version === VERSION_WITH_OLD_TEAM_STYLE) content = restyleTeamPage(content);
+  if (version !== CONTENT_VERSION) moveEventDetailsToHero(content);
   return content;
 }

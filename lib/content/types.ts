@@ -9,7 +9,11 @@ export type BlockData = {
     emphasis: string;
     summary: RichText;
     dates: string;
+    hours: string;
     location: string;
+    directionsHref: string;
+    virtual: string;
+    virtualHref: string;
     image: ImageRef;
     video: { src: string; mobileSrc: string; webmSrc: string; mobileWebmSrc: string };
     primary: LinkRef;
@@ -153,7 +157,7 @@ type SiteSettings = {
 };
 
 export type SiteContent = {
-  version: 4;
+  version: 5;
   settings: SiteSettings;
   pages: Page[];
 };

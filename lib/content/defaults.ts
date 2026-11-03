@@ -91,7 +91,11 @@ const home: Page = {
       emphasis: "Career Fair",
       summary: "<p>The premier recruiting event for the College of Engineering at Texas A&amp;M.</p>",
       dates: "September 9–10, 2026",
-      location: "Legends Event Center · Bryan, TX",
+      hours: "9:00 AM – 5:00 PM",
+      location: "Legends Event Center, 2533 Midtown Park Blvd, Bryan, TX",
+      directionsHref: LEGENDS_MAP,
+      virtual: "Virtual fair: September 11, 2026 · 9:00 AM – 5:00 PM on HireAggies",
+      virtualHref: HIREAGGIES_STUDENTS,
       image: { ...careerFairPoster },
       video: { ...careerFairVideo },
       primary: { label: "I’m a student", href: "/students" },
@@ -115,22 +119,6 @@ const home: Page = {
         { value: "#1", label: "Largest student-run career fair in the nation" },
       ],
     }, { tone: "tint" }),
-    blk("home-location", "event", {
-      heading: "Date, time & location",
-      body: "<p>Join us in person at Legends Event Center, or online through HireAggies the day after.</p>",
-      facts: [
-        { label: "In-person dates", value: "September 9–10, 2026" },
-        { label: "Hours", value: "9:00 AM – 5:00 PM" },
-        { label: "Venue", value: "Legends Event Center, 2533 Midtown Park Blvd, Bryan, TX" },
-        { label: "Virtual fair", value: "September 11, 2026 · 9:00 AM – 5:00 PM on HireAggies" },
-      ],
-      links: [
-        { label: "Get directions", href: LEGENDS_MAP },
-        { label: "HireAggies login", href: HIREAGGIES_STUDENTS },
-      ],
-      note: "",
-      gallery: [],
-    }),
     blk("home-contact", "contact", {
       heading: "Get in touch",
       intro: "<p>Questions about the fair, registration, or logistics? Email is the fastest way to reach us.</p>",
@@ -853,7 +841,7 @@ const discovery: Page = {
 };
 
 export const defaultContent: SiteContent = {
-  version: 4,
+  version: 5,
   settings: {
     siteName: "SEC Engineering Career Fair",
     nav: [

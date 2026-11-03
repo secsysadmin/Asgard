@@ -783,7 +783,7 @@ h4 {
 }
 .hero h1 em {
   display: block;
-  font-style: italic;
+  font-style: normal;
   color: var(--sand);
 }
 .hero-organizer {
@@ -813,6 +813,7 @@ h4 {
   gap: 9px;
 }
 .hero-meta svg {
+  flex: none;
   width: 19px;
   height: 19px;
   color: var(--brass);
@@ -860,9 +861,8 @@ h4 {
 .hero-with-video h1 em {
   margin-top: 12px;
   color: var(--white);
-  font: italic 500 clamp(60px, 9cqi, 112px) / 1.08 var(--hero-display);
+  font: normal 500 clamp(60px, 9cqi, 112px) / 1.08 var(--hero-display);
   letter-spacing: -0.03em;
-  font-style: italic;
 }
 .hero-with-video .hero-organizer {
   margin: 22px auto 0;

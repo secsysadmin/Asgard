@@ -38,7 +38,7 @@ const LABELS: Record<string, string> = {
   cta: "Main button",
   primary: "Primary button",
   secondary: "Secondary button",
-  emphasis: "Headline emphasis (italic second line)",
+  emphasis: "Headline second line",
   dates: "Dates",
   intro: "Introduction",
   note: "Highlighted note",

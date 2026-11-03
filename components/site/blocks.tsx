@@ -110,9 +110,11 @@ function Hero({ data, at }: Props<"hero">) {
             <li>
               <CalendarDays aria-hidden /> <Text value={data.dates} path={[...at, "dates"]} placeholder="Dates" />
             </li>
+            {(data.hours || edit) && <li><Clock aria-hidden /> <Text value={data.hours} path={[...at, "hours"]} placeholder="Hours" /></li>}
             <li>
-              <MapPin aria-hidden /> <Text value={data.location} path={[...at, "location"]} placeholder="Location" />
+              <MapPin aria-hidden /> <MaybeLink href={data.directionsHref}><Text value={data.location} path={[...at, "location"]} placeholder="Location" /></MaybeLink>
             </li>
+            {(data.virtual || edit) && <li><Monitor aria-hidden /> <MaybeLink href={data.virtualHref}><Text value={data.virtual} path={[...at, "virtual"]} placeholder="Virtual fair details" /></MaybeLink></li>}
           </ul>
           <div className="hero-actions">
             <Lnk className="button button-light" value={data.primary} path={[...at, "primary"]}>
