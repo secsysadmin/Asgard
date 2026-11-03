@@ -91,18 +91,13 @@ function Hero({ data, at }: Props<"hero">) {
       )}
       <div className="hero-copy">
         <div className="hero-message">
+          <div className="hero-eyebrow">
+            {data.emphasis && <Text value={data.title} path={[...at, "title"]} placeholder="Headline" />}
+            <Text value={data.eyebrow} path={[...at, "eyebrow"]} placeholder="Organizer" />
+          </div>
           <h1>
-            <Text value={data.title} path={[...at, "title"]} placeholder="Headline" />
-            {(data.emphasis || edit) && (
-              <>
-                {" "}
-                <em>
-                  <Text value={data.emphasis} path={[...at, "emphasis"]} placeholder="Emphasis" />
-                </em>
-              </>
-            )}
+            {data.emphasis ? <Text value={data.emphasis} path={[...at, "emphasis"]} placeholder="Emphasis" /> : <Text value={data.title} path={[...at, "title"]} placeholder="Headline" />}
           </h1>
-          <Text as="p" className="hero-organizer" value={data.eyebrow} path={[...at, "eyebrow"]} placeholder="Organizer" />
           <Rich value={data.summary} path={[...at, "summary"]} className="hero-summary" placeholder="Supporting sentence" />
           <div className="hero-actions">
             <Lnk className="button button-light" value={data.primary} path={[...at, "primary"]}>
@@ -116,13 +111,13 @@ function Hero({ data, at }: Props<"hero">) {
         <div className="hero-details">
           <ul className="hero-meta">
             <li>
-              <CalendarDays aria-hidden /> <Text value={data.dates} path={[...at, "dates"]} placeholder="Dates" />
+              <span className="hero-meta-label">Date</span><Text value={data.dates} path={[...at, "dates"]} placeholder="Dates" />
             </li>
-            {(data.hours || edit) && <li><Clock aria-hidden /> <Text value={data.hours} path={[...at, "hours"]} placeholder="Hours" /></li>}
+            {(data.hours || edit) && <li><span className="hero-meta-label">Hours</span><Text value={data.hours} path={[...at, "hours"]} placeholder="Hours" /></li>}
             <li>
-              <MapPin aria-hidden /> <MaybeLink href={data.directionsHref}><Text value={data.location} path={[...at, "location"]} placeholder="Location" /></MaybeLink>
+              <span className="hero-meta-label">Venue</span><MaybeLink href={data.directionsHref}><Text value={data.location} path={[...at, "location"]} placeholder="Location" />{data.directionsHref && <ArrowUpRight aria-hidden />}</MaybeLink>
             </li>
-            {(data.virtual || edit) && <li><Monitor aria-hidden /> <MaybeLink href={data.virtualHref}><Text value={data.virtual} path={[...at, "virtual"]} placeholder="Virtual fair details" /></MaybeLink></li>}
+            {(data.virtual || edit) && <li><span className="hero-meta-label">Virtual</span><MaybeLink href={data.virtualHref}><Text value={data.virtual} path={[...at, "virtual"]} placeholder="Virtual fair details" />{data.virtualHref && <ArrowUpRight aria-hidden />}</MaybeLink></li>}
           </ul>
         </div>
       </div>
