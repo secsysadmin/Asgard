@@ -2317,7 +2317,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   top: calc(var(--header-h) + 12px);
   max-height: calc(100dvh - var(--header-h) - 24px);
   overflow-y: auto;
-  padding: 12px 0;
+  padding: 8px 0;
   font-size: 15.5px;
 }
 .toc-toggle {
@@ -2331,7 +2331,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   color: var(--maroon-light);
 }
 .toc-group + .toc-group {
-  margin-top: 12px;
+  margin-top: 13px;
 }
 .toc-group > p {
   margin: 0 0 4px;
@@ -2348,7 +2348,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 }
 .toc a {
   display: block;
-  padding: 3px 10px 3px 14px;
+  padding: 4px 10px 4px 14px;
   margin-left: -2px;
   border-left: 3px solid transparent;
   border-radius: 0 var(--radius) var(--radius) 0;
@@ -2366,6 +2366,10 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   font-weight: 700;
   background: var(--maroon-soft);
   border-left-color: var(--maroon-light);
+}
+@media (min-height: 850px) {
+  .toc-group + .toc-group { margin-top: 16px; }
+  .toc a { padding-block: 5px; }
 }
 @container site (max-width: 960px) {
   .guide {
