@@ -7,7 +7,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
-    "db:migrate": "node --env-file=.env scripts/migrate.mjs"
+    "db:migrate": "node --env-file=.env --experimental-strip-types scripts/migrate.mjs",
+    "db:staff": "node --env-file=.env --experimental-strip-types scripts/provision-staff.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",

@@ -42,6 +42,7 @@ import { HistoryPanel, NewPageDialog, PagesPanel, type SectionActions, SectionsP
 import { errorMessage, fetchJson, JSON_HEADERS } from "./request";
 import { RichToolbar } from "./RichToolbar";
 import { TeamImport } from "./TeamImport";
+import { SignOut } from "./SignOut";
 
 type Panel = "sections" | "pages" | "media" | "site" | "history";
 type Device = "desktop" | "tablet" | "mobile";
@@ -368,6 +369,7 @@ export function Studio() {
         <a className="st-btn" href={`/${page.slug}`} target="_blank" rel="noreferrer">
           <Laptop /> View live
         </a>
+        <SignOut />
         <button type="button" className="st-btn st-btn-primary" onClick={publish} disabled={publishing || !unpublished || dirty}>
           {publishing ? <Loader2 className="st-spin" /> : <Upload />} Publish
         </button>

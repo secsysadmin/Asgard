@@ -116,6 +116,10 @@ function normalizePage(input: unknown, index: number): Page | null {
   const slug = isHome ? "" : slugify(String(input.slug ?? ""));
   if (!isHome && (!slug || RESERVED_SLUGS.has(slug))) return null;
   const blocks = uniqueBy((Array.isArray(input.blocks) ? input.blocks : []).map(normalizeBlock), (block) => block.id);
+  if (isHome) {
+    const index = blocks.findIndex((block) => block.id === "home-paths" && block.type === "pathways");
+    if (index >= 0) blocks.splice(index, 1);
+  }
   return {
     id: typeof input.id === "string" && input.id ? input.id.slice(0, MAX_ID_LENGTH) : slug || HOME_PAGE_ID,
     slug,

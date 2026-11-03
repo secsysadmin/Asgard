@@ -1,3 +1,4 @@
+import { authSchemaStatements } from "./auth-schema";
 import { neon } from "@neondatabase/serverless";
 
 let ready: Promise<void> | null = null;
@@ -21,6 +22,7 @@ export function database() {
 function schemaStatements(schema: string) {
   return [
     `create schema if not exists ${schema}`,
+    ...authSchemaStatements(schema),
     `create table if not exists ${schema}.site_content (
       id smallint primary key check (id = 1),
       draft jsonb,

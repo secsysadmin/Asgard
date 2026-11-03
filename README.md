@@ -13,7 +13,7 @@ npm run build    # production build + type check
 
 Open `/` for the site and `/admin` for the studio.
 
-> **The studio currently has no sign-in.** Anyone with the `/admin` link can edit and publish. Google OAuth is planned; it plugs into `isAuthorized()` in `lib/auth.ts`, which every studio route already checks.
+> Staff sign in at `/admin`. Passwords are salted and hashed with scrypt; sessions expire after eight hours and are stored as token hashes in Neon. Failed sign-in attempts are limited by client address on Vercel; other production hosts need a trusted client-IP adapter.
 
 ## Pages
 
@@ -50,7 +50,7 @@ Guide pages have a sticky "On this page" menu that tracks your position as you s
 | `lib/content/search.ts` | Builds and ranks the site-search index. |
 | `lib/sanitize.ts` | Allowlist sanitizer for rich text and link URLs. |
 | `lib/media.ts`, `lib/request.ts` | Upload validation and the guards shared by studio API routes. |
-| `lib/auth.ts` | `isAuthorized()`, the single hook for adding sign-in. |
+| `lib/auth.ts` | `isAuthorized()`, database-backed staff sessions and sign-in. |
 | `components/site/*` | Public site: page shell, block renderers, search, links. |
 | `components/edit/context.tsx` | Makes the same renderers editable in place inside the studio. |
 | `components/edit/RichField.tsx` | Rich-text fields: a [Tiptap](https://tiptap.dev) editor, created only when a field is clicked, limited to what the sanitizer allows. |

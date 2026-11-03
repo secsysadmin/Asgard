@@ -106,38 +106,6 @@ const home: Page = {
         { date: "Fri, Sep 11", title: "Virtual fair", meta: "9 AM – 5 PM · HireAggies", href: "/students#virtual-fair" },
       ],
     }),
-    blk("home-paths", "pathways", {
-      heading: "Find what you need",
-      intro: "",
-      items: [
-        {
-          eyebrow: "Students",
-          title: "Get ready for fair day",
-          body: "<p>Explore internships, co-ops, and full-time roles from 500+ engineering companies. No pre-registration for current students — just bring your A&amp;M ID.</p>",
-          cta: { label: "Open the student guide", href: "/students" },
-          links: [
-            { label: "Dress code", href: "/students#dress-code" },
-            { label: "Shuttle & parking", href: "/students#getting-there" },
-            { label: "Company list & booth map", href: "/students#company-search" },
-            { label: "Pre-Career Fair Week", href: "/students#pre-fair-week" },
-            { label: "Student FAQs", href: "/students#faqs" },
-          ],
-        },
-        {
-          eyebrow: "Recruiters",
-          title: "Plan your company’s visit",
-          body: "<p>Connect with 12,000+ Aggie engineers across every discipline and degree level. Registration runs May 6 – August 21 through HireAggies.</p>",
-          cta: { label: "Open the recruiter guide", href: "/recruiters" },
-          links: [
-            { label: "Registration & pricing", href: "/recruiters#registration" },
-            { label: "Booth & shipping", href: "/recruiters#booth-shipping" },
-            { label: "Parking", href: "/recruiters#parking" },
-            { label: "Hotels", href: "/recruiters#hotels" },
-            { label: "Recruiter FAQs", href: "/recruiters#faqs" },
-          ],
-        },
-      ],
-    }),
     blk("home-about", "about", {
       heading: "About the fair",
       body: "<p>The SEC Engineering Career Fair is planned, organized, and staffed entirely by the Student Engineers’ Council. Each fall, thousands of engineering students meet hundreds of companies hiring for internships, co-ops, and full-time positions across every engineering discipline.</p>",

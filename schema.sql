@@ -33,3 +33,24 @@ create table if not exists development.media_files (
   data text not null, -- base64
   created_at timestamptz not null default now()
 );
+
+create table if not exists development.staff_users (
+  email text primary key,
+  password_hash text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists development.staff_sessions (
+  token_hash text primary key,
+  email text not null references development.staff_users(email) on delete cascade,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists staff_sessions_expiry on development.staff_sessions(expires_at);
+
+create table if not exists development.staff_login_limits (
+  bucket text primary key,
+  attempts integer not null,
+  reset_at timestamptz not null
+);
