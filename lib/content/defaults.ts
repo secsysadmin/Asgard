@@ -126,7 +126,7 @@ const home: Page = {
       phone: "(979) 847-8567",
       address: MAILING_ADDRESS,
       people: coChairs,
-    }, { tone: "tint" }),
+    }),
   ],
 };
 
@@ -841,7 +841,7 @@ const discovery: Page = {
 };
 
 export const defaultContent: SiteContent = {
-  version: 5,
+  version: 6,
   settings: {
     siteName: "SEC Engineering Career Fair",
     nav: [

@@ -879,10 +879,6 @@ h4 {
   color: var(--white);
 }
 .hero-with-video .hero-details {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 28px;
   padding: 26px var(--gutter);
   border-top: 1px solid rgba(255, 255, 255, 0.25);
   background: rgba(22, 8, 6, 0.40);
@@ -890,15 +886,16 @@ h4 {
 }
 .hero-with-video .hero-meta {
   display: flex;
-  gap: 12px 32px;
+  justify-content: center;
+  gap: 12px 20px;
   margin: 0;
   font-size: 15px;
   font-weight: 500;
 }
 .hero-with-video .hero-actions {
-  flex: none;
+  justify-content: center;
   gap: 12px;
-  margin: 0;
+  margin: 24px 0 0;
 }
 .hero-with-video .hero-actions .button {
   padding: 0 22px;
@@ -947,10 +944,6 @@ h4 {
   color: var(--maroon-dark);
 }
 @container site (max-width: 1100px) {
-  .hero-with-video .hero-details {
-    flex-direction: column;
-    text-align: center;
-  }
   .hero-with-video .hero-meta {
     justify-content: center;
   }

@@ -104,6 +104,14 @@ function Hero({ data, at }: Props<"hero">) {
           </h1>
           <Text as="p" className="hero-organizer" value={data.eyebrow} path={[...at, "eyebrow"]} placeholder="Organizer" />
           <Rich value={data.summary} path={[...at, "summary"]} className="hero-summary" placeholder="Supporting sentence" />
+          <div className="hero-actions">
+            <Lnk className="button button-light" value={data.primary} path={[...at, "primary"]}>
+              <ArrowRight aria-hidden />
+            </Lnk>
+            <Lnk className="button button-outline-light" value={data.secondary} path={[...at, "secondary"]}>
+              <ArrowRight aria-hidden />
+            </Lnk>
+          </div>
         </div>
         <div className="hero-details">
           <ul className="hero-meta">
@@ -116,14 +124,6 @@ function Hero({ data, at }: Props<"hero">) {
             </li>
             {(data.virtual || edit) && <li><Monitor aria-hidden /> <MaybeLink href={data.virtualHref}><Text value={data.virtual} path={[...at, "virtual"]} placeholder="Virtual fair details" /></MaybeLink></li>}
           </ul>
-          <div className="hero-actions">
-            <Lnk className="button button-light" value={data.primary} path={[...at, "primary"]}>
-              <ArrowRight aria-hidden />
-            </Lnk>
-            <Lnk className="button button-outline-light" value={data.secondary} path={[...at, "secondary"]}>
-              <ArrowRight aria-hidden />
-            </Lnk>
-          </div>
         </div>
       </div>
     </div>

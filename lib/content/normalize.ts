@@ -6,11 +6,12 @@ import type { Block, BlockType, Page, SiteContent } from "./types";
 
 export const RESERVED_SLUGS = new Set(["admin", "api", "student", "_next", "images"]);
 
-const CONTENT_VERSION = 5;
+const CONTENT_VERSION = 6;
+const VERSION_WITH_HERO_DETAILS = 5;
 const VERSION_WITH_EVENT_SECTION = 4;
 const VERSION_WITH_TEAM_ON_HOME = 2;
 const VERSION_WITH_OLD_TEAM_STYLE = 3;
-const SUPPORTED_VERSIONS = new Set<unknown>([VERSION_WITH_TEAM_ON_HOME, VERSION_WITH_OLD_TEAM_STYLE, VERSION_WITH_EVENT_SECTION, CONTENT_VERSION]);
+const SUPPORTED_VERSIONS = new Set<unknown>([VERSION_WITH_TEAM_ON_HOME, VERSION_WITH_OLD_TEAM_STYLE, VERSION_WITH_EVENT_SECTION, VERSION_WITH_HERO_DETAILS, CONTENT_VERSION]);
 const MAX_RICH_TEXT_LENGTH = 20_000;
 const MAX_TEXT_LENGTH = 5000;
 const MAX_LIST_ITEMS = 200;
@@ -218,6 +219,11 @@ export function normalizeContent(input: unknown): SiteContent {
   let content: SiteContent = { version: CONTENT_VERSION, settings, pages };
   if (version === VERSION_WITH_TEAM_ON_HOME) content = moveTeamToOwnPage(content);
   if (version === VERSION_WITH_TEAM_ON_HOME || version === VERSION_WITH_OLD_TEAM_STYLE) content = restyleTeamPage(content);
-  if (version !== CONTENT_VERSION) moveEventDetailsToHero(content);
+  if (version === VERSION_WITH_TEAM_ON_HOME || version === VERSION_WITH_OLD_TEAM_STYLE || version === VERSION_WITH_EVENT_SECTION) moveEventDetailsToHero(content);
+  if (version !== CONTENT_VERSION) {
+    const blocks = content.pages[0].blocks;
+    const index = blocks.findIndex((block) => block.id === "home-contact" && block.type === "contact" && block.tone === "tint");
+    if (index > 0 && blocks[index - 1].id === "home-about" && blocks[index - 1].tone === "tint") blocks[index].tone = "plain";
+  }
   return content;
 }
