@@ -1394,7 +1394,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 
 .cards {
   display: grid;
-  gap: 20px;
+  gap: 32px;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
 }
 .cards-2 {
@@ -1403,17 +1403,16 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .card {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--white);
-  overflow: hidden;
+  border-top: 1px solid var(--line-strong);
   color: var(--ink);
 }
 .card-media {
   display: block;
   width: 100%;
+  margin-top: 18px;
+  border-radius: var(--radius);
   background: var(--cream);
-  border-bottom: 1px solid var(--line);
+  overflow: hidden;
 }
 .card-media img {
   width: 100%;
@@ -1422,7 +1421,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   margin: 0 auto;
 }
 .card-body {
-  padding: 22px 24px 24px;
+  padding: 18px 0 0;
   display: grid;
   gap: 10px;
   align-content: start;
@@ -1436,6 +1435,17 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 }
 .tone-maroon .card {
   --ink-soft: var(--ink-soft-on-light);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  overflow: hidden;
+}
+.tone-maroon .card-media {
+  margin-top: 0;
+  border-radius: 0;
+}
+.tone-maroon .card-body {
+  padding: 22px 24px 24px;
 }
 
 .zoomable {
