@@ -402,20 +402,22 @@ export function Studio() {
             </button>
           ))}
         </div>
+        <span className="st-spacer" />
+        <button type="button" className="st-btn" aria-pressed={preview} disabled={publishing} title={preview ? "Back to editing" : "Preview"} onClick={() => setPreview(!preview)}>
+          {preview ? <Pencil aria-hidden /> : <Eye aria-hidden />}
+          <span className="st-btn-label">{preview ? "Back to editing" : "Preview"}</span>
+        </button>
+        {!preview && <button type="button" className="st-btn st-inspector-toggle" aria-expanded={inspectorOpen} aria-controls="studio-inspector" disabled={publishing} onClick={() => setInspectorOpen(!inspectorOpen)}><Settings2 aria-hidden /> {inspectorOpen ? "Close details" : "Details"}</button>}
+        <a className="st-btn" href={`/${page.slug}`} target="_blank" rel="noreferrer" title="View live">
+          <ExternalLink aria-hidden />
+          <span className="st-btn-label">View live</span>
+        </a>
+        <SignOut disabled={publishing || dirty} onError={(message) => notify(message, "error")} />
         <span className={`st-status st-status-${status.tone}`} role="status">
           {status.icon}
           {status.text}
         </span>
         {saveState === "error" && <button type="button" className="st-btn st-btn-small" onClick={() => void retrySave()}>Retry save</button>}
-        <span className="st-spacer" />
-        <button type="button" className="st-btn" aria-pressed={preview} disabled={publishing} onClick={() => setPreview(!preview)}>
-          {preview ? <Pencil aria-hidden /> : <Eye aria-hidden />} {preview ? "Back to editing" : "Preview"}
-        </button>
-        {!preview && <button type="button" className="st-btn st-inspector-toggle" aria-expanded={inspectorOpen} aria-controls="studio-inspector" disabled={publishing} onClick={() => setInspectorOpen(!inspectorOpen)}><Settings2 aria-hidden /> {inspectorOpen ? "Close details" : "Details"}</button>}
-        <a className="st-btn" href={`/${page.slug}`} target="_blank" rel="noreferrer">
-          <ExternalLink aria-hidden /> View live
-        </a>
-        <SignOut disabled={publishing || dirty} onError={(message) => notify(message, "error")} />
         <button type="button" className="st-btn st-btn-primary" onClick={publish} disabled={publishing || !unpublished || dirty} title={dirty ? "Wait until the draft is saved" : !unpublished ? "There are no unpublished changes" : "Publish all draft changes to the live site"}>
           {publishing ? <Loader2 className="st-spin" aria-hidden /> : <Upload aria-hidden />} Publish
         </button>
