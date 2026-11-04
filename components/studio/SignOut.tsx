@@ -1,4 +1,5 @@
 "use client";
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { JSON_HEADERS } from "./request";
 
@@ -18,5 +19,10 @@ export function SignOut({ disabled = false, onError }: SignOutProps) {
       onError(SIGN_OUT_ERROR);
     }
   }
-  return <button type="button" className="st-btn" onClick={signOut} disabled={disabled}>Sign out</button>;
+  return (
+    <button type="button" className="st-btn" onClick={signOut} disabled={disabled} title="Sign out">
+      <LogOut aria-hidden />
+      <span className="st-btn-label">Sign out</span>
+    </button>
+  );
 }
