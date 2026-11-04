@@ -249,7 +249,6 @@ export function SiteSearch({ content }: Props) {
           onClick={(event) => event.target === dialog.current && close()}
         >
           <div className="search-heading">
-            <p>SEC Engineering Career Fair</p>
             <h2>Search the fair</h2>
           </div>
           <div className="search-box">

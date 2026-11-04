@@ -717,6 +717,13 @@
   width: 12px !important;
   height: 12px !important;
 }
+.st-frame .hero-actions .ed-link-button {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 2;
+  margin: 0;
+}
 .st-section:hover .ed-link-button,
 .st-left .ed-link-button,
 .ed-link:focus-within .ed-link-button,

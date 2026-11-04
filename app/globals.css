@@ -350,17 +350,10 @@ svg {
   padding: 28px 28px 18px;
   background: var(--white);
 }
-.search-heading p {
-  margin: 0 0 8px;
-  color: var(--maroon);
-  font: 600 11px/1.4 var(--sans);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
 .search-heading h2 {
   margin: 0;
   color: var(--maroon);
-  font: 500 30px/1.15 var(--display);
+  font: 500 36px/1.15 var(--display);
 }
 .search-box {
   display: flex;
@@ -1148,7 +1141,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 
 .pathways {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 24px;
 }
 .pathway {
@@ -1645,8 +1638,10 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .step {
   counter-increment: step;
   position: relative;
+  min-width: 0;
   padding: 0 0 32px 66px;
   color: var(--ink);
+  overflow-wrap: anywhere;
 }
 .step:last-of-type {
   padding-bottom: 4px;
@@ -1838,7 +1833,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 
 .link-groups {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: 28px;
 }
 .link-group h3 {
@@ -2040,7 +2035,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 }
 .contact-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 28px;
 }
 .contact-grid h3 {
@@ -2264,7 +2259,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .guide-body .text-block,
 .guide-body .contact,
 .guide-body .about {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
 }
 @container site (min-width: 1240px) {
