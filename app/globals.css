@@ -128,12 +128,13 @@ svg {
   border-bottom: 1px solid var(--maroon-dark);
 }
 .site-header-overlay {
-  background: rgba(80, 0, 0, 0.68);
+  background: rgba(0, 0, 0, 0.64);
   border-bottom-color: transparent;
+  backdrop-filter: blur(8px);
   transition: background-color 250ms ease, border-color 250ms ease, backdrop-filter 250ms ease;
 }
 .site-header-overlay.site-header-scrolled {
-  background: rgba(80, 0, 0, 0.96);
+  background: rgba(80, 0, 0, 0.88);
   border-bottom-color: var(--maroon-dark);
   backdrop-filter: blur(12px);
 }
@@ -887,8 +888,8 @@ h4 {
 .hero-with-video .hero-details {
   padding: 22px var(--gutter);
   border-top: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(0, 0, 0, 0.54);
-  backdrop-filter: blur(8px);
+  background: linear-gradient(110deg, rgba(80, 0, 0, 0.78), rgba(54, 0, 0, 0.7), rgba(80, 0, 0, 0.78));
+  backdrop-filter: blur(12px);
   text-align: left;
 }
 .hero-with-video .hero-meta {
