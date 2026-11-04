@@ -130,7 +130,7 @@ svg {
 .site-header-overlay {
   background: rgba(80, 0, 0, 0.35);
   border-bottom-color: transparent;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
   transition: background-color 250ms ease, border-color 250ms ease, backdrop-filter 250ms ease;
 }
 .site-header-overlay.site-header-scrolled {
@@ -874,14 +874,14 @@ h4 {
 .hero-with-video .hero-summary {
   margin: 20px auto 0;
   max-width: 70ch;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1.55;
   color: var(--white);
 }
 .hero-with-video .hero-details {
   padding: 22px var(--gutter);
-  border-top: 1px solid rgba(255, 255, 255, 0.25);
-  background: linear-gradient(110deg, rgba(80, 0, 0, 0.78), rgba(54, 0, 0, 0.7), rgba(80, 0, 0, 0.78));
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(110deg, rgba(80, 0, 0, 0.52), rgba(54, 0, 0, 0.44), rgba(80, 0, 0, 0.52));
   backdrop-filter: blur(12px);
   text-align: left;
 }
@@ -971,7 +971,7 @@ h4 {
     padding-bottom: 48px;
   }
   .hero-with-video .hero-summary {
-    font-size: 16px;
+    font-size: 17px;
   }
   .hero-with-video .hero-details {
     gap: 22px;
