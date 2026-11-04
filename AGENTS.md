@@ -74,7 +74,8 @@ and the sechat bot; when in doubt, mirror the existing code that already follows
 - No database keeps the public site working: `getPublishedContent` falls back to
   `defaultContent` and never throws.
 - Production and previews stay isolated through `deploymentSchema()`; every query is scoped to
-  it. `lib/database.ts`, `scripts/migrate.mjs`, and `schema.sql` stay in sync.
+  it. `lib/schema.ts` (shared by `lib/database.ts` and
+  `scripts/migrate.mjs`) and `schema.sql` stay in sync.
 
 **Scope and verification**
 - Change only what the task needs: no cosmetic cleanups in touched files, no repo-wide

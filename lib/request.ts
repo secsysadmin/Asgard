@@ -1,5 +1,5 @@
 // Browsers always send Origin on cross-site mutating requests, so a missing Origin is same-origin, curl, or a server call.
-export function sameOrigin(request: Request): boolean {
+export function sameOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) return true;
   try {
@@ -27,7 +27,7 @@ export function badRequest(message = "The request was malformed.") {
   return Response.json({ error: message }, { status: 400 });
 }
 
-export function safeDecode(value: string | null, fallback = ""): string {
+export function safeDecode(value: string | null, fallback = "") {
   if (value == null) return fallback;
   try {
     return decodeURIComponent(value);

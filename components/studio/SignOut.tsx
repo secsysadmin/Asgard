@@ -1,21 +1,22 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { JSON_HEADERS } from "./request";
 
-type SignOutProps = { disabled?: boolean };
+type SignOutProps = { disabled?: boolean; onError: (message: string) => void };
 
-export function SignOut({ disabled = false }: SignOutProps) {
+const SIGN_OUT_ERROR = "Couldn’t sign out. Please try again.";
+
+export function SignOut({ disabled = false, onError }: SignOutProps) {
   const router = useRouter();
-  const [error, setError] = useState("");
   async function signOut() {
     try {
-      const response = await fetch("/api/auth/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      const response = await fetch("/api/auth/logout", { method: "POST", headers: JSON_HEADERS, body: "{}" });
       if (!response.ok) throw new Error("Sign out failed");
       router.replace("/admin/sign-in");
       router.refresh();
     } catch {
-      setError("Could not sign out. Please try again.");
+      onError(SIGN_OUT_ERROR);
     }
   }
-  return <><button type="button" className="st-btn" onClick={signOut} disabled={disabled}>Sign out</button>{error && <span role="alert">{error}</span>}</>;
+  return <button type="button" className="st-btn" onClick={signOut} disabled={disabled}>Sign out</button>;
 }

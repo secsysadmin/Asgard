@@ -8,8 +8,7 @@ type Props = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & { href: str
 export const isExternalHref = (href: string) => /^https?:/i.test(href);
 
 function isOtherPageOnSite(href: string, pathname: string) {
-  const path = href.split("#")[0];
-  return href.startsWith("/") && !!path && path !== pathname;
+  return href.startsWith("/") && href.split("#")[0] !== pathname;
 }
 
 export function SmartLink({ href, children, ...rest }: Props) {

@@ -53,7 +53,7 @@ async function prepare(file: File): Promise<PreparedUpload> {
   }
 }
 
-export async function uploadFile(file: File, alt = ""): Promise<MediaItem & { url: string }> {
+export async function uploadFile(file: File, alt: string): Promise<MediaItem & { url: string }> {
   const { blob, width, height, name } = await prepare(file);
   const response = await fetch("/api/media", {
     method: "POST",

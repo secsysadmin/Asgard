@@ -45,7 +45,6 @@ export function validateUpload(mime: string, bytes: Buffer): string | null {
 export function mediaHeaders(mime: string, filename: string): Record<string, string> {
   return {
     "Content-Type": mime,
-    // Every upload gets a new id, so a URL's bytes never change and can be cached forever.
     "Cache-Control": IMMUTABLE_CACHE_CONTROL,
     "Content-Disposition": `inline; filename="${cleanFilename(filename)}"`,
     "X-Content-Type-Options": "nosniff",

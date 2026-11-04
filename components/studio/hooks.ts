@@ -9,6 +9,7 @@ const HISTORY_LIMIT = 80;
 const COALESCE_WINDOW_MS = 1200;
 const AUTOSAVE_DELAY_MS = 900;
 const EDITABLE_TARGETS = "[contenteditable], input, textarea, select";
+const SAVE_FAILED_MESSAGE = "Couldn’t save the draft.";
 
 type Tone = "error";
 type Notify = (text: string, tone?: Tone) => void;
@@ -17,15 +18,24 @@ type ContentUpdate = SiteContent | ((current: SiteContent) => SiteContent);
 type Commit = (next: ContentUpdate, coalesceKey?: string) => void;
 
 type Toast = { text: string; tone?: Tone };
+type AutosaveOptions = {
+  content: SiteContent | null;
+  contentRef: RefObject<SiteContent | null>;
+  notify: Notify;
+  withdraw: (text: string) => void;
+};
 type Stack = { current: SiteContent[] };
 
 export function useToast() {
   const [toast, setToast] = useState<Toast | null>(null);
   const notify = useCallback<Notify>((text, tone) => {
     setToast({ text, tone });
-    window.setTimeout(() => setToast((current) => (current?.text === text ? null : current)), TOAST_DURATION_MS);
+    if (tone === "error") return;
+    window.setTimeout(() => setToast((current) => (current?.text === text && current.tone !== "error" ? null : current)), TOAST_DURATION_MS);
   }, []);
-  return { toast, notify };
+  const dismiss = useCallback(() => setToast(null), []);
+  const withdraw = useCallback((text: string) => setToast((current) => (current?.text === text ? null : current)), []);
+  return { toast, notify, dismiss, withdraw };
 }
 
 export function useEditHistory() {
@@ -82,10 +92,11 @@ export function useEditHistory() {
   return { content, contentRef, history, load: replace, commit, undo, redo };
 }
 
-export function useDraftAutosave(content: SiteContent | null, contentRef: RefObject<SiteContent | null>, notify: Notify) {
+export function useDraftAutosave({ content, contentRef, notify, withdraw }: AutosaveOptions) {
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const savedJson = useRef("");
   const inFlight = useRef(false);
+  const failure = useRef("");
 
   const markSaved = useCallback((value: SiteContent) => {
     savedJson.current = JSON.stringify(value);
@@ -104,19 +115,21 @@ export function useDraftAutosave(content: SiteContent | null, contentRef: RefObj
     try {
       await fetchJson("/api/content", { method: "PUT", headers: JSON_HEADERS, body: json });
       savedJson.current = json;
+      withdraw(failure.current);
     } catch (error) {
-      inFlight.current = false;
       setSaveState("error");
-      notify(errorMessage(error, "Couldn’t save the draft."), "error");
+      failure.current = errorMessage(error, SAVE_FAILED_MESSAGE);
+      notify(failure.current, "error");
       return;
+    } finally {
+      inFlight.current = false;
     }
-    inFlight.current = false;
     if (contentRef.current && JSON.stringify(contentRef.current) !== json) {
       void saveLatest();
     } else {
       setSaveState("saved");
     }
-  }, [contentRef, notify]);
+  }, [contentRef, notify, withdraw]);
 
   useEffect(() => {
     if (!content) return;
@@ -142,7 +155,7 @@ export function useDraftAutosave(content: SiteContent | null, contentRef: RefObj
   return { saveState, isSaved, markSaved, retrySave: saveLatest };
 }
 
-export function useUndoShortcuts(undo: () => void, redo: () => void, enabled = true) {
+export function useUndoShortcuts(undo: () => void, redo: () => void, enabled: boolean) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (!enabled) return;
@@ -165,7 +178,7 @@ export function useUndoShortcuts(undo: () => void, redo: () => void, enabled = t
 }
 
 export function useMediaLibrary() {
-  const [library, setLibrary] = useState<MediaItem[]>([]);
+  const [library, setLibrary] = useState<MediaItem[] | null>(null);
   const [libraryError, setLibraryError] = useState("");
   const loadLibrary = useCallback(() => {
     fetchJson<MediaItem[]>("/api/media")

@@ -3,10 +3,10 @@ name: SEC Engineering Career Fair
 description: An editorial, information-first fair site for Aggie engineers and recruiters.
 colors:
   maroon: "#500000"
-  maroon-dark: "#330000"
+  maroon-dark: "#360000"
   cream: "#f5f1e8"
   paper: "#fbfaf6"
-  ink: "#192320"
+  ink: "#1f1a17"
   sand: "#e7d7c2"
   warm-white: "#faf7f2"
   brass: "#c7a66a"
@@ -87,7 +87,7 @@ Guide pages are the core information architecture: grouped section navigation, f
 
 ### Home hero film
 
-The home hero uses the career fair film as a full-bleed background with cover sizing at every viewport. A graduated dark scrim and a subtle maroon multiply tint support a centered italic Playfair Display event headline, with the event name and supporting copy in IBM Plex Sans. Organizer text is white. Dates, location, and audience actions sit over the darker bottom of the footage, separated by a fine rule. On phones the details and actions stack. No playback button is displayed; reduced motion and data saving show the still poster.
+The home hero uses the career fair film as a full-bleed background with cover sizing at every viewport. A graduated dark scrim and a subtle maroon multiply tint support a centered upright Playfair Display event headline, with the event name and supporting copy in IBM Plex Sans. Organizer text is white. Dates, location, and audience actions sit over the darker bottom of the footage, separated by a fine rule. On phones the details and actions stack. No playback button is displayed; reduced motion and data saving show the still poster.
 
 ## Do's and Don'ts
 

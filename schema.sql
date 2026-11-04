@@ -1,6 +1,6 @@
 -- CMS persistence model: one database, one schema per environment.
 -- Repeat for `production`. The app creates these automatically on first use
--- (lib/database.ts), and `npm run db:migrate` creates both schemas up front.
+-- (lib/schema.ts), and `npm run db:migrate` creates both schemas up front.
 create schema if not exists development;
 
 -- The whole site (pages, sections, settings) as one validated JSON document.

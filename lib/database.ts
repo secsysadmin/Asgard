@@ -1,5 +1,5 @@
-import { authSchemaStatements } from "./auth-schema";
 import { neon } from "@neondatabase/serverless";
+import { schemaStatements } from "./schema";
 
 let ready: Promise<void> | null = null;
 
@@ -17,37 +17,6 @@ export function database() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is not configured");
   return neon(url);
-}
-
-function schemaStatements(schema: string) {
-  return [
-    `create schema if not exists ${schema}`,
-    ...authSchemaStatements(schema),
-    `create table if not exists ${schema}.site_content (
-      id smallint primary key check (id = 1),
-      draft jsonb,
-      published jsonb,
-      draft_updated_at timestamptz,
-      published_at timestamptz
-    )`,
-    `create table if not exists ${schema}.site_revisions (
-      id bigserial primary key,
-      content jsonb not null,
-      label text not null default '',
-      created_at timestamptz not null default now()
-    )`,
-    `create table if not exists ${schema}.media_files (
-      id text primary key,
-      filename text not null,
-      mime text not null,
-      alt text not null default '',
-      size integer not null,
-      width integer,
-      height integer,
-      data text not null,
-      created_at timestamptz not null default now()
-    )`,
-  ];
 }
 
 async function createTablesInOneRoundTrip() {

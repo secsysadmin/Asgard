@@ -17,14 +17,16 @@ import {
   Monitor,
   Package,
   Phone,
+  Plus,
   Shirt,
   Users,
 } from "lucide-react";
 import { memo, type RefObject, useEffect, useRef, useState } from "react";
 import { faqItemId } from "@/lib/content/anchors";
-import type { Block, BlockData, BlockType, LinkRef } from "@/lib/content/types";
+import type { Block, BlockData, BlockType, ImageRef, LinkRef } from "@/lib/content/types";
 import { cx } from "../edit/classNames";
-import { Img, List, Lnk, MaybeLink, type Path, Rich, Text, useEdit } from "../edit/context";
+import type { Path } from "@/lib/studio/paths";
+import { Img, List, Lnk, MaybeLink, Rich, Text, useEdit } from "../edit/context";
 import { HeroVideo } from "./HeroVideo";
 
 type Props<K extends BlockType> = { block: Extract<Block, { type: K }>; data: BlockData[K]; at: Path };
@@ -39,6 +41,7 @@ const MAX_PHOTO_STRIP_COLUMNS = 3;
 const TUCK_MIN_OVERHANG_PX = 96;
 const CAROUSEL_PAGE_FRACTION = 0.9;
 const LEAVES_SITE = /^(https?:|mailto:|tel:)/i;
+const NON_DIAL_CHARS = /[^\d+]/g;
 
 const FACT_ICONS: [RegExp, LucideIcon][] = [
   [/time|hour/i, Clock],
@@ -52,6 +55,28 @@ const FACT_ICONS: [RegExp, LucideIcon][] = [
   [/shuttle|bus|getting there|parking/i, Bus],
   [/ship|deliver|package/i, Package],
 ];
+
+const renderers: { [K in BlockType]: (props: Props<K>) => React.ReactNode } = {
+  hero: Hero,
+  pageHeader: PageHeader,
+  keyDates: KeyDates,
+  about: About,
+  pathways: Pathways,
+  schedule: Schedule,
+  timeline: Timeline,
+  text: TextBlock,
+  cards: Cards,
+  event: Event,
+  steps: Steps,
+  faq: Faq,
+  gallery: Gallery,
+  table: Table,
+  links: Links,
+  team: Team,
+  contact: Contact,
+  callout: Callout,
+};
+
 const factIcon = (label: string) => FACT_ICONS.find(([pattern]) => pattern.test(label))?.[1] ?? Info;
 
 function linkIcon(href: string) {
@@ -79,11 +104,20 @@ function Note({ value, at }: NoteProps) {
   return <Rich value={value} path={[...at, "note"]} className="note" placeholder="Optional note (leave empty to hide)" />;
 }
 
+function renderPhoto(image: ImageRef, _index: number, at: Path) {
+  return (
+    <figure>
+      <Img value={image} path={at} zoom />
+    </figure>
+  );
+}
+
 function Hero({ data, at }: Props<"hero">) {
   const edit = useEdit();
+  const withVideo = !!data.video.src;
   return (
-    <div className={`hero${data.video?.src ? " hero-with-video" : ""}`}>
-      {data.video?.src ? <HeroVideo data={data} at={at} /> : (
+    <div className={cx("hero", withVideo && "hero-with-video")}>
+      {withVideo ? <HeroVideo data={data} at={at} /> : (
         <>
           <Img value={data.image} path={[...at, "image"]} className="hero-image" frameClassName="hero-media" loading="eager" />
           <div className="hero-shade" aria-hidden />
@@ -416,11 +450,7 @@ function Event({ data, at }: Props<"event">) {
       items={data.gallery}
       path={[...at, "gallery"]}
       label="photo"
-      render={(image, _i, p) => (
-        <figure>
-          <Img value={image} path={p} zoom />
-        </figure>
-      )}
+      render={renderPhoto}
     />
   );
   return (
@@ -490,7 +520,12 @@ function Faq({ block, data, at }: Props<"faq">) {
                   </div>
                 ) : (
                   <details className="faq-item" id={faqItemId(block.id, gi, qi)}>
-                    <summary>{item.q}</summary>
+                    <summary>
+                      {item.q}
+                      <span className="faq-toggle" aria-hidden>
+                        <Plus />
+                      </span>
+                    </summary>
                     <Rich value={item.a} path={[...qp, "a"]} className="faq-a" />
                   </details>
                 )
@@ -512,11 +547,7 @@ function Gallery({ data, at }: Props<"gallery">) {
         items={data.images}
         path={[...at, "images"]}
         label="photo"
-        render={(image, _i, p) => (
-          <figure>
-            <Img value={image} path={p} zoom />
-          </figure>
-        )}
+        render={renderPhoto}
       />
     </>
   );
@@ -610,10 +641,10 @@ function Team({ data, at }: Props<"team">) {
         {!edit && (
           <div className="carousel-controls">
             <button type="button" onClick={() => scroll(-1)} aria-label="Previous team members">
-              <ChevronLeft />
+              <ChevronLeft aria-hidden />
             </button>
             <button type="button" onClick={() => scroll(1)} aria-label="Next team members">
-              <ChevronRight />
+              <ChevronRight aria-hidden />
             </button>
           </div>
         )}
@@ -674,7 +705,7 @@ function Contact({ data, at }: Props<"contact">) {
                     <Text as="span" className="phone" value={person.phone} path={[...p, "phone"]} placeholder="Phone" />
                   ) : (
                     person.phone && (
-                      <a className="phone" href={`tel:${person.phone.replace(/[^\d+]/g, "")}`}>
+                      <a className="phone" href={`tel:${person.phone.replace(NON_DIAL_CHARS, "")}`}>
                         <Phone aria-hidden /> {person.phone}
                       </a>
                     )
@@ -710,27 +741,6 @@ function Callout({ data, at }: Props<"callout">) {
     </div>
   );
 }
-
-const renderers: { [K in BlockType]: (props: Props<K>) => React.ReactNode } = {
-  hero: Hero,
-  pageHeader: PageHeader,
-  keyDates: KeyDates,
-  about: About,
-  pathways: Pathways,
-  schedule: Schedule,
-  timeline: Timeline,
-  text: TextBlock,
-  cards: Cards,
-  event: Event,
-  steps: Steps,
-  faq: Faq,
-  gallery: Gallery,
-  table: Table,
-  links: Links,
-  team: Team,
-  contact: Contact,
-  callout: Callout,
-};
 
 function sameBlockAndPosition(prev: BlockViewProps, next: BlockViewProps) {
   return prev.block === next.block && prev.at.join("/") === next.at.join("/");

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import type { BlockData } from "@/lib/content/types";
-import { Img, type Path } from "../edit/context";
+import type { Path } from "@/lib/studio/paths";
+import { Img } from "../edit/context";
 
 type Connection = EventTarget & { saveData?: boolean };
 type HeroVideoProps = { data: BlockData["hero"]; at: Path };
@@ -17,15 +18,22 @@ const VIDEO_HEIGHT = 1080;
 const PLAYBACK_RATE = 0.8;
 const PLAYBACK_INTERRUPTED = "AbortError";
 
+const isMobile = () => window.matchMedia(MOBILE_MEDIA).matches;
+
 function mp4Source(sources: VideoSources) {
-  return (window.matchMedia(MOBILE_MEDIA).matches && sources.mobileSrc) || sources.src;
+  return (isMobile() && sources.mobileSrc) || sources.src;
 }
 
 function loadVideoSource(video: HTMLVideoElement, sources: VideoSources) {
   if (video.getAttribute("src")) return;
-  const small = window.matchMedia(MOBILE_MEDIA).matches;
-  const webm = (small && sources.mobileWebmSrc) || sources.webmSrc;
+  const webm = (isMobile() && sources.mobileWebmSrc) || sources.webmSrc;
   video.src = webm && video.canPlayType(AV1_TYPE) ? webm : mp4Source(sources);
+}
+
+function unloadVideo(video: HTMLVideoElement) {
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
 }
 
 function playVideo(video: HTMLVideoElement) {
@@ -50,11 +58,8 @@ export function HeroVideo({ data, at }: HeroVideoProps) {
     let visible = false;
     const sync = () => {
       if (motion.matches || connection?.saveData) {
-        el.pause();
-        if (el.hasAttribute("src")) {
-          el.removeAttribute("src");
-          el.load();
-        }
+        if (el.hasAttribute("src")) unloadVideo(el);
+        else el.pause();
         return;
       }
       if (!visible || document.hidden) {
@@ -77,9 +82,7 @@ export function HeroVideo({ data, at }: HeroVideoProps) {
       motion.removeEventListener("change", sync);
       connection?.removeEventListener("change", sync);
       document.removeEventListener("visibilitychange", sync);
-      el.pause();
-      el.removeAttribute("src");
-      el.load();
+      unloadVideo(el);
     };
   }, [sources]);
 

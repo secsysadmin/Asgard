@@ -12,12 +12,12 @@ export async function GET(_request: Request, ctx: Ctx) {
   if (!MEDIA_ID.test(id)) return notFound();
   try {
     await ensureSchema();
-    const rows = (await database().query(
+    const [file] = (await database().query(
       `select mime, data, filename from ${deploymentSchema()}.media_files where id = $1`,
       [id],
     )) as { mime: string; data: string; filename: string }[];
-    if (!rows[0]) return notFound();
-    return new Response(Buffer.from(rows[0].data, "base64"), { headers: mediaHeaders(rows[0].mime, rows[0].filename) });
+    if (!file) return notFound();
+    return new Response(Buffer.from(file.data, "base64"), { headers: mediaHeaders(file.mime, file.filename) });
   } catch (error) {
     console.error(`[media] Serving ${id} failed`, error);
     return new Response("Media unavailable", { status: 503 });

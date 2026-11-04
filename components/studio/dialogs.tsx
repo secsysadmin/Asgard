@@ -14,6 +14,13 @@ type ModalProps = {
   footer?: ReactNode;
   wide?: boolean;
 };
+export type ConfirmRequest = {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+};
+type ConfirmDialogProps = ConfirmRequest & { onClose: () => void };
 type DropzoneProps = {
   accept: string;
   multiple?: boolean;
@@ -28,7 +35,7 @@ type MediaPickerProps = {
   onClose: () => void;
   onSelect: (image: ImageRef) => void;
   onLibraryChange: () => void;
-  library: MediaItem[];
+  library: MediaItem[] | null;
   libraryError: string;
 };
 type LinkEditorProps = {
@@ -38,7 +45,7 @@ type LinkEditorProps = {
   onSave: (link: LinkRef) => void;
 };
 type AddSectionProps = { onClose: () => void; onAdd: (type: BlockType) => void };
-type MediaLibraryProps = { library: MediaItem[]; error: string; onChange: () => void };
+type MediaLibraryProps = { library: MediaItem[] | null; error: string; onChange: () => void };
 
 const PICKER_TABS: PickerTab[] = ["library", "site", "upload"];
 
@@ -48,7 +55,12 @@ const isImageMime = (mime: string) => mime.startsWith("image/");
 export function Modal({ title, onClose, children, footer, wide = false }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
+    const opener = document.activeElement;
     ref.current?.showModal();
+    ref.current?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
+    return () => {
+      if (opener instanceof HTMLElement) opener.focus();
+    };
   }, []);
   return (
     <dialog
@@ -64,12 +76,38 @@ export function Modal({ title, onClose, children, footer, wide = false }: ModalP
       <header className="st-modal-head">
         <h2>{title}</h2>
         <button type="button" className="st-icon" onClick={onClose} aria-label="Close">
-          <X />
+          <X aria-hidden />
         </button>
       </header>
       <div className="st-modal-body">{children}</div>
       {footer && <footer className="st-modal-foot">{footer}</footer>}
     </dialog>
+  );
+}
+
+export function ConfirmDialog({ title, message, confirmLabel, onConfirm, onClose }: ConfirmDialogProps) {
+  const confirm = () => {
+    onClose();
+    onConfirm();
+  };
+  return (
+    <Modal
+      title={title}
+      onClose={onClose}
+      footer={
+        <>
+          <span className="st-spacer" />
+          <button type="button" className="st-btn" onClick={onClose} data-autofocus>
+            Cancel
+          </button>
+          <button type="button" className="st-btn st-btn-danger" onClick={confirm}>
+            {confirmLabel}
+          </button>
+        </>
+      }
+    >
+      <p className="st-confirm">{message}</p>
+    </Modal>
   );
 }
 
@@ -117,9 +155,10 @@ export function MediaPicker({ content, current, onClose, onSelect, onLibraryChan
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const inUse = useMemo(() => imagesInUse(content), [content]);
-  const images = library.filter((item) => isImageMime(item.mime));
+  const libraryLoading = library === null && !libraryError;
+  const images = (library ?? []).filter((item) => isImageMime(item.mime));
   const tabLabels: Record<PickerTab, string> = {
-    library: `Uploaded (${images.length})`,
+    library: library ? `Uploaded (${images.length})` : "Uploaded",
     site: `On this site (${inUse.length})`,
     upload: "Upload new",
   };
@@ -156,6 +195,10 @@ export function MediaPicker({ content, current, onClose, onSelect, onLibraryChan
       <span>{label}</span>
     </button>
   );
+  const tiles =
+    tab === "library"
+      ? images.filter((item) => filter(item.filename + item.alt)).map((item) => tile({ src: mediaPath(item.id), alt: item.alt }, item.filename, item.id))
+      : inUse.filter((image) => filter(image.src + image.alt)).map((image) => tile(image, image.src.split("/").pop() ?? "", image.src));
 
   return (
     <Modal
@@ -189,29 +232,29 @@ export function MediaPicker({ content, current, onClose, onSelect, onLibraryChan
             ))}
             {tab !== "upload" && (
               <label className="st-search">
-                <Search />
+                <Search aria-hidden />
                 <input placeholder="Filter" value={query} onChange={(event) => setQuery(event.target.value)} />
               </label>
             )}
           </div>
-          {tab === "upload" || (tab === "library" && !images.length) ? (
+          {tab === "library" && libraryLoading ? (
+            <p className="st-muted">Loading…</p>
+          ) : tab === "upload" || (tab === "library" && !images.length) ? (
             <Dropzone accept="image/*" onFiles={(files) => upload(files[0])}>
-              {busy ? <Loader2 className="st-spin" /> : <Upload />}
+              {busy ? <Loader2 className="st-spin" aria-hidden /> : <Upload aria-hidden />}
               <strong>{busy ? "Uploading…" : "Drag a photo here, or click to browse"}</strong>
               <span>JPG, PNG, WebP, GIF, or SVG. Large photos are resized automatically.</span>
               {libraryError && <span className="st-error">{libraryError}</span>}
             </Dropzone>
+          ) : tiles.length ? (
+            <div className="st-grid">{tiles}</div>
           ) : (
-            <div className="st-grid">
-              {tab === "library"
-                ? images.filter((item) => filter(item.filename + item.alt)).map((item) => tile({ src: mediaPath(item.id), alt: item.alt }, item.filename, item.id))
-                : inUse.filter((image) => filter(image.src + image.alt)).map((image) => tile(image, image.src.split("/").pop() ?? "", image.src))}
-            </div>
+            <p className="st-muted">{query ? `No images match “${query}”.` : "No images on this site yet."}</p>
           )}
           {error && <p className="st-error">{error}</p>}
         </div>
         <aside className="st-picker-side">
-          <div className="st-preview">{choice.src ? <img src={choice.src} alt="" /> : <ImagePlus />}</div>
+          <div className="st-preview">{choice.src ? <img src={choice.src} alt="" /> : <ImagePlus aria-hidden />}</div>
           <label className="st-field">
             <span>Alt text</span>
             <textarea
@@ -326,6 +369,7 @@ export function AddSection({ onClose, onAdd }: AddSectionProps) {
 export function MediaLibrary({ library, error, onChange }: MediaLibraryProps) {
   const [busy, setBusy] = useState(0);
   const [message, setMessage] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<MediaItem | null>(null);
   const upload = async (files: FileList) => {
     const list = [...files];
     setBusy(list.length);
@@ -341,7 +385,6 @@ export function MediaLibrary({ library, error, onChange }: MediaLibraryProps) {
     onChange();
   };
   const remove = async (item: MediaItem) => {
-    if (!confirm(`Delete ${item.filename}? Pages still using it will show a broken image.`)) return;
     setMessage("");
     try {
       await fetchJson(mediaPath(item.id), { method: "DELETE" });
@@ -360,19 +403,20 @@ export function MediaLibrary({ library, error, onChange }: MediaLibraryProps) {
   const copyLink = (url: string) =>
     navigator.clipboard.writeText(new URL(url, location.href).pathname).catch(() => setMessage("Couldn’t copy the link. Copy it from the address bar instead."));
   return (
-    <div className="st-panel-body">
+    <>
       <Dropzone small multiple accept="image/*,application/pdf" onFiles={upload}>
-        {busy ? <Loader2 className="st-spin" /> : <Upload />}
+        {busy ? <Loader2 className="st-spin" aria-hidden /> : <Upload aria-hidden />}
         <strong>{busy ? `Uploading ${busy}…` : "Upload images or PDFs"}</strong>
         <span>Drop files here or click. PDFs get a link you can paste into any link.</span>
       </Dropzone>
       {(error || message) && <p className="st-error">{error || message}</p>}
+      {library === null && !error && <p className="st-muted">Loading…</p>}
       <ul className="st-media-list">
-        {library.map((item) => {
+        {library?.map((item) => {
           const url = mediaPath(item.id);
           return (
             <li key={item.id}>
-              {isImageMime(item.mime) ? <img src={url} alt="" loading="lazy" /> : <FileText className="st-file-icon" />}
+              {isImageMime(item.mime) ? <img src={url} alt="" loading="lazy" /> : <FileText className="st-file-icon" aria-hidden />}
               <div>
                 <strong title={item.filename}>{item.filename}</strong>
                 <small>
@@ -387,14 +431,23 @@ export function MediaLibrary({ library, error, onChange }: MediaLibraryProps) {
                   </button>
                 )}
               </div>
-              <button type="button" className="st-icon" aria-label={`Delete ${item.filename}`} onClick={() => remove(item)}>
-                <Trash2 />
+              <button type="button" className="st-icon" aria-label={`Delete ${item.filename}`} onClick={() => setPendingDelete(item)}>
+                <Trash2 aria-hidden />
               </button>
             </li>
           );
         })}
       </ul>
-      {!library.length && !error && <p className="st-muted">No uploads yet. Images already on the site are still available when choosing an image.</p>}
-    </div>
+      {library?.length === 0 && !error && <p className="st-muted">No uploads yet. Images already on the site are still available when choosing an image.</p>}
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Delete file"
+          message={`Delete ${pendingDelete.filename}? Pages still using it will show a broken image. This can’t be undone.`}
+          confirmLabel="Delete file"
+          onConfirm={() => void remove(pendingDelete)}
+          onClose={() => setPendingDelete(null)}
+        />
+      )}
+    </>
   );
 }

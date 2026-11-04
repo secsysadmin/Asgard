@@ -5,6 +5,13 @@ type RosterRow = { name: string; role: string; major: string; photo: string };
 export type ImportMode = "merge" | "replace";
 type EntryStatus = "new" | "updated" | "unchanged" | "removed";
 export type PlanEntry = { key: string; member: Member; file: string; status: EntryStatus };
+type PlanInput = {
+  existing: Member[];
+  rows: RosterRow[];
+  files: string[];
+  mode: ImportMode;
+  overrides: Record<string, string>;
+};
 
 const COLUMNS: [keyof RosterRow, RegExp][] = [
   ["name", /name|member|person/],
@@ -12,8 +19,6 @@ const COLUMNS: [keyof RosterRow, RegExp][] = [
   ["major", /major|degree|discipline|department/],
   ["photo", /photo|image|picture|headshot|file/],
 ];
-
-const blankMember = (): Member => ({ name: "", role: "", major: "", photo: { src: "", alt: "" } });
 
 function splitLine(line: string, delimiter: string): string[] {
   if (delimiter === "\t") return line.split("\t").map((cell) => cell.trim());
@@ -99,21 +104,15 @@ function matchFile(name: string, files: string[], explicit = ""): string {
   return loose.length === 1 ? loose[0] : "";
 }
 
-export function buildPlan(
-  existing: Member[],
-  rows: RosterRow[],
-  files: string[],
-  mode: ImportMode,
-  overrides: Record<string, string> = {},
-): PlanEntry[] {
+export function buildPlan({ existing, rows, files, mode, overrides }: PlanInput): PlanEntry[] {
   const fileFor = (key: string, name: string, explicit = "") => (key in overrides ? overrides[key] : matchFile(name, files, explicit));
   const keyed = existing.map((member, i) => ({ member, key: nameKey(member.name) || `existing-${i}` }));
+  const existingEntry = ({ member, key }: { member: Member; key: string }): PlanEntry => {
+    const file = fileFor(key, member.name);
+    return { key, member, file, status: file ? "updated" : "unchanged" };
+  };
 
-  if (!rows.length)
-    return keyed.map(({ member, key }) => {
-      const file = fileFor(key, member.name);
-      return { key, member, file, status: file ? "updated" : "unchanged" };
-    });
+  if (!rows.length) return keyed.map(existingEntry);
 
   const fromRows: PlanEntry[] = [];
   const seen = new Set<string>();
@@ -123,7 +122,7 @@ export function buildPlan(
     seen.add(key);
     const current = keyed.find((entry) => entry.key === key)?.member;
     const member: Member = {
-      ...(current ?? blankMember()),
+      ...current,
       name: row.name,
       role: row.role || current?.role || "",
       major: row.major || current?.major || "",
@@ -139,12 +138,7 @@ export function buildPlan(
     return [...fromRows, ...rest.map(({ member, key }): PlanEntry => ({ key, member, file: "", status: "removed" }))];
 
   const byKey = new Map(fromRows.map((entry) => [entry.key, entry]));
-  const merged: PlanEntry[] = keyed.map(({ member, key }) => {
-    const updated = byKey.get(key);
-    if (updated) return updated;
-    const file = fileFor(key, member.name);
-    return { key, member, file, status: file ? "updated" : "unchanged" };
-  });
+  const merged = keyed.map((entry) => byKey.get(entry.key) ?? existingEntry(entry));
   return [...merged, ...fromRows.filter((entry) => entry.status === "new")];
 }
 

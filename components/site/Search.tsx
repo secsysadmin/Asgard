@@ -1,5 +1,5 @@
 "use client";
-import { ArrowRight, CornerDownLeft, Search as SearchIcon, X } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, CornerDownLeft, Search as SearchIcon, X } from "lucide-react";
 import { Fragment, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type Ref, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { buildSearchIndex, search, snippet, tokenize, type SearchResult } from "@/lib/content/search";
 import type { SiteContent } from "@/lib/content/types";
@@ -9,7 +9,7 @@ type Props = { content: SiteContent };
 type GroupItem = { result: SearchResult; position: number };
 type Group = { page: string; items: GroupItem[] };
 type SuggestionsProps = { onPick: (suggestion: string) => void };
-type NoResultsProps = { query: string; contactEmail: string };
+type NoResultsProps = { query: string; contactEmail: string; onPick: (suggestion: string) => void };
 type ResultListProps = {
   ref?: Ref<HTMLUListElement>;
   id: string;
@@ -98,17 +98,20 @@ function Suggestions({ onPick }: SuggestionsProps) {
   );
 }
 
-function NoResults({ query, contactEmail }: NoResultsProps) {
+function NoResults({ query, contactEmail, onPick }: NoResultsProps) {
   return (
-    <div className="search-empty" role="status">
-      <p>
-        No results for “<strong>{query}</strong>”.
-      </p>
-      <p>
-        Try a shorter word, or email{" "}
-        <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
-      </p>
-    </div>
+    <>
+      <div className="search-empty" role="status">
+        <p>
+          No results for “<strong>{query}</strong>”.
+        </p>
+        <p>
+          Try a shorter word, or email{" "}
+          <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
+        </p>
+      </div>
+      <Suggestions onPick={onPick} />
+    </>
   );
 }
 
@@ -155,8 +158,13 @@ function KeyHints() {
   return (
     <footer className="search-foot" aria-hidden>
       <span>
-        <kbd>↑</kbd>
-        <kbd>↓</kbd> to move
+        <kbd>
+          <ArrowUp />
+        </kbd>
+        <kbd>
+          <ArrowDown />
+        </kbd>{" "}
+        to move
       </span>
       <span>
         <kbd>
@@ -269,7 +277,7 @@ export function SiteSearch({ content }: Props) {
             {!query.trim() ? (
               <Suggestions onPick={updateQuery} />
             ) : results.length === 0 ? (
-              <NoResults query={query} contactEmail={content.settings.contactEmail} />
+              <NoResults query={query} contactEmail={content.settings.contactEmail} onPick={updateQuery} />
             ) : (
               <ResultList ref={list} id={listId} groups={groups} query={query} active={active} onHover={setActive} onOpen={go} />
             )}

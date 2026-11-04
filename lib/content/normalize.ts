@@ -6,14 +6,12 @@ import type { Block, BlockType, Page, SiteContent } from "./types";
 
 export const RESERVED_SLUGS = new Set(["admin", "api", "student", "_next", "images"]);
 
-const CONTENT_VERSION = 8;
-const VERSION_WITH_SEC_HEADING = 7;
-const VERSION_WITH_SECTION_COLORS = 6;
-const VERSION_WITH_HERO_DETAILS = 5;
-const VERSION_WITH_EVENT_SECTION = 4;
 const VERSION_WITH_TEAM_ON_HOME = 2;
 const VERSION_WITH_OLD_TEAM_STYLE = 3;
-const SUPPORTED_VERSIONS = new Set<unknown>([VERSION_WITH_TEAM_ON_HOME, VERSION_WITH_OLD_TEAM_STYLE, VERSION_WITH_EVENT_SECTION, VERSION_WITH_HERO_DETAILS, VERSION_WITH_SECTION_COLORS, VERSION_WITH_SEC_HEADING, CONTENT_VERSION]);
+const VERSION_WITH_EVENT_SECTION = 4;
+const VERSION_WITH_SECTION_COLORS = 6;
+const VERSION_WITH_SEC_HEADING = 7;
+const CONTENT_VERSION = 8;
 const MAX_RICH_TEXT_LENGTH = 20_000;
 const MAX_TEXT_LENGTH = 5000;
 const MAX_LIST_ITEMS = 200;
@@ -32,6 +30,10 @@ const TEAM_HREF = "/team";
 const TEAM_NAV_LABEL = "Meet the Team";
 const TEAM_HEADER_ID = "team-header";
 const HOME_HERO_ID = "home-hero";
+const HOME_PATHS_ID = "home-paths";
+const HOME_EVENT_ID = "home-location";
+const HOME_ABOUT_ID = "home-about";
+const HOME_CONTACT_ID = "home-contact";
 const LEGACY_HOME_HEADING = "Career Fair";
 const HOME_HEADING = "SEC Career Fair";
 const LEGACY_HOME_ABOUT_BODY = "<p>The SEC Engineering Career Fair is planned, organized, and staffed entirely by the Student Engineers’ Council. Each fall, thousands of engineering students meet hundreds of companies hiring for internships, co-ops, and full-time positions across every engineering discipline.</p>";
@@ -55,6 +57,15 @@ const isBlockType = (value: unknown): value is BlockType => typeof value === "st
 const isTone = (value: unknown): value is Block["tone"] => BLOCK_TONES.some((tone) => tone === value);
 
 const isTeamBlock = (block: Block): block is Block<"team"> => block.type === "team";
+
+const isSupportedVersion = (value: unknown): value is number =>
+  typeof value === "number" && Number.isInteger(value) && value >= VERSION_WITH_TEAM_ON_HOME && value <= CONTENT_VERSION;
+
+const findBlock = <T extends BlockType>(blocks: Block[], id: string, type: T) =>
+  blocks.find((block): block is Extract<Block, { type: T }> => block.id === id && block.type === type);
+
+const byLabel = <T extends { label: string }>(items: T[], label: string) =>
+  items.find((item) => item.label.toLowerCase() === label);
 
 const safeSrc = (src: string) =>
   /^(https:\/\/|\/(?!\/))/i.test(src.trim()) ? src.trim() : "";
@@ -140,10 +151,8 @@ function normalizePage(input: unknown, index: number): Page | null {
   const slug = isHome ? "" : slugify(String(input.slug ?? ""));
   if (!isHome && (!slug || RESERVED_SLUGS.has(slug))) return null;
   const blocks = uniqueBy((Array.isArray(input.blocks) ? input.blocks : []).map(normalizeBlock), (block) => block.id);
-  if (isHome) {
-    const index = blocks.findIndex((block) => block.id === "home-paths" && block.type === "pathways");
-    if (index >= 0) blocks.splice(index, 1);
-  }
+  const pathways = isHome ? findBlock(blocks, HOME_PATHS_ID, "pathways") : undefined;
+  if (pathways) blocks.splice(blocks.indexOf(pathways), 1);
   return {
     id: typeof input.id === "string" && input.id ? input.id.slice(0, MAX_ID_LENGTH) : slug || HOME_PAGE_ID,
     slug,
@@ -161,7 +170,7 @@ function takeHomeTeamBlock(home: Page): Block<"team"> {
   return structuredClone(homeTeam);
 }
 
-function moveTeamToOwnPage(content: SiteContent): SiteContent {
+function moveTeamToOwnPage(content: SiteContent) {
   const { pages, settings } = content;
   if (!pages.some((page) => page.slug === TEAM_SLUG)) {
     const members = takeHomeTeamBlock(pages[0]);
@@ -175,10 +184,9 @@ function moveTeamToOwnPage(content: SiteContent): SiteContent {
     const external = settings.nav.findIndex((link) => /^https?:/i.test(link.href));
     settings.nav.splice(external < 0 ? settings.nav.length : external, 0, { label: TEAM_NAV_LABEL, href: TEAM_HREF });
   }
-  return content;
 }
 
-function restyleTeamPage(content: SiteContent): SiteContent {
+function restyleTeamPage(content: SiteContent) {
   const page = content.pages.find((candidate) => candidate.slug === TEAM_SLUG);
   for (const block of page?.blocks ?? []) {
     if (block.id === TEAM_HEADER_ID && block.tone === "plain") block.tone = "maroon";
@@ -187,20 +195,19 @@ function restyleTeamPage(content: SiteContent): SiteContent {
       if (block.data.heading === LEGACY_TEAM_HEADING) block.data.heading = "";
     }
   }
-  return content;
 }
 
 function moveEventDetailsToHero(content: SiteContent) {
   const home = content.pages[0];
-  const hero = home.blocks.find((block) => block.id === HOME_HERO_ID && block.type === "hero");
-  const event = home.blocks.find((block) => block.id === "home-location" && block.type === "event");
-  if (!hero || hero.type !== "hero" || !event || event.type !== "event") return;
-  const dates = event.data.facts.find((item) => /^in-person dates$/i.test(item.label));
-  const hours = event.data.facts.find((item) => /^hours$/i.test(item.label));
-  const venue = event.data.facts.find((item) => /^venue$/i.test(item.label));
-  const virtual = event.data.facts.find((item) => /^virtual fair$/i.test(item.label));
-  const directions = event.data.links.find((item) => /^get directions$/i.test(item.label));
-  const virtualLink = event.data.links.find((item) => /^hireaggies login$/i.test(item.label));
+  const hero = findBlock(home.blocks, HOME_HERO_ID, "hero");
+  const event = findBlock(home.blocks, HOME_EVENT_ID, "event");
+  if (!hero || !event) return;
+  const dates = byLabel(event.data.facts, "in-person dates");
+  const hours = byLabel(event.data.facts, "hours");
+  const venue = byLabel(event.data.facts, "venue");
+  const virtual = byLabel(event.data.facts, "virtual fair");
+  const directions = byLabel(event.data.links, "get directions");
+  const virtualLink = byLabel(event.data.links, "hireaggies login");
   hero.data.dates = dates?.value || hero.data.dates;
   hero.data.hours = hours?.value ?? "";
   hero.data.location = venue?.value || hero.data.location || directions?.label || "";
@@ -214,29 +221,38 @@ function moveEventDetailsToHero(content: SiteContent) {
   if (!hasCustomContent) home.blocks = home.blocks.filter((block) => block !== event);
 }
 
+function untintContactAfterAbout(home: Page) {
+  const contact = findBlock(home.blocks, HOME_CONTACT_ID, "contact");
+  const previous = contact && home.blocks[home.blocks.indexOf(contact) - 1];
+  if (contact?.tone === "tint" && previous?.id === HOME_ABOUT_ID && previous.tone === "tint") contact.tone = "plain";
+}
+
+function renameHomeHeading(home: Page) {
+  const hero = findBlock(home.blocks, HOME_HERO_ID, "hero");
+  if (hero?.data.emphasis === LEGACY_HOME_HEADING) hero.data.emphasis = HOME_HEADING;
+}
+
+function refreshHomeAbout(home: Page) {
+  const about = findBlock(home.blocks, HOME_ABOUT_ID, "about");
+  if (about?.data.body === LEGACY_HOME_ABOUT_BODY) about.data.body = HOME_ABOUT_BODY;
+}
+
+function upgrade(content: SiteContent, version: number) {
+  if (version === VERSION_WITH_TEAM_ON_HOME) moveTeamToOwnPage(content);
+  if (version <= VERSION_WITH_OLD_TEAM_STYLE) restyleTeamPage(content);
+  if (version <= VERSION_WITH_EVENT_SECTION) moveEventDetailsToHero(content);
+  if (version < VERSION_WITH_SECTION_COLORS) untintContactAfterAbout(content.pages[0]);
+  if (version < VERSION_WITH_SEC_HEADING) renameHomeHeading(content.pages[0]);
+  if (version < CONTENT_VERSION) refreshHomeAbout(content.pages[0]);
+}
+
 export function normalizeContent(input: unknown): SiteContent {
-  if (!isObject(input) || !SUPPORTED_VERSIONS.has(input.version) || !Array.isArray(input.pages)) return structuredClone(defaultContent);
-  const version = input.version;
+  if (!isObject(input) || !isSupportedVersion(input.version) || !Array.isArray(input.pages)) return structuredClone(defaultContent);
   const pages = uniqueBy(input.pages.map((page, index) => normalizePage(page, index)), (page) => page.slug);
   if (!pages.length || pages[0].slug !== "") return structuredClone(defaultContent);
   const settings = conform(input.settings, defaultContent.settings) as SiteContent["settings"];
   settings.hiddenNav = [...new Set(settings.hiddenNav.filter((href) => typeof href === "string" && !!safeHref(href)))];
-  let content: SiteContent = { version: CONTENT_VERSION, settings, pages };
-  if (version === VERSION_WITH_TEAM_ON_HOME) content = moveTeamToOwnPage(content);
-  if (version === VERSION_WITH_TEAM_ON_HOME || version === VERSION_WITH_OLD_TEAM_STYLE) content = restyleTeamPage(content);
-  if (version === VERSION_WITH_TEAM_ON_HOME || version === VERSION_WITH_OLD_TEAM_STYLE || version === VERSION_WITH_EVENT_SECTION) moveEventDetailsToHero(content);
-  if (version !== CONTENT_VERSION && version !== VERSION_WITH_SEC_HEADING && version !== VERSION_WITH_SECTION_COLORS) {
-    const blocks = content.pages[0].blocks;
-    const index = blocks.findIndex((block) => block.id === "home-contact" && block.type === "contact" && block.tone === "tint");
-    if (index > 0 && blocks[index - 1].id === "home-about" && blocks[index - 1].tone === "tint") blocks[index].tone = "plain";
-  }
-  if (version !== CONTENT_VERSION && version !== VERSION_WITH_SEC_HEADING) {
-    const hero = content.pages[0].blocks.find((block) => block.id === HOME_HERO_ID && block.type === "hero");
-    if (hero?.type === "hero" && hero.data.emphasis === LEGACY_HOME_HEADING) hero.data.emphasis = HOME_HEADING;
-  }
-  if (version !== CONTENT_VERSION) {
-    const about = content.pages[0].blocks.find((block) => block.id === "home-about" && block.type === "about");
-    if (about?.type === "about" && about.data.body === LEGACY_HOME_ABOUT_BODY) about.data.body = HOME_ABOUT_BODY;
-  }
+  const content: SiteContent = { version: CONTENT_VERSION, settings, pages };
+  upgrade(content, input.version);
   return content;
 }

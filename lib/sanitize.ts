@@ -12,7 +12,7 @@ const escapeText = (text: string) => text.replace(/</g, "&lt;").replace(/>/g, "&
 const escapeAttr = (value: string) =>
   value.replace(/&(?!amp;|lt;|gt;|quot;|#\d+;)/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
-export function safeHref(href: string): string {
+export function safeHref(href: string) {
   const value = href.trim();
   if (SAFE_SCHEMES.test(value)) return value;
   if (/^[/#]/.test(value) && !value.startsWith("//")) return value;
@@ -34,7 +34,7 @@ function allowedTag(whole: string, tagName: string, attributes: string) {
   return name === "a" ? openAnchor(attributes) : `<${name}>`;
 }
 
-export function sanitizeHtml(raw: unknown): string {
+export function sanitizeHtml(raw: unknown) {
   if (typeof raw !== "string" || !raw) return "";
   const input = raw.replace(DANGEROUS_ELEMENTS, "");
   let out = "";
@@ -43,14 +43,13 @@ export function sanitizeHtml(raw: unknown): string {
     const [whole, tagName, attributes] = match;
     out += escapeText(input.slice(last, match.index));
     last = match.index + whole.length;
-    const isComment = !tagName;
-    if (!isComment) out += allowedTag(whole, tagName, attributes);
+    if (tagName) out += allowedTag(whole, tagName, attributes);
   }
   out += escapeText(input.slice(last));
   return out.replace(TRAILING_EMPTY_PARAGRAPHS, "").trim();
 }
 
-export function stripHtml(input: string): string {
+export function stripHtml(input: string) {
   return input
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/g, " ")

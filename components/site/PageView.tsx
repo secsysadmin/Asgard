@@ -3,7 +3,7 @@ import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
 import { type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from "react";
 import type { Block, Page, SiteContent } from "@/lib/content/types";
 import { safeHref } from "@/lib/sanitize";
-import { Rich, type Path, useEdit } from "../edit/context";
+import { Rich, useEdit } from "../edit/context";
 import { BlockView } from "./blocks";
 import { decodeHash, onReaderScroll, revealHash } from "./reveal";
 import { isExternalHref, SmartLink } from "./SmartLink";
@@ -13,15 +13,11 @@ export type SectionWrapper = (block: Block, index: number, node: ReactNode) => R
 
 type TocGroup = { title: string; items: { id: string; label: string }[] };
 type LogoProps = { className?: string };
-type HeaderProps = { content: SiteContent; page: Page };
+type HeaderProps = { content: SiteContent; page?: Page };
 type FooterProps = { content: SiteContent };
 type TocProps = { groups: TocGroup[] };
-type Props = {
-  content: SiteContent;
-  pageIndex: number;
-  wrap?: SectionWrapper;
-  basePath?: Path;
-};
+type Props = { content: SiteContent; pageIndex: number; wrap?: SectionWrapper };
+type SiteChromeProps = { content: SiteContent; page?: Page; children: ReactNode };
 
 const LOGO_ALT = "Student Engineers’ Council";
 const LOGO_SRC = "/images/sec-logo-white.png";
@@ -31,11 +27,12 @@ const ACTIVE_SECTION_OFFSET_PX = 160;
 const HEADER_SOLID_SCROLL_PX = 24;
 const PAGE_BOTTOM_TOLERANCE_PX = 4;
 
-const pagePath = (page: Page) => `/${page.slug}`;
+function isCurrent(href: string, page?: Page) {
+  return !!page && page.slug !== "" && href.split("#")[0] === `/${page.slug}`;
+}
 
-function isCurrent(href: string, page: Page) {
-  const path = href.split("#")[0];
-  return path === pagePath(page) && page.slug !== "";
+function visibleNav(settings: SiteContent["settings"]) {
+  return settings.nav.filter((link) => !settings.hiddenNav.includes(link.href));
 }
 
 function useDismiss(ref: RefObject<HTMLElement | null>, open: boolean, close: () => void) {
@@ -64,8 +61,8 @@ function Header({ content, page }: HeaderProps) {
   useDismiss(header, open, useCallback(() => setOpen(false), []));
   const edit = useEdit();
   const { settings } = content;
-  const firstBlock = page.blocks[0];
-  const overlay = !edit && page.slug === "" && firstBlock?.visible && firstBlock.type === "hero" && !!firstBlock.data.video?.src;
+  const firstBlock = page?.blocks[0];
+  const overlay = !edit && page?.slug === "" && firstBlock?.visible && firstBlock.type === "hero" && !!firstBlock.data.video.src;
   useEffect(() => {
     const node = header.current;
     if (!node || !overlay) return;
@@ -94,7 +91,7 @@ function Header({ content, page }: HeaderProps) {
         </button>
         <nav id="site-nav" className={open ? "site-nav open" : "site-nav"} aria-label="Main">
           <ul>
-            {settings.nav.filter((link) => !settings.hiddenNav.includes(link.href)).map((link, i) => (
+            {visibleNav(settings).map((link, i) => (
               <li key={i}>
                 <SmartLink href={safeHref(link.href)} aria-current={isCurrent(link.href, page) ? "page" : undefined} onClick={() => setOpen(false)}>
                   {link.label}
@@ -127,7 +124,7 @@ function Footer({ content }: FooterProps) {
           <li>
             <SmartLink href="/">Home</SmartLink>
           </li>
-          {settings.nav.filter((link) => !settings.hiddenNav.includes(link.href)).map((link, i) => (
+          {visibleNav(settings).map((link, i) => (
             <li key={i}>
               <SmartLink href={safeHref(link.href)}>{link.label}</SmartLink>
             </li>
@@ -284,14 +281,8 @@ const defaultWrap: SectionWrapper = (block, _index, node) => (
   </section>
 );
 
-export function PageView({ content, pageIndex, wrap = defaultWrap, basePath = ["pages", pageIndex, "blocks"] }: Props) {
+export function SiteChrome({ content, page, children }: SiteChromeProps) {
   const edit = useEdit();
-  const page = content.pages[pageIndex];
-  useRevealLinkedAnswer(!edit);
-  const render = (block: Block, index: number) => wrap(block, index, <BlockView block={block} at={[...basePath, index, "data"]} />);
-  const indexed = page.blocks.map((block, index) => ({ block, index }));
-  const lead = page.layout === "guide" && page.blocks[0]?.type === "pageHeader" ? indexed.slice(0, 1) : [];
-  const body = indexed.slice(lead.length);
   return (
     <div className="site">
       <a className="skip-link" href="#main">Skip to content</a>
@@ -301,6 +292,22 @@ export function PageView({ content, pageIndex, wrap = defaultWrap, basePath = ["
         </div>
       )}
       <Header content={content} page={page} />
+      {children}
+      <Footer content={content} />
+    </div>
+  );
+}
+
+export function PageView({ content, pageIndex, wrap = defaultWrap }: Props) {
+  const edit = useEdit();
+  const page = content.pages[pageIndex];
+  useRevealLinkedAnswer(!edit);
+  const render = (block: Block, index: number) => wrap(block, index, <BlockView block={block} at={["pages", pageIndex, "blocks", index, "data"]} />);
+  const indexed = page.blocks.map((block, index) => ({ block, index }));
+  const lead = page.layout === "guide" && page.blocks[0]?.type === "pageHeader" ? indexed.slice(0, 1) : [];
+  const body = indexed.slice(lead.length);
+  return (
+    <SiteChrome content={content} page={page}>
       <main id="main" className={`page page-${page.layout}`} data-page={page.slug || "home"}>
         {lead.map(({ block, index }) => render(block, index))}
         {page.layout === "guide" ? (
@@ -312,7 +319,6 @@ export function PageView({ content, pageIndex, wrap = defaultWrap, basePath = ["
           body.map(({ block, index }) => render(block, index))
         )}
       </main>
-      <Footer content={content} />
-    </div>
+    </SiteChrome>
   );
 }

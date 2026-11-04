@@ -1,5 +1,5 @@
 "use client";
-import { Eye, EyeOff, GripVertical, Plus, Trash2, Undo2, Users } from "lucide-react";
+import { Eye, EyeOff, GripVertical, Plus, RotateCcw, Trash2, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { blockSpecs, createBlock, newBlockId } from "@/lib/content/blocks";
 import { RESERVED_SLUGS, slugify } from "@/lib/content/normalize";
@@ -7,7 +7,7 @@ import type { Block, Page, SiteContent } from "@/lib/content/types";
 import { blockTitle } from "@/lib/studio/content-ops";
 import type { Path } from "@/lib/studio/paths";
 import { type EditApi, List as EditableList, Lnk, Rich } from "../edit/context";
-import { Modal } from "./dialogs";
+import { ConfirmDialog, Modal } from "./dialogs";
 import { pageName } from "./labels";
 import { errorMessage, fetchJson } from "./request";
 
@@ -99,7 +99,7 @@ export function SectionsPanel({ blocks, selected, actions }: SectionsPanelProps)
               }}
               title="Alt + ↑/↓ to move with the keyboard"
             >
-              <GripVertical className="st-grip" />
+              <GripVertical className="st-grip" aria-hidden />
               <span>
                 <strong>{blockTitle(block)}</strong>
                 <small>
@@ -110,19 +110,19 @@ export function SectionsPanel({ blocks, selected, actions }: SectionsPanelProps)
               </span>
             </button>
             <div className="st-outline-actions">
-              <button type="button" aria-label={`${block.visible ? "Hide" : "Show"} section ${blockTitle(block)}`} onClick={() => actions.toggleVisible(index)}>
-                {block.visible ? <EyeOff /> : <Eye />} {block.visible ? "Hide" : "Show"}
+              <button type="button" className="st-btn st-btn-small" aria-label={`${block.visible ? "Hide" : "Show"} section ${blockTitle(block)}`} onClick={() => actions.toggleVisible(index)}>
+                {block.visible ? <EyeOff aria-hidden /> : <Eye aria-hidden />} {block.visible ? "Hide" : "Show"}
               </button>
-              <button type="button" className="st-outline-delete" aria-label={`Delete section ${blockTitle(block)}`} onClick={() => actions.remove(index)}>
-                <Trash2 /> Delete
+              <button type="button" className="st-btn st-btn-small st-btn-danger-quiet" aria-label={`Delete section ${blockTitle(block)}`} onClick={() => actions.remove(index)}>
+                <Trash2 aria-hidden /> Delete
               </button>
             </div>
-            {block.type === "team" && <button type="button" className="st-outline-team" onClick={() => actions.manageTeam(index)}><Users /> Update team</button>}
+            {block.type === "team" && <button type="button" className="st-btn st-btn-small st-outline-team" onClick={() => actions.manageTeam(index)}><Users aria-hidden /> Update team</button>}
           </li>
         ))}
       </ol>
       <button type="button" className="st-btn st-btn-block" onClick={() => actions.insertAt(selectedIndex >= 0 ? selectedIndex + 1 : blocks.length)}>
-        <Plus /> Add section
+        <Plus aria-hidden /> Add section
       </button>
     </>
   );
@@ -164,6 +164,7 @@ function slugError(content: SiteContent, slug: string, pageIndex: number) {
 export function PagesPanel({ content, pageIndex, onSelect, onAdd, commit, api }: PagesPanelProps) {
   const page = content.pages[pageIndex];
   const [slug, setSlug] = useState(page.slug);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const error = slugError(content, slug, pageIndex);
   const pageHref = `/${page.slug}`;
   const hasMenuLink = content.settings.nav.some((link) => link.href === pageHref);
@@ -176,14 +177,12 @@ export function PagesPanel({ content, pageIndex, onSelect, onAdd, commit, api }:
         const external = nav.findIndex((link) => /^https?:/i.test(link.href));
         nav.splice(external < 0 ? nav.length : external, 0, { label: page.title, href: pageHref });
       }
-      const hiddenNav = isInMenu
-        ? [...settings.hiddenNav.filter((href) => href !== pageHref), pageHref]
-        : settings.hiddenNav.filter((href) => href !== pageHref);
+      const otherHidden = settings.hiddenNav.filter((href) => href !== pageHref);
+      const hiddenNav = isInMenu ? [...otherHidden, pageHref] : otherHidden;
       return { ...current, settings: { ...settings, nav, hiddenNav } };
     });
   };
   const deletePage = () => {
-    if (!confirm(`Delete the “${page.title}” page? Its menu links will also be removed. This reaches the live site when you publish. You can undo before publishing.`)) return;
     onSelect(0);
     commit((c) => ({
       ...c,
@@ -212,7 +211,7 @@ export function PagesPanel({ content, pageIndex, onSelect, onAdd, commit, api }:
         ))}
       </ul>
       <button type="button" className="st-btn st-btn-block" onClick={onAdd}>
-        <Plus /> New page
+        <Plus aria-hidden /> New page
       </button>
       {pageIndex > 0 && (
         <>
@@ -220,7 +219,7 @@ export function PagesPanel({ content, pageIndex, onSelect, onAdd, commit, api }:
             <h3>Menu visibility</h3>
             <p className="st-muted">{isInMenu ? "This page is in the main menu." : "This page is hidden from the main menu."} The page remains accessible by its direct link and search.</p>
             <button type="button" className="st-btn st-btn-small" onClick={toggleMenu}>
-              {isInMenu ? <EyeOff /> : <Eye />} {isInMenu ? "Hide from menu" : hasMenuLink ? "Show in menu" : "Add to menu"}
+              {isInMenu ? <EyeOff aria-hidden /> : <Eye aria-hidden />} {isInMenu ? "Hide from menu" : hasMenuLink ? "Show in menu" : "Add to menu"}
             </button>
             <p className="st-help">Publish to update the live header and footer.</p>
           </section>
@@ -238,12 +237,21 @@ export function PagesPanel({ content, pageIndex, onSelect, onAdd, commit, api }:
               <button type="button" className="st-btn st-btn-small" disabled={!!error || slug === page.slug} onClick={() => api.set(["pages", pageIndex, "slug"], slug)}>
                 Save URL
               </button>
-              <button type="button" className="st-btn st-btn-small st-btn-danger-quiet" onClick={deletePage}>
-                <Trash2 /> Delete page
+              <button type="button" className="st-btn st-btn-small st-btn-danger-quiet" onClick={() => setConfirmingDelete(true)}>
+                <Trash2 aria-hidden /> Delete page
               </button>
             </div>
           </section>
         </>
+      )}
+      {confirmingDelete && (
+        <ConfirmDialog
+          title="Delete page"
+          message={`Delete the “${page.title}” page? Its menu links will also be removed. This reaches the live site when you publish. You can undo before publishing.`}
+          confirmLabel="Delete page"
+          onConfirm={deletePage}
+          onClose={() => setConfirmingDelete(false)}
+        />
       )}
     </>
   );
@@ -339,58 +347,59 @@ export function SitePanel({ content, api }: SitePanelProps) {
         <h2>Site settings</h2>
         <p>The header menu, footer, and site-wide announcement appear on every page.</p>
       </div>
-      <div className="st-panel-body">
-        <section className="st-group">
-          <h3>Main menu</h3>
-          <EditableList
-            as="ol"
-            className="st-navlist"
-            items={settings.nav}
-            path={["settings", "nav"]}
-            label="menu link"
-            render={(link, _i, p) => (
+      <section className="st-group">
+        <h3>Main menu</h3>
+        <EditableList
+          as="ol"
+          className="st-navlist"
+          items={settings.nav}
+          path={["settings", "nav"]}
+          label="menu link"
+          render={(link, _i, p) => {
+            const hidden = settings.hiddenNav.includes(link.href);
+            return (
               <li>
                 <Lnk value={link} path={p} />
                 <button
                   type="button"
-                  className="st-menu-visibility"
-                  onClick={() => api.set(["settings", "hiddenNav"], settings.hiddenNav.includes(link.href)
+                  className="st-btn st-btn-small st-menu-visibility"
+                  onClick={() => api.set(["settings", "hiddenNav"], hidden
                     ? settings.hiddenNav.filter((href) => href !== link.href)
                     : [...settings.hiddenNav, link.href])}
-                  aria-label={`${settings.hiddenNav.includes(link.href) ? "Show" : "Hide"} ${link.label || "link"} in menu`}
+                  aria-label={`${hidden ? "Show" : "Hide"} ${link.label || "link"} in menu`}
                   disabled={!link.href}
                 >
-                  {settings.hiddenNav.includes(link.href) ? "Show in menu" : "Hide from menu"}
+                  {hidden ? "Show in menu" : "Hide from menu"}
                 </button>
               </li>
-            )}
-          />
-        </section>
-        <section className="st-group">
-          <h3>Header button</h3>
-          <div className="st-navlist">
-            <Lnk value={settings.headerCta} path={["settings", "headerCta"]} />
-          </div>
-        </section>
-        <section className="st-group">
-          <h3>Announcement bar</h3>
-          <Rich value={settings.announcement} path={["settings", "announcement"]} className="st-rich-input" placeholder="e.g. Shuttle times changed for Thursday — leave empty to hide" />
-        </section>
-        <section className="st-group">
-          <label className="st-field">
-            <span>Site name</span>
-            <input value={settings.siteName} onChange={(event) => api.set(["settings", "siteName"], event.target.value)} />
-          </label>
-          <label className="st-field">
-            <span>Contact email (footer)</span>
-            <input type="email" value={settings.contactEmail} onChange={(event) => api.set(["settings", "contactEmail"], event.target.value)} />
-          </label>
-          <label className="st-field">
-            <span>Footer text</span>
-            <textarea rows={3} value={settings.footerNote} onChange={(event) => api.set(["settings", "footerNote"], event.target.value)} />
-          </label>
-        </section>
-      </div>
+            );
+          }}
+        />
+      </section>
+      <section className="st-group">
+        <h3>Header button</h3>
+        <div className="st-navlist">
+          <Lnk value={settings.headerCta} path={["settings", "headerCta"]} />
+        </div>
+      </section>
+      <section className="st-group">
+        <h3>Announcement bar</h3>
+        <Rich value={settings.announcement} path={["settings", "announcement"]} className="st-rich-input" placeholder="e.g. Shuttle times changed for Thursday — leave empty to hide" />
+      </section>
+      <section className="st-group">
+        <label className="st-field">
+          <span>Site name</span>
+          <input value={settings.siteName} onChange={(event) => api.set(["settings", "siteName"], event.target.value)} />
+        </label>
+        <label className="st-field">
+          <span>Contact email (footer)</span>
+          <input type="email" value={settings.contactEmail} onChange={(event) => api.set(["settings", "contactEmail"], event.target.value)} />
+        </label>
+        <label className="st-field">
+          <span>Footer text</span>
+          <textarea rows={3} value={settings.footerNote} onChange={(event) => api.set(["settings", "footerNote"], event.target.value)} />
+        </label>
+      </section>
     </>
   );
 }
@@ -420,34 +429,32 @@ export function HistoryPanel({ onRestore, onRevert, unpublished }: HistoryPanelP
         <h2>History</h2>
         <p>Every publish is saved. Restoring loads that version into your draft.</p>
       </div>
-      <div className="st-panel-body">
-        <button type="button" className="st-btn st-btn-block" disabled={!unpublished} onClick={onRevert}>
-          <Undo2 /> Discard unpublished changes
-        </button>
-        {error && <p className="st-error">{error}</p>}
-        {revisions === null ? (
-          <p className="st-muted">Loading…</p>
-        ) : revisions.length === 0 ? (
-          !error && <p className="st-muted">Nothing published from the studio yet.</p>
-        ) : (
-          <ol className="st-history">
-            {revisions.map((revision, i) => {
-              const when = new Date(revision.created_at).toLocaleString(undefined, REVISION_DATE_FORMAT);
-              return (
-                <li key={revision.id}>
-                  <span>
-                    <strong>{when}</strong>
-                    <small>{i === 0 ? "Live now" : revision.label || "Published"}</small>
-                  </span>
-                  <button type="button" className="st-btn st-btn-small" onClick={() => restore(revision.id, when)}>
-                    Restore
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-        )}
-      </div>
+      <button type="button" className="st-btn st-btn-block" disabled={!unpublished} onClick={onRevert}>
+        <RotateCcw aria-hidden /> Discard unpublished changes
+      </button>
+      {error && <p className="st-error">{error}</p>}
+      {revisions === null ? (
+        <p className="st-muted">Loading…</p>
+      ) : revisions.length === 0 ? (
+        !error && <p className="st-muted">Nothing published from the studio yet.</p>
+      ) : (
+        <ol className="st-history">
+          {revisions.map((revision, i) => {
+            const when = new Date(revision.created_at).toLocaleString(undefined, REVISION_DATE_FORMAT);
+            return (
+              <li key={revision.id}>
+                <span>
+                  <strong>{when}</strong>
+                  <small>{i === 0 ? "Live now" : revision.label || "Published"}</small>
+                </span>
+                <button type="button" className="st-btn st-btn-small" onClick={() => restore(revision.id, when)}>
+                  Restore
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      )}
     </>
   );
 }
