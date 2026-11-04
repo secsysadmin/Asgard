@@ -13,15 +13,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { ArrowDown, ArrowUp, Copy, GripVertical, ImagePlus, Link2, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, GripVertical, ImagePlus, Link2, Plus, Trash2, X } from "lucide-react";
 import { safeHref, sanitizeHtml } from "@/lib/sanitize";
 import type { ImageRef, LinkRef } from "@/lib/content/types";
 import type { Path } from "@/lib/studio/paths";
 import { SmartLink } from "../site/SmartLink";
 import { cx } from "./classNames";
 import { RichField } from "./RichField";
-
-export type { Path };
 
 export type EditApi = {
   set(path: Path, value: unknown): void;
@@ -231,7 +229,9 @@ function Lightbox({ image, onClose }: LightboxProps) {
       <div className="lightbox-bar">
         <span>{image.alt}</span>
         <a href={image.src} target="_blank" rel="noopener noreferrer">Open full size</a>
-        <button type="button" onClick={() => ref.current?.close()} autoFocus>Close</button>
+        <button type="button" className="lightbox-close" onClick={() => ref.current?.close()} aria-label="Close">
+          <X aria-hidden />
+        </button>
       </div>
     </dialog>
   );

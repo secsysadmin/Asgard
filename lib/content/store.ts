@@ -4,20 +4,9 @@ import { defaultContent } from "./defaults";
 import { normalizeContent } from "./normalize";
 import type { SiteContent } from "./types";
 
-type Row = {
-  draft: unknown;
-  published: unknown;
-  draft_updated_at: string | null;
-  published_at: string | null;
-};
+type Row = { draft: unknown; published: unknown };
 
-type StudioState = {
-  draft: SiteContent;
-  published: SiteContent;
-  draftUpdatedAt: string | null;
-  publishedAt: string | null;
-  hasUnpublishedChanges: boolean;
-};
+type StudioState = { draft: SiteContent; published: SiteContent };
 
 const MAX_REVISIONS = 30;
 const MAX_REVISION_LABEL_LENGTH = 120;
@@ -27,7 +16,7 @@ const freshDefaults = () => structuredClone(defaultContent);
 async function readRow(): Promise<Row | null> {
   await ensureSchema();
   const rows = (await database().query(
-    `select draft, published, draft_updated_at, published_at from ${deploymentSchema()}.site_content where id = 1`,
+    `select draft, published from ${deploymentSchema()}.site_content where id = 1`,
   )) as Row[];
   return rows[0] ?? null;
 }
@@ -47,40 +36,32 @@ export async function getStudioState(): Promise<StudioState> {
   const row = await readRow();
   const published = row?.published ? normalizeContent(row.published) : freshDefaults();
   const draft = row?.draft ? normalizeContent(row.draft) : published;
-  return {
-    draft,
-    published,
-    draftUpdatedAt: row?.draft_updated_at ?? null,
-    publishedAt: row?.published_at ?? null,
-    hasUnpublishedChanges: JSON.stringify(draft) !== JSON.stringify(published),
-  };
+  return { draft, published };
 }
 
 export async function saveDraft(input: unknown) {
   await ensureSchema();
   const content = normalizeContent(input);
-  const rows = (await database().query(
+  await database().query(
     `insert into ${deploymentSchema()}.site_content (id, draft, draft_updated_at) values (1, $1::jsonb, now())
-     on conflict (id) do update set draft = excluded.draft, draft_updated_at = now()
-     returning draft_updated_at`,
+     on conflict (id) do update set draft = excluded.draft, draft_updated_at = now()`,
     [JSON.stringify(content)],
-  )) as { draft_updated_at: string }[];
-  return { content, draftUpdatedAt: rows[0]?.draft_updated_at ?? null };
+  );
+  return { content };
 }
 
-export async function publish(input: unknown, label = "") {
+export async function publish(input: unknown, label: string) {
   await ensureSchema();
   const content = normalizeContent(input);
   const json = JSON.stringify(content);
   const schema = deploymentSchema();
   const sql = database();
-  const [published] = (await sql.transaction([
+  await sql.transaction([
     sql.query(
       `insert into ${schema}.site_content (id, draft, published, draft_updated_at, published_at)
        values (1, $1::jsonb, $1::jsonb, now(), now())
        on conflict (id) do update set draft = excluded.draft, published = excluded.published,
-         draft_updated_at = now(), published_at = now()
-       returning published_at`,
+         draft_updated_at = now(), published_at = now()`,
       [json],
     ),
     sql.query(`insert into ${schema}.site_revisions (content, label) values ($1::jsonb, $2)`, [
@@ -90,8 +71,8 @@ export async function publish(input: unknown, label = "") {
     sql.query(
       `delete from ${schema}.site_revisions where id not in (select id from ${schema}.site_revisions order by id desc limit ${MAX_REVISIONS})`,
     ),
-  ])) as { published_at: string }[][];
-  return { content, publishedAt: published[0]?.published_at ?? null };
+  ]);
+  return { content };
 }
 
 export async function listRevisions() {

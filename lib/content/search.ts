@@ -29,11 +29,7 @@ const SCORE_TEXT_WORD_START = 2;
 const SCORE_TEXT = 1;
 const SCORE_EXACT_TITLE = 20;
 
-const clean = (value: string) =>
-  stripHtml(value)
-    .replace(/\s+/g, " ")
-    .replace(/\s+([.,;:!?)])/g, "$1")
-    .trim();
+const clean = (value: string) => stripHtml(value).replace(/\s+([.,;:!?)])/g, "$1");
 
 const fold = (value: string) => value.normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[’']/g, "'").toLowerCase();
 
@@ -45,7 +41,7 @@ function textOf(value: unknown, key = ""): string[] {
   if (SKIP_KEYS.has(key)) return [];
   if (typeof value === "string") return value ? [clean(value)] : [];
   if (Array.isArray(value)) return value.flatMap((item) => textOf(item, key));
-  if (value && typeof value === "object") return Object.entries(value).flatMap(([k, v]) => textOf(v, k));
+  if (isFieldObject(value)) return Object.entries(value).flatMap(([k, v]) => textOf(v, k));
   return [];
 }
 
@@ -77,9 +73,9 @@ function ownText(record: Fields, exclude = ""): string {
 }
 
 function titledItems(record: Fields): Fields[] {
-  return Object.entries(record)
-    .filter(([key, value]) => Array.isArray(value) && !DETAIL_LISTS.has(key))
-    .flatMap(([, value]) => (Array.isArray(value) ? value.filter(isFieldObject) : []));
+  return Object.entries(record).flatMap(([key, value]) =>
+    Array.isArray(value) && !DETAIL_LISTS.has(key) ? value.filter(isFieldObject) : [],
+  );
 }
 
 function blockEntries(block: Block, page: Page): SearchEntry[] {

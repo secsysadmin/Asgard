@@ -21,18 +21,15 @@ const LIMITED_LOGIN = "Too many sign-in attempts. Please try again in 15 minutes
 const MAX_EMAIL_LENGTH = 254;
 const MAX_PASSWORD_LENGTH = 1024;
 const NO_CACHE_HEADERS = { "Cache-Control": "no-store" };
+const SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  path: "/",
+} as const;
 
 function tokenHash(token: string) {
   return createHash("sha256").update(token).digest("hex");
-}
-
-function sessionCookieOptions() {
-  return {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
-    path: "/",
-  };
 }
 
 export async function isAuthorized() {
@@ -83,12 +80,23 @@ async function createSession(email: string, bucket: string) {
     sql.query(`insert into ${schema}.staff_sessions (token_hash, email, expires_at) values ($1, $2, $3)`, [tokenHash(token), email, expires.toISOString()]),
     sql.query(`delete from ${schema}.staff_login_limits where bucket = $1`, [bucket]),
   ]);
-  (await cookies()).set(SESSION_COOKIE, token, { ...sessionCookieOptions(), expires });
+  (await cookies()).set(SESSION_COOKIE, token, { ...SESSION_COOKIE_OPTIONS, expires });
+}
+
+function loginBucket(request: Request) {
+  const address = process.env.VERCEL ? request.headers.get("x-vercel-forwarded-for")?.split(",")[0].trim() : LOCAL_LOGIN_BUCKET;
+  return tokenHash(address || LOCAL_LOGIN_BUCKET);
+}
+
+function readCredentials(input: unknown) {
+  if (!input || typeof input !== "object" || !("email" in input) || !("password" in input)) return null;
+  const { email, password } = input;
+  if (typeof email !== "string" || typeof password !== "string" || email.length > MAX_EMAIL_LENGTH || password.length > MAX_PASSWORD_LENGTH) return null;
+  return { email: email.trim().toLowerCase(), password };
 }
 
 export async function signIn(input: unknown, request: Request) {
-  const address = process.env.VERCEL ? request.headers.get("x-vercel-forwarded-for")?.split(",")[0].trim() : LOCAL_LOGIN_BUCKET;
-  const bucket = tokenHash(address || LOCAL_LOGIN_BUCKET);
+  const bucket = loginBucket(request);
   await ensureSchema();
   if (!(await allowLoginAttempt(bucket))) {
     return Response.json({ error: LIMITED_LOGIN }, {
@@ -96,15 +104,14 @@ export async function signIn(input: unknown, request: Request) {
       headers: { ...NO_CACHE_HEADERS, "Retry-After": String(LOGIN_WINDOW_SECONDS) },
     });
   }
-  if (!input || typeof input !== "object" || !("email" in input) || !("password" in input)) return invalidLogin();
-  const { email, password } = input;
-  if (typeof email !== "string" || typeof password !== "string" || email.length > MAX_EMAIL_LENGTH || password.length > MAX_PASSWORD_LENGTH) return invalidLogin();
+  const credentials = readCredentials(input);
+  if (!credentials) return invalidLogin();
   const rows = await database().query(
     `select email, password_hash from ${deploymentSchema()}.staff_users where email = $1`,
-    [email.trim().toLowerCase()],
+    [credentials.email],
   ) as StaffUser[];
   const user = rows[0];
-  const matches = await verifyPassword(password, user?.password_hash ?? DUMMY_PASSWORD_HASH);
+  const matches = await verifyPassword(credentials.password, user?.password_hash ?? DUMMY_PASSWORD_HASH);
   if (!user || !matches) return invalidLogin();
   await createSession(user.email, bucket);
   return Response.json({ ok: true }, { headers: NO_CACHE_HEADERS });
@@ -117,6 +124,6 @@ export async function signOut() {
     await ensureSchema();
     await database().query(`delete from ${deploymentSchema()}.staff_sessions where token_hash = $1`, [tokenHash(token)]);
   }
-  jar.set(SESSION_COOKIE, "", { ...sessionCookieOptions(), maxAge: 0 });
+  jar.set(SESSION_COOKIE, "", { ...SESSION_COOKIE_OPTIONS, maxAge: 0 });
   return Response.json({ ok: true }, { headers: NO_CACHE_HEADERS });
 }

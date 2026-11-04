@@ -1,6 +1,7 @@
 "use client";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { JSON_HEADERS } from "@/components/studio/request";
 
 export function SignInForm() {
   const router = useRouter();
@@ -12,7 +13,7 @@ export function SignInForm() {
     setError("");
     const data = new FormData(event.currentTarget);
     try {
-      const response = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: data.get("email"), password: data.get("password") }) });
+      const response = await fetch("/api/auth/login", { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ email: data.get("email"), password: data.get("password") }) });
       const result: { error?: string } = await response.json();
       if (!response.ok) { setError(result.error ?? "Sign in failed. Please try again."); return; }
       router.replace("/admin");

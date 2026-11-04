@@ -20,7 +20,7 @@ type TeamImportProps = {
   onApply: (members: Member[], summary: string) => void;
   onLibraryChange: () => void;
 };
-type Upload = { entry: PlanEntry; file: File };
+type PendingUpload = { entry: PlanEntry; file: File };
 
 const STATUS_LABEL = { new: "New", updated: "Updated", unchanged: "No change", removed: "Removed" } as const;
 const SUMMARY_STATUSES = ["new", "updated", "removed"] as const;
@@ -41,7 +41,7 @@ export function TeamImport({ members, onClose, onApply, onLibraryChange }: TeamI
 
   const rows = useMemo(() => parseRoster(roster), [roster]);
   const fileNames = useMemo(() => files.map((file) => file.name), [files]);
-  const plan = useMemo(() => buildPlan(members, rows, fileNames, mode, overrides), [members, rows, fileNames, mode, overrides]);
+  const plan = useMemo(() => buildPlan({ existing: members, rows, files: fileNames, mode, overrides }), [members, rows, fileNames, mode, overrides]);
   const previews = useMemo(() => new Map(files.map((file) => [file.name, URL.createObjectURL(file)])), [files]);
   useEffect(() => () => previews.forEach((url) => URL.revokeObjectURL(url)), [previews]);
 
@@ -72,7 +72,7 @@ export function TeamImport({ members, onClose, onApply, onLibraryChange }: TeamI
   const apply = async () => {
     const kept = plan.filter((entry) => entry.status !== "removed");
     const filesByName = new Map(files.map((file) => [file.name, file]));
-    const uploads = kept.flatMap<Upload>((entry) => {
+    const uploads = kept.flatMap<PendingUpload>((entry) => {
       const file = filesByName.get(entry.file);
       return file ? [{ entry, file }] : [];
     });
@@ -102,7 +102,7 @@ export function TeamImport({ members, onClose, onApply, onLibraryChange }: TeamI
     const src = entry.file ? previews.get(entry.file) : entry.member.photo.src;
     return (
       <li key={entry.key} className={`is-${entry.status}`}>
-        <span className="st-import-photo">{src ? <img src={src} alt="" /> : <ImagePlus />}</span>
+        <span className="st-import-photo">{src ? <img src={src} alt="" /> : <ImagePlus aria-hidden />}</span>
         <span className="st-import-text">
           <strong>{entry.member.name}</strong>
           <small>{[entry.member.role, entry.member.major].filter(Boolean).join(" · ") || "No role or major"}</small>
@@ -143,7 +143,7 @@ export function TeamImport({ members, onClose, onApply, onLibraryChange }: TeamI
             Cancel
           </button>
           <button type="button" className="st-btn st-btn-primary" onClick={apply} disabled={busy || !summary}>
-            {busy ? <Loader2 className="st-spin" /> : <Upload />} Apply to team
+            {busy ? <Loader2 className="st-spin" aria-hidden /> : <Upload aria-hidden />} Apply to team
           </button>
         </>
       }
@@ -153,7 +153,7 @@ export function TeamImport({ members, onClose, onApply, onLibraryChange }: TeamI
           <header>
             <h3>1. Team list</h3>
             <button type="button" className="st-btn st-btn-quiet st-btn-small" onClick={copyRoster}>
-              <ClipboardCopy /> {copied ? "Copied" : "Copy current team"}
+              <ClipboardCopy aria-hidden /> {copied ? "Copied" : "Copy current team"}
             </button>
           </header>
           <label className="st-field">
@@ -195,7 +195,7 @@ export function TeamImport({ members, onClose, onApply, onLibraryChange }: TeamI
             )}
           </header>
           <Dropzone small multiple accept="image/*" onFiles={addFiles}>
-            <ImagePlus />
+            <ImagePlus aria-hidden />
             <strong>{files.length ? `${files.length} photo${files.length === 1 ? "" : "s"} added` : "Drop all the headshots here, or click to choose"}</strong>
             <span>Photos match people by file name, like nathan-lam.jpg or “Nathan Lam.png”.</span>
           </Dropzone>

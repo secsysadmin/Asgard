@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { DM_Mono, IBM_Plex_Sans, Playfair_Display, Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 
+export const revalidate = 300;
+
 type RootLayoutProps = Readonly<{ children: React.ReactNode }>;
 
 const THEME_COLOR = "#500000";
@@ -9,7 +11,7 @@ const THEME_COLOR = "#500000";
 const heroDisplay = Playfair_Display({
   subsets: ["latin"],
   weight: ["500", "600"],
-  style: ["normal", "italic"],
+  style: ["normal"],
   variable: "--font-hero-display",
   display: "swap",
 });

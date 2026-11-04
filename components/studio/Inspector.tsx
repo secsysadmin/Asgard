@@ -1,9 +1,10 @@
 "use client";
-import { ArrowDown, ArrowUp, ChevronRight, Copy, ImagePlus, Link2, Plus, Trash2, Users } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Copy, ImagePlus, Link2, Plus, Trash2, Users } from "lucide-react";
 import { richKeys, blockSpecs } from "@/lib/content/blocks";
 import { slugify } from "@/lib/content/normalize";
 import type { Block, ImageRef, LinkRef, Page } from "@/lib/content/types";
-import { type EditApi, type Path, Rich } from "../edit/context";
+import { type EditApi, Rich } from "../edit/context";
+import type { Path } from "@/lib/studio/paths";
 import { pageName } from "./labels";
 import { PageSettings } from "./panels";
 
@@ -17,10 +18,18 @@ type BlockInspectorProps = {
   onDelete: () => void;
   onDuplicate: () => void;
   onTeamImport: () => void;
+  onShowPage: () => void;
 };
 type PageInspectorProps = { page: Page; pageIndex: number; api: EditApi };
 
 const ITEM_TITLE_MAX_LENGTH = 48;
+const ITEM_NOUNS: Record<string, string> = {
+  data: "item",
+  facts: "fact",
+  gallery: "photo",
+  people: "contact",
+  members: "person",
+};
 const CHILD_FIELD_NAMES = new Map([
   ["columns", "column"],
   ["cells", "cell"],
@@ -39,13 +48,11 @@ const LABELS: Record<string, string> = {
   primary: "Primary button",
   secondary: "Secondary button",
   emphasis: "Headline second line",
-  dates: "Dates",
   intro: "Introduction",
   note: "Highlighted note",
   summary: "Supporting text",
   facts: "Fact list",
   gallery: "Photos",
-  cells: "Cells",
   people: "Phone contacts",
 };
 
@@ -56,6 +63,11 @@ const hasExactKeys = (value: unknown, keys: string) =>
   !!value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join() === keys;
 const isImage = (value: unknown): value is ImageRef => hasExactKeys(value, "alt,src");
 const isLink = (value: unknown): value is LinkRef => hasExactKeys(value, "href,label");
+
+function itemName(listName: string, index: number) {
+  const noun = ITEM_NOUNS[listName] ?? human(listName).toLowerCase().replace(/s$/, "");
+  return `${noun} ${index + 1}`;
+}
 
 function itemTitle(value: unknown, index: number): string {
   if (typeof value === "string") return value || `Item ${index + 1}`;
@@ -97,7 +109,7 @@ function Field({ value, path, name, api }: FieldProps) {
       <div className="st-field">
         <span>{human(name)}</span>
         <button type="button" className="st-image-field" onClick={() => api.pickImage(path, value)}>
-          {value.src ? <img src={value.src} alt="" /> : <ImagePlus />}
+          {value.src ? <img src={value.src} alt="" /> : <ImagePlus aria-hidden />}
           <span>{value.src ? value.alt || "No alt text — add one" : "Choose image"}</span>
         </button>
       </div>
@@ -107,7 +119,7 @@ function Field({ value, path, name, api }: FieldProps) {
       <div className="st-field">
         <span>{human(name)}</span>
         <button type="button" className="st-link-field" onClick={() => api.editLink(path, value)}>
-          <Link2 />
+          <Link2 aria-hidden />
           <span>
             <strong>{value.label || "No text"}</strong>
             <small>{value.href || "No destination"}</small>
@@ -126,20 +138,20 @@ function Field({ value, path, name, api }: FieldProps) {
             <li key={i}>
               <details>
                 <summary>
-                  <ChevronRight className="st-caret" />
+                  <ChevronRight className="st-caret" aria-hidden />
                   <span>{itemTitle(item, i)}</span>
                   <span className="st-array-tools" onClick={(event) => event.preventDefault()}>
-                    <button type="button" aria-label="Move up" disabled={i === 0} onClick={() => api.moveItem(path, i, i - 1)}>
-                      <ArrowUp />
+                    <button type="button" aria-label={`Move ${itemName(name, i)} up`} disabled={i === 0} onClick={() => api.moveItem(path, i, i - 1)}>
+                      <ArrowUp aria-hidden />
                     </button>
-                    <button type="button" aria-label="Move down" disabled={i === value.length - 1} onClick={() => api.moveItem(path, i, i + 1)}>
-                      <ArrowDown />
+                    <button type="button" aria-label={`Move ${itemName(name, i)} down`} disabled={i === value.length - 1} onClick={() => api.moveItem(path, i, i + 1)}>
+                      <ArrowDown aria-hidden />
                     </button>
-                    <button type="button" aria-label="Duplicate" onClick={() => api.duplicateItem(path, i)}>
-                      <Copy />
+                    <button type="button" aria-label={`Duplicate ${itemName(name, i)}`} onClick={() => api.duplicateItem(path, i)}>
+                      <Copy aria-hidden />
                     </button>
-                    <button type="button" aria-label="Delete" onClick={() => api.removeItem(path, i)}>
-                      <Trash2 />
+                    <button type="button" aria-label={`Delete ${itemName(name, i)}`} onClick={() => api.removeItem(path, i)}>
+                      <Trash2 aria-hidden />
                     </button>
                   </span>
                 </summary>
@@ -151,7 +163,7 @@ function Field({ value, path, name, api }: FieldProps) {
           ))}
         </ol>
         <button type="button" className="st-btn st-btn-quiet st-btn-small" onClick={() => api.insertItem(path, value.length)}>
-          <Plus /> Add
+          <Plus aria-hidden /> Add
         </button>
       </div>
     );
@@ -166,12 +178,15 @@ function Field({ value, path, name, api }: FieldProps) {
   return null;
 }
 
-export function BlockInspector({ block, index, pageIndex, page, api, onDelete, onDuplicate, onTeamImport }: BlockInspectorProps) {
+export function BlockInspector({ block, index, pageIndex, page, api, onDelete, onDuplicate, onTeamImport, onShowPage }: BlockInspectorProps) {
   const base: Path = ["pages", pageIndex, "blocks", index];
   const groups = [...new Set(page.blocks.map((b) => b.group).filter(Boolean))];
   const idTaken = (id: string) => page.blocks.some((b, i) => i !== index && b.id === id);
   return (
     <div className="st-inspector-body">
+      <button type="button" className="st-btn st-btn-quiet st-btn-small st-back" onClick={onShowPage}>
+        <ChevronLeft aria-hidden /> Page settings
+      </button>
       <p className="st-kicker">{blockSpecs[block.type].label}</p>
       <p className="st-tip">Click any text on the page to type over it. Use this panel for links, image descriptions, and section settings.</p>
       <section className="st-group">
@@ -222,10 +237,10 @@ export function BlockInspector({ block, index, pageIndex, page, api, onDelete, o
         </label>
         <div className="st-row">
           <button type="button" className="st-btn st-btn-small" onClick={onDuplicate}>
-            <Copy /> Duplicate
+            <Copy aria-hidden /> Duplicate
           </button>
           <button type="button" className="st-btn st-btn-small st-btn-danger-quiet" onClick={onDelete}>
-            <Trash2 /> Delete section
+            <Trash2 aria-hidden /> Delete section
           </button>
         </div>
       </section>
@@ -235,7 +250,7 @@ export function BlockInspector({ block, index, pageIndex, page, api, onDelete, o
           <div className="st-callout">
             <p>Update many people at once: paste your roster from a spreadsheet and drop in everyone’s headshots.</p>
             <button type="button" className="st-btn st-btn-small" onClick={onTeamImport}>
-              <Users /> Bulk update team
+              <Users aria-hidden /> Bulk update team
             </button>
           </div>
         )}

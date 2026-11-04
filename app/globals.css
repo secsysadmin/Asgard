@@ -1,4 +1,3 @@
-/* ───────────────────────────── Tokens ───────────────────────────── */
 :root {
   --maroon: #500000;
   --maroon-dark: #360000;
@@ -9,12 +8,15 @@
   --white: #faf7f2;
   --brass: #c7a66a;
   --ink: #1f1a17;
-  --ink-soft: #5a514b;
+  --ink-soft-on-light: #5a514b;
+  --ink-soft: var(--ink-soft-on-light);
   --ink-faint: #6f6660;
   --sand: #e7d7c2;
   --line: rgba(31, 26, 23, 0.13);
   --line-strong: rgba(31, 26, 23, 0.24);
   --focus: #b3541e;
+  --warning: #a15c00;
+  --warning-soft: #fbf0dc;
   --display: var(--font-display), Georgia, serif;
   --hero-display: var(--font-hero-display), Georgia, serif;
   --hero-sans: var(--font-hero-sans), Arial, sans-serif;
@@ -83,9 +85,6 @@ svg {
   flex: none;
 }
 
-/* ───────────────────────────── Site frame ───────────────────────────── */
-/* The site is a size container so the studio's device previews reflow it
-   exactly like a real phone or tablet would. */
 .site {
   container: site / inline-size;
   --gutter: clamp(20px, 6cqi, 96px);
@@ -184,8 +183,6 @@ svg {
   text-decoration: none;
   padding: 6px 0;
   border-bottom: 2px solid transparent;
-}
-.site-nav a:not(.button) {
   color: rgba(255, 255, 255, 0.88);
 }
 .site-nav a:not(.button):hover {
@@ -208,18 +205,29 @@ svg {
   height: 14px;
   opacity: 0.6;
 }
-.menu-toggle {
-  display: none;
+.menu-toggle,
+.search-toggle {
   align-items: center;
   gap: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  background: transparent;
-  color: var(--white);
+  min-height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: var(--radius);
-  padding: 8px 12px;
-  font-size: 14px;
-  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  font: 500 14px/1 var(--sans);
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.menu-toggle:hover,
+.search-toggle:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.55);
+  color: var(--white);
+}
+.menu-toggle {
+  display: none;
+  min-height: 40px;
+  padding: 0 12px;
 }
 .menu-toggle svg {
   width: 18px;
@@ -282,25 +290,9 @@ svg {
   }
 }
 
-/* Site search */
 .search-toggle {
   display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
   padding: 0 8px 0 12px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-  font: 500 14px/1 var(--sans);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-.search-toggle:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.55);
-  color: var(--white);
 }
 .search-toggle svg {
   width: 16px;
@@ -462,6 +454,9 @@ svg {
 .search-empty p {
   margin: 0 0 6px;
 }
+.search-empty + .search-suggest {
+  padding-top: 0;
+}
 .search-empty a {
   color: var(--maroon);
   font-weight: 600;
@@ -568,7 +563,6 @@ svg {
   }
 }
 
-/* ───────────────────────────── Typography ───────────────────────────── */
 h1,
 h2,
 h3,
@@ -603,9 +597,6 @@ h4 {
   width: 26px;
   height: 2px;
   background: currentColor;
-}
-.eyebrow.light {
-  color: var(--sand);
 }
 .rich {
   overflow-wrap: break-word;
@@ -665,7 +656,6 @@ h4 {
   color: var(--ink-soft);
 }
 
-/* ───────────────────────────── Buttons ───────────────────────────── */
 .button {
   display: inline-flex;
   align-items: center;
@@ -678,6 +668,7 @@ h4 {
   font: 600 15px/1.2 var(--sans);
   text-decoration: none;
   border: 1px solid var(--maroon);
+  cursor: pointer;
   transition: background 0.15s, transform 0.15s;
 }
 .button svg {
@@ -726,7 +717,6 @@ h4 {
   margin-top: 24px;
 }
 
-/* ───────────────────────────── Bands ───────────────────────────── */
 .band {
   padding: clamp(56px, 8cqi, 96px) var(--gutter);
   border-bottom: 1px solid var(--line);
@@ -761,7 +751,6 @@ h4 {
   color: var(--maroon);
 }
 
-/* Hero */
 .band-hero {
   padding: 0;
   border: 0;
@@ -806,17 +795,6 @@ h4 {
   color: var(--white);
   font: 500 clamp(46px, 7.4cqi, 104px) / 0.95 var(--hero-display);
   letter-spacing: -0.035em;
-}
-.hero h1 em {
-  display: block;
-  font-style: normal;
-  color: var(--sand);
-}
-.hero-organizer {
-  margin: 24px 0 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--sand);
 }
 .hero-summary {
   margin-top: 22px;
@@ -881,8 +859,6 @@ h4 {
 }
 .hero-with-video .hero-message {
   padding-inline: var(--gutter);
-}
-.hero-with-video .hero-message {
   position: relative;
   isolation: isolate;
   margin: auto 0;
@@ -1033,7 +1009,6 @@ h4 {
   }
 }
 
-/* Key dates */
 .band-keyDates {
   padding-top: 40px;
   padding-bottom: 40px;
@@ -1138,7 +1113,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   .key-date-arrow { right: 0; bottom: 28px; }
 }
 
-/* About + stats */
 .about {
   display: grid;
   grid-template-columns: 1fr;
@@ -1179,7 +1153,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   color: var(--ink-soft);
 }
 
-/* Pathways */
 .pathways {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -1237,7 +1210,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   margin-top: auto;
 }
 
-/* Tables (schedule + data) */
 .table-wrap {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -1336,7 +1308,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   border-left-color: var(--sand);
 }
 
-/* Timeline */
 .timeline {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
@@ -1378,7 +1349,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .timeline-entry:last-child {
   padding-bottom: 0;
 }
-/* Dot and connecting rail. */
 .timeline-entry::before {
   content: "";
   position: absolute;
@@ -1408,11 +1378,10 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 }
 .timeline-entry .rich {
   font-size: 15px;
-  color: #5a514b;
+  color: var(--ink-soft-on-light);
   margin-top: 2px;
 }
 
-/* Text */
 .text-block {
   display: grid;
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
@@ -1423,7 +1392,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   max-width: 68ch;
 }
 
-/* Cards */
 .cards {
   display: grid;
   gap: 20px;
@@ -1467,10 +1435,9 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   color: var(--ink);
 }
 .tone-maroon .card {
-  --ink-soft: #5a514b;
+  --ink-soft: var(--ink-soft-on-light);
 }
 
-/* Zoomable images */
 .zoomable {
   position: relative;
   display: block;
@@ -1527,24 +1494,31 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.lightbox-bar button {
-  background: var(--cream);
-  color: var(--ink);
+.lightbox-close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
   border: 0;
   border-radius: var(--radius);
-  padding: 6px 14px;
-  font-weight: 600;
+  background: none;
+  color: var(--cream);
   cursor: pointer;
 }
+.lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.lightbox-close svg {
+  width: 18px;
+  height: 18px;
+}
 
-/* Event */
 .event {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
   gap: clamp(28px, 5cqi, 72px);
   align-items: start;
 }
-/* No fact card: let the description and buttons use the full width. */
 .event.event-solo,
 .guide-body .event.event-solo {
   grid-template-columns: minmax(0, 1fr);
@@ -1591,7 +1565,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   border-radius: 50%;
   background: var(--white);
   color: var(--maroon);
-  box-shadow: 0 0 0 1px rgba(80, 0, 0, 0.08);
 }
 .tone-tint .fact-icon {
   background: var(--cream);
@@ -1625,7 +1598,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   aspect-ratio: 4 / 3;
   object-fit: cover;
 }
-/* Photos tucked under the description, beside a tall fact card. */
 .event-tuck {
   grid-template-areas: "main facts" "photos facts";
   grid-template-rows: auto 1fr;
@@ -1644,7 +1616,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   gap: 12px;
   margin-top: 0;
 }
-/* A single image (e.g. the booth map) spans the whole content column. */
 .photo-strip-1 {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -1657,9 +1628,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   background: var(--white);
 }
 
-/* Steps: a flowchart. Vertical by default; a horizontal flow when the
-   section is wide enough (container query, so it adapts to the guide
-   sidebar and the studio's device previews too). */
 .band-steps {
   container: steps / inline-size;
 }
@@ -1704,7 +1672,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   color: var(--maroon);
   box-shadow: 0 0 0 6px var(--maroon);
 }
-/* Connector between steps. */
 .step:not(:last-of-type)::after {
   content: "";
   position: absolute;
@@ -1745,7 +1712,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   .step::before {
     top: 0;
   }
-  /* Horizontal connector with an arrowhead, from this node to the next. */
   .step:not(:last-of-type)::after {
     left: 60px;
     right: -20px;
@@ -1772,7 +1738,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   }
 }
 
-/* FAQ */
 .faq-groups {
   display: grid;
   gap: 40px;
@@ -1782,7 +1747,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   font: 500 clamp(24px, 2.6cqi, 30px) / 1.2 var(--display);
   color: var(--maroon);
 }
-/* Each topic's questions sit in their own card, set apart from the heading. */
 .faq-items {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -1791,7 +1755,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 }
 .tone-maroon .faq-items {
   color: var(--ink);
-  --ink-soft: #5a514b;
+  --ink-soft: var(--ink-soft-on-light);
 }
 .faq-item {
   border-bottom: 1px solid var(--line);
@@ -1814,8 +1778,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .faq-item summary::-webkit-details-marker {
   display: none;
 }
-.faq-item summary::after {
-  content: "+";
+.faq-toggle {
   flex: none;
   display: grid;
   place-items: center;
@@ -1823,11 +1786,14 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   height: 28px;
   border-radius: 50%;
   background: var(--maroon-soft);
-  font: 400 20px/1 var(--sans);
   color: var(--maroon);
   transition: transform 0.2s, background 0.15s;
 }
-.faq-item[open] summary::after {
+.faq-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+.faq-item[open] .faq-toggle {
   transform: rotate(45deg);
   background: var(--maroon);
   color: var(--white);
@@ -1839,7 +1805,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   background: rgba(243, 233, 230, 0.5);
   color: var(--maroon);
 }
-/* Open: the question row stays highlighted; the answer sits on white. */
 .faq-item[open] summary,
 .faq-item[open] summary:hover {
   background: var(--maroon-soft);
@@ -1862,14 +1827,12 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   margin: 0 0 6px;
 }
 
-/* Gallery */
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 14px;
 }
 
-/* Links */
 .link-groups {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -1910,7 +1873,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   color: var(--maroon);
 }
 
-/* Team */
 .team-head {
   display: flex;
   justify-content: space-between;
@@ -1937,7 +1899,14 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   cursor: pointer;
 }
 .carousel-controls button:hover {
+  background: var(--maroon-soft);
+}
+.tone-maroon .carousel-controls button:hover {
   background: rgba(255, 255, 255, 0.12);
+}
+.carousel-controls svg {
+  width: 18px;
+  height: 18px;
 }
 .team-track {
   display: grid;
@@ -2025,7 +1994,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   }
 }
 
-/* Contact */
 .contact {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -2060,7 +2028,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   max-width: 100%;
   overflow-wrap: anywhere;
 }
-/* Guide columns are narrower; keep long addresses on one line where possible. */
 .guide-body .contact-email {
   font-size: clamp(18px, 1.7cqi, 22px);
 }
@@ -2117,7 +2084,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   font-size: 15px;
 }
 
-/* Callout */
 .band-callout {
   padding-top: 28px;
   padding-bottom: 28px;
@@ -2130,17 +2096,15 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   font-size: 16px;
 }
 .callout-warning {
-  border-left-color: #a15c00;
-  background: #fbf0dc;
+  border-left-color: var(--warning);
+  background: var(--warning-soft);
 }
 
-/* Page header (guides) */
 .band-pageHeader {
   background: var(--cream);
   padding-top: clamp(36px, 4.5cqi, 60px);
   padding-bottom: clamp(36px, 4.5cqi, 56px);
 }
-/* Title and top tasks on the left, an at-a-glance card on the right. */
 .page-header-split {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
@@ -2164,7 +2128,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 }
 .band-pageHeader .facts {
   background: var(--white);
-  box-shadow: 0 1px 2px rgba(31, 26, 23, 0.04), 0 8px 24px -16px rgba(80, 0, 0, 0.18);
+  border: 1px solid var(--line);
 }
 .band-pageHeader .fact-icon {
   background: var(--cream);
@@ -2220,7 +2184,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
     margin-top: 18px;
   }
 }
-/* Phones: compact buttons and a tighter summary card. */
 @container site (max-width: 520px) {
   .page-header-actions {
     gap: 8px;
@@ -2247,7 +2210,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   }
 }
 
-/* ───────────────────────────── Guide layout ───────────────────────────── */
 .guide {
   display: grid;
   grid-template-columns: 256px minmax(0, 1fr);
@@ -2261,6 +2223,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .guide-body > .band {
   padding-left: 0;
   padding-right: 0;
+  border-bottom: 0;
 }
 .guide-body > .band.tone-tint,
 .guide-body > .band.tone-maroon {
@@ -2269,9 +2232,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   border-radius: var(--radius-lg);
   margin: 32px 0;
   border: 0;
-}
-.guide-body > .band {
-  border-bottom: 0;
 }
 .guide-body > .band:not(:first-child):not(.tone-tint):not(.tone-maroon) {
   position: relative;
@@ -2445,7 +2405,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   }
 }
 
-/* ───────────────────────────── Footer ───────────────────────────── */
 .site-footer {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
@@ -2502,7 +2461,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   }
 }
 
-/* ───────────────────────────── Responsive blocks ───────────────────────────── */
 @container site (max-width: 900px) {
   .about > div:first-child {
     grid-template-columns: 1fr;
@@ -2539,21 +2497,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
     grid-template-columns: 1fr;
     gap: 2px;
   }
-}
-
-/* 404 */
-.not-found {
-  max-width: 640px;
-  margin: 18vh auto;
-  padding: 0 24px;
-}
-.not-found h1 {
-  font: 500 44px/1.1 var(--display);
-  margin-bottom: 14px;
-}
-.not-found a {
-  color: var(--maroon);
-  font-weight: 600;
 }
 
 @media (prefers-reduced-motion: no-preference) {

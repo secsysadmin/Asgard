@@ -4,12 +4,12 @@ import {
   ArrowUp,
   Check,
   Copy,
+  ExternalLink,
   Eye,
   EyeOff,
   FileText,
   History,
   ImageIcon,
-  Laptop,
   Layers,
   Loader2,
   Monitor,
@@ -17,6 +17,7 @@ import {
   Pencil,
   Plus,
   Redo2,
+  RotateCw,
   Settings2,
   Smartphone,
   Tablet,
@@ -35,7 +36,7 @@ import { altFromFilename, uploadFile } from "@/lib/studio/media";
 import type { Member } from "@/lib/studio/team-import";
 import { EditProvider, type EditApi } from "../edit/context";
 import { PageView, type SectionWrapper } from "../site/PageView";
-import { AddSection, LinkEditor, MediaLibrary, MediaPicker } from "./dialogs";
+import { AddSection, ConfirmDialog, type ConfirmRequest, LinkEditor, MediaLibrary, MediaPicker } from "./dialogs";
 import { useDraftAutosave, useEditHistory, useElementWidth, useMediaLibrary, useToast, useUndoShortcuts, type SaveState } from "./hooks";
 import { BlockInspector, PageInspector } from "./Inspector";
 import { pageName } from "./labels";
@@ -49,11 +50,13 @@ type Panel = "sections" | "pages" | "media" | "site" | "history";
 type Device = "desktop" | "tablet" | "mobile";
 type Dialog =
   | { kind: "image"; path: Path; current: ImageRef }
-  | { kind: "link"; path: Path; current: LinkRef }
+  | ({ kind: "link" } & LinkTarget)
   | { kind: "add"; index: number }
   | { kind: "page" }
   | { kind: "team"; path: Path }
+  | ({ kind: "confirm" } & ConfirmRequest)
   | null;
+type LinkTarget = { path: Path; current: LinkRef };
 type LoadedContent = { draft: SiteContent; published: SiteContent };
 type SectionFrameProps = {
   block: Block;
@@ -79,14 +82,23 @@ const PANELS = [
 ] as const;
 const INITIAL_CANVAS_WIDTH = 1000;
 const MIN_ZOOM = 0.4;
+const PHONE_QUERY = "(max-width: 820px)";
+const LOAD_FAILED_HELP = "Your saved draft is safe. Reload to try again, and if this keeps happening, contact the website team.";
 
-const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+function withLink(content: SiteContent, { path, current: previous }: LinkTarget, link: LinkRef) {
+  const next = setIn(content, path, link);
+  const isNavLink = path[0] === "settings" && path[1] === "nav";
+  if (!isNavLink || !content.settings.hiddenNav.includes(previous.href)) return next;
+  const oldHrefStillUsed = next.settings.nav.some((item) => item.href === previous.href);
+  const hiddenNav = [...new Set([...content.settings.hiddenNav.filter((href) => href !== previous.href || oldHrefStillUsed), link.href].filter(Boolean))];
+  return { ...next, settings: { ...next.settings, hiddenNav } };
+}
 
 function saveStatus(saveState: SaveState, unpublished: boolean) {
-  if (saveState === "error") return { icon: <TriangleAlert />, text: "Draft not saved", tone: "error" };
-  if (saveState === "saving") return { icon: <Loader2 className="st-spin" />, text: "Saving draft…", tone: "" };
-  if (unpublished) return { icon: <Pencil />, text: "Draft saved · ready to publish", tone: "draft" };
-  return { icon: <Check />, text: "All changes are live", tone: "ok" };
+  if (saveState === "error") return { icon: <TriangleAlert aria-hidden />, text: "Draft not saved", tone: "error" };
+  if (saveState === "saving") return { icon: <Loader2 className="st-spin" aria-hidden />, text: "Saving draft…", tone: "" };
+  if (unpublished) return { icon: <Pencil aria-hidden />, text: "Draft saved · ready to publish", tone: "draft" };
+  return { icon: <Check aria-hidden />, text: "All changes are live", tone: "ok" };
 }
 
 function SectionFrame({ block, index, count, selected, actions, children }: SectionFrameProps) {
@@ -113,22 +125,22 @@ function SectionFrame({ block, index, count, selected, actions, children }: Sect
           {!block.visible && <em> · hidden</em>}
         </span>
         <button type="button" title="Move section up" aria-label="Move section up" disabled={index === 0} onClick={() => actions.move(index, index - 1)}>
-          <ArrowUp />
+          <ArrowUp aria-hidden />
         </button>
         <button type="button" title="Move section down" aria-label="Move section down" disabled={index === count - 1} onClick={() => actions.move(index, index + 1)}>
-          <ArrowDown />
+          <ArrowDown aria-hidden />
         </button>
         <button type="button" title={visibilityLabel} aria-label={visibilityLabel} onClick={() => actions.toggleVisible(index)}>
-          {block.visible ? <EyeOff /> : <Eye />}
+          {block.visible ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
         </button>
         <button type="button" title="Duplicate section" aria-label="Duplicate section" onClick={() => actions.duplicate(index)}>
-          <Copy />
+          <Copy aria-hidden />
         </button>
         <button type="button" title="Section settings" aria-label="Section settings" onClick={() => actions.select(block.id)}>
-          <Settings2 />
+          <Settings2 aria-hidden />
         </button>
         <button type="button" title="Delete section" aria-label="Delete section" onClick={() => actions.remove(index)}>
-          <Trash2 />
+          <Trash2 aria-hidden />
         </button>
       </div>
       {children}
@@ -141,7 +153,7 @@ function SectionFrame({ block, index, count, selected, actions, children }: Sect
           actions.insertAt(index + 1);
         }}
       >
-        <Plus /> Add section
+        <Plus aria-hidden /> Add section
       </button>
     </section>
   );
@@ -161,16 +173,19 @@ export function Studio() {
   const [publishing, setPublishing] = useState(false);
   const canvas = useRef<HTMLDivElement>(null);
 
-  const { toast, notify } = useToast();
+  const { toast, notify, dismiss, withdraw } = useToast();
   const { content, contentRef, history, load, commit, undo, redo } = useEditHistory();
-  const { saveState, isSaved, markSaved, retrySave } = useDraftAutosave(content, contentRef, notify);
+  const { saveState, isSaved, markSaved, retrySave } = useDraftAutosave({ content, contentRef, notify, withdraw });
   const { library, libraryError, loadLibrary } = useMediaLibrary();
   const canvasWidth = useElementWidth(canvas, INITIAL_CANVAS_WIDTH, !!content);
   useUndoShortcuts(undo, redo, !publishing);
 
   useEffect(() => {
-    if (!window.matchMedia("(max-width: 820px)").matches) return;
-    const timer = window.setTimeout(() => setDevice("mobile"), 0);
+    if (!window.matchMedia(PHONE_QUERY).matches) return;
+    const timer = window.setTimeout(() => {
+      setDevice("mobile");
+      setPanelOpen(false);
+    }, 0);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -225,26 +240,30 @@ export function Studio() {
 
   if (loadError)
     return (
-      <div className="st-fatal">
-        <TriangleAlert />
+      <div className="studio st-fatal">
+        <TriangleAlert aria-hidden />
         <h1>The studio couldn’t load</h1>
         <p>{loadError}</p>
-        <p>Check that DATABASE_URL is set and the Neon database is reachable, then reload.</p>
+        <p>{LOAD_FAILED_HELP}</p>
+        <button type="button" className="st-btn" onClick={() => window.location.reload()}>
+          <RotateCw aria-hidden /> Reload
+        </button>
       </div>
     );
   if (!content || !published)
     return (
-      <div className="st-fatal">
-        <Loader2 className="st-spin" />
+      <div className="studio st-fatal">
+        <Loader2 className="st-spin" aria-hidden />
         <p>Loading the studio…</p>
       </div>
     );
 
   const page = content.pages[Math.min(pageIndex, content.pages.length - 1)];
   const pageBase: Path = ["pages", pageIndex];
+  const membersPath = (index: number): Path => [...pageBase, "blocks", index, "data", "members"];
   const blockIndex = page.blocks.findIndex((block) => block.id === selected);
   const selectedBlock = blockIndex >= 0 ? page.blocks[blockIndex] : null;
-  const unpublished = !sameJson(content, published);
+  const unpublished = JSON.stringify(content) !== JSON.stringify(published);
   const dirty = !isSaved;
   const status = saveStatus(dirty && saveState === "saved" ? "saving" : saveState, unpublished);
   const zoom = Math.min(1, Math.max(MIN_ZOOM, canvasWidth / DEVICE_WIDTH[device]));
@@ -271,12 +290,18 @@ export function Studio() {
     setBlocks((blocks) => [...blocks.slice(0, index + 1), copy, ...blocks.slice(index + 1)]);
     setSelected(copy.id);
   };
-  const deleteBlock = (index: number) => {
-    if (!confirm(`Delete “${blockTitle(page.blocks[index])}” from this draft? The live site changes only after you publish. You can undo before publishing.`)) return;
-    setBlocks((blocks) => blocks.filter((_, i) => i !== index));
-    setSelected(null);
-    notify("Section deleted from draft. Publish to update the live site.");
-  };
+  const deleteBlock = (index: number) =>
+    setDialog({
+      kind: "confirm",
+      title: "Delete section",
+      message: `Delete “${blockTitle(page.blocks[index])}” from this draft? The live site changes only after you publish. You can undo before publishing.`,
+      confirmLabel: "Delete section",
+      onConfirm: () => {
+        setBlocks((blocks) => blocks.filter((_, i) => i !== index));
+        setSelected(null);
+        notify("Section deleted from draft. Publish to update the live site.");
+      },
+    });
 
   const sectionActions: SectionActions = {
     select: (id) => {
@@ -300,7 +325,7 @@ export function Studio() {
     insertAt: (index) => setDialog({ kind: "add", index }),
     manageTeam: (index) => {
       setSelected(page.blocks[index].id);
-      setDialog({ kind: "team", path: [...pageBase, "blocks", index, "data", "members"] });
+      setDialog({ kind: "team", path: membersPath(index) });
     },
   };
 
@@ -346,7 +371,7 @@ export function Studio() {
         </a>
         <label className="st-page-select">
           <span className="sr-only">Page</span>
-          <FileText />
+          <FileText aria-hidden />
           <select
             value={pageIndex}
             disabled={publishing}
@@ -364,16 +389,16 @@ export function Studio() {
         </label>
         <div className="st-top-group">
           <button type="button" className="st-icon" onClick={undo} disabled={publishing || !history.canUndo} title="Undo (⌘Z)" aria-label="Undo">
-            <Undo2 />
+            <Undo2 aria-hidden />
           </button>
           <button type="button" className="st-icon" onClick={redo} disabled={publishing || !history.canRedo} title="Redo (⌘⇧Z)" aria-label="Redo">
-            <Redo2 />
+            <Redo2 aria-hidden />
           </button>
         </div>
         <div className="st-top-group st-devices" role="group" aria-label="Preview width">
           {DEVICES.map(({ id, Icon, label }) => (
             <button key={id} type="button" className="st-icon" aria-pressed={device === id} title={label} aria-label={`${label} preview`} onClick={() => setDevice(id)}>
-              <Icon />
+              <Icon aria-hidden />
             </button>
           ))}
         </div>
@@ -384,15 +409,15 @@ export function Studio() {
         {saveState === "error" && <button type="button" className="st-btn st-btn-small" onClick={() => void retrySave()}>Retry save</button>}
         <span className="st-spacer" />
         <button type="button" className="st-btn" aria-pressed={preview} disabled={publishing} onClick={() => setPreview(!preview)}>
-          {preview ? <Pencil /> : <Eye />} {preview ? "Back to editing" : "Preview"}
+          {preview ? <Pencil aria-hidden /> : <Eye aria-hidden />} {preview ? "Back to editing" : "Preview"}
         </button>
-        {!preview && <button type="button" className="st-btn st-inspector-toggle" aria-expanded={inspectorOpen} aria-controls="studio-inspector" disabled={publishing} onClick={() => setInspectorOpen(!inspectorOpen)}><Settings2 /> {inspectorOpen ? "Close details" : "Details"}</button>}
+        {!preview && <button type="button" className="st-btn st-inspector-toggle" aria-expanded={inspectorOpen} aria-controls="studio-inspector" disabled={publishing} onClick={() => setInspectorOpen(!inspectorOpen)}><Settings2 aria-hidden /> {inspectorOpen ? "Close details" : "Details"}</button>}
         <a className="st-btn" href={`/${page.slug}`} target="_blank" rel="noreferrer">
-          <Laptop /> View live
+          <ExternalLink aria-hidden /> View live
         </a>
-        <SignOut disabled={publishing || dirty} />
+        <SignOut disabled={publishing || dirty} onError={(message) => notify(message, "error")} />
         <button type="button" className="st-btn st-btn-primary" onClick={publish} disabled={publishing || !unpublished || dirty} title={dirty ? "Wait until the draft is saved" : !unpublished ? "There are no unpublished changes" : "Publish all draft changes to the live site"}>
-          {publishing ? <Loader2 className="st-spin" /> : <Upload />} Publish
+          {publishing ? <Loader2 className="st-spin" aria-hidden /> : <Upload aria-hidden />} Publish
         </button>
       </header>
 
@@ -414,13 +439,13 @@ export function Studio() {
                       setPanel(id);
                     }}
                   >
-                    <Icon />
+                    <Icon aria-hidden />
                     <span>{label}</span>
                   </button>
                 ))}
               </nav>
               <div id="studio-panel" className="st-panel" hidden={!panelOpen}>
-                <button type="button" className="st-btn st-btn-small st-panel-close" onClick={() => setPanelOpen(false)}><X /> Close panel</button>
+                <button type="button" className="st-btn st-btn-small st-panel-close" onClick={() => setPanelOpen(false)}><X aria-hidden /> Close panel</button>
                 {panel === "sections" && <SectionsPanel blocks={page.blocks} selected={selected} actions={sectionActions} />}
                 {panel === "pages" && (
                   <PagesPanel
@@ -448,13 +473,20 @@ export function Studio() {
                     onRestore={(restored, label) => {
                       commit(restored);
                       openPage(0);
-                      notify(`${label} restored into your draft. Publish to make it live.`);
+                      notify(`${label} restored into your draft. Use Undo to go back, or publish to make it live.`);
                     }}
-                    onRevert={() => {
-                      if (!confirm("Discard all unpublished changes and go back to the live version?")) return;
-                      commit(structuredClone(published));
-                      notify("Draft reset to the live version.");
-                    }}
+                    onRevert={() =>
+                      setDialog({
+                        kind: "confirm",
+                        title: "Discard unpublished changes",
+                        message: "Discard all unpublished changes and go back to the live version? You can undo this until you publish.",
+                        confirmLabel: "Discard changes",
+                        onConfirm: () => {
+                          commit(structuredClone(published));
+                          notify("Draft reset to the live version.");
+                        },
+                      })
+                    }
                     unpublished={unpublished}
                   />
                 )}
@@ -489,7 +521,8 @@ export function Studio() {
                   api={api}
                   onDelete={() => deleteBlock(blockIndex)}
                   onDuplicate={() => duplicateBlock(blockIndex)}
-                  onTeamImport={() => setDialog({ kind: "team", path: [...pageBase, "blocks", blockIndex, "data", "members"] })}
+                  onTeamImport={() => setDialog({ kind: "team", path: membersPath(blockIndex) })}
+                  onShowPage={() => setSelected(null)}
                 />
               ) : (
                 <PageInspector page={page} pageIndex={pageIndex} api={api} />
@@ -519,15 +552,7 @@ export function Studio() {
             current={dialog.current}
             onClose={() => setDialog(null)}
             onSave={(link) => {
-              commit((current) => {
-                let next = setIn(current, dialog.path, link);
-                if (dialog.path[0] === "settings" && dialog.path[1] === "nav" && current.settings.hiddenNav.includes(dialog.current.href)) {
-                  const oldHrefStillUsed = next.settings.nav.some((item) => item.href === dialog.current.href);
-                  const hiddenNav = [...new Set([...current.settings.hiddenNav.filter((href) => href !== dialog.current.href || oldHrefStillUsed), link.href].filter(Boolean))];
-                  next = { ...next, settings: { ...next.settings, hiddenNav } };
-                }
-                return next;
-              });
+              commit((current) => withLink(current, dialog, link));
               setDialog(null);
             }}
           />
@@ -542,6 +567,15 @@ export function Studio() {
               setDialog(null);
               notify(`Team updated (${summary}). Publish to make it live.`);
             }}
+          />
+        )}
+        {dialog?.kind === "confirm" && (
+          <ConfirmDialog
+            title={dialog.title}
+            message={dialog.message}
+            confirmLabel={dialog.confirmLabel}
+            onConfirm={dialog.onConfirm}
+            onClose={() => setDialog(null)}
           />
         )}
         {dialog?.kind === "add" && <AddSection onClose={() => setDialog(null)} onAdd={(type) => addBlock(type, dialog.index)} />}
@@ -565,8 +599,11 @@ export function Studio() {
         )}
       </EditProvider>
       {toast && (
-        <div className={toast.tone === "error" ? "st-toast st-toast-error" : "st-toast"} role="status">
-          {toast.text}
+        <div key={toast.tone ?? "info"} className={toast.tone === "error" ? "st-toast st-toast-error" : "st-toast"} role={toast.tone === "error" ? "alert" : "status"}>
+          <span>{toast.text}</span>
+          <button type="button" className="st-toast-close" aria-label="Dismiss message" onClick={dismiss}>
+            <X aria-hidden />
+          </button>
         </div>
       )}
     </div>
