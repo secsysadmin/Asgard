@@ -28,8 +28,8 @@ typography:
     fontWeight: 400
     lineHeight: 1.4
 rounded:
-  control: "4px"
-  panel: "8px"
+  control: "6px"
+  panel: "10px"
 spacing:
   compact: "16px"
   section: "120px"
@@ -69,7 +69,7 @@ Public surfaces are mostly flat; contrast and sectional changes create hierarchy
 
 ## Shapes
 
-Controls are modestly rounded (4px); panels use 8px. The site avoids decorative cards in favor of ruled lists, type, and whole-surface color blocks.
+Controls are modestly rounded (6px); panels use 10px. The site avoids decorative cards in favor of ruled lists, type, and whole-surface color blocks.
 
 ## Components
 
