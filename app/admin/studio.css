@@ -418,6 +418,9 @@
   overflow: auto;
   padding: 0 20px 20px;
 }
+.st-frame .skip-link {
+  display: none;
+}
 .st-frame {
   margin: 20px auto 0;
   background: var(--paper);
@@ -1460,40 +1463,18 @@ div.st-navlist {
   color: var(--st-muted);
 }
 .st-blockicon {
-  height: 56px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
   margin-bottom: 6px;
   border-radius: 6px;
-  background:
-    linear-gradient(#500000, #500000) 10px 12px / 40% 6px no-repeat,
-    linear-gradient(#d8cfc4, #d8cfc4) 10px 26px / 70% 4px no-repeat,
-    linear-gradient(#d8cfc4, #d8cfc4) 10px 36px / 55% 4px no-repeat,
-    #f5f1e8;
+  background: var(--maroon-soft);
+  color: var(--st-accent);
 }
-.st-blockicon-hero,
-.st-blockicon-team {
-  background:
-    linear-gradient(#e7d7c2, #e7d7c2) 10px 14px / 45% 7px no-repeat,
-    linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)) 10px 30px / 30% 5px no-repeat,
-    #500000;
-}
-.st-blockicon-cards,
-.st-blockicon-gallery,
-.st-blockicon-pathways,
-.st-blockicon-steps,
-.st-blockicon-keyDates {
-  background:
-    linear-gradient(#fff, #fff) 8px 10px / 28% 36px no-repeat,
-    linear-gradient(#fff, #fff) 50% 10px / 28% 36px no-repeat,
-    linear-gradient(#fff, #fff) calc(100% - 8px) 10px / 28% 36px no-repeat,
-    #f5f1e8;
-}
-.st-blockicon-schedule,
-.st-blockicon-table,
-.st-blockicon-faq,
-.st-blockicon-links {
-  background:
-    repeating-linear-gradient(#f5f1e8 0 10px, #d8cfc4 10px 11px) 8px 8px / calc(100% - 16px) 40px no-repeat,
-    #f5f1e8;
+.st-blockicon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .st-rich-toolbar {

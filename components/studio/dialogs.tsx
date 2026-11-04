@@ -1,5 +1,32 @@
 "use client";
-import { FileText, ImagePlus, Loader2, Search, Trash2, Upload, X } from "lucide-react";
+import {
+  AlignLeft,
+  CalendarClock,
+  CalendarRange,
+  CircleHelp,
+  FileText,
+  Footprints,
+  GitCommitHorizontal,
+  Heading,
+  ImagePlus,
+  Images,
+  Info,
+  LayoutGrid,
+  Link,
+  Loader2,
+  type LucideIcon,
+  Mail,
+  MapPin,
+  Megaphone,
+  PanelTop,
+  Search,
+  Signpost,
+  Table,
+  Trash2,
+  Upload,
+  Users,
+  X,
+} from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { blockSpecs, blockTypes } from "@/lib/content/blocks";
 import type { BlockType, ImageRef, LinkRef, SiteContent } from "@/lib/content/types";
@@ -48,6 +75,26 @@ type AddSectionProps = { onClose: () => void; onAdd: (type: BlockType) => void }
 type MediaLibraryProps = { library: MediaItem[] | null; error: string; onChange: () => void };
 
 const PICKER_TABS: PickerTab[] = ["library", "site", "upload"];
+const BLOCK_ICONS: Record<BlockType, LucideIcon> = {
+  hero: PanelTop,
+  pageHeader: Heading,
+  keyDates: CalendarRange,
+  about: Info,
+  pathways: Signpost,
+  schedule: CalendarClock,
+  timeline: GitCommitHorizontal,
+  text: AlignLeft,
+  cards: LayoutGrid,
+  event: MapPin,
+  steps: Footprints,
+  faq: CircleHelp,
+  gallery: Images,
+  table: Table,
+  links: Link,
+  team: Users,
+  contact: Mail,
+  callout: Megaphone,
+};
 
 const mediaPath = (id: string) => `/api/media/${id}`;
 const isImageMime = (mime: string) => mime.startsWith("image/");
@@ -354,13 +401,18 @@ export function AddSection({ onClose, onAdd }: AddSectionProps) {
   return (
     <Modal title="Add a section" onClose={onClose} wide>
       <div className="st-blocklib">
-        {blockTypes.map((type) => (
-          <button key={type} type="button" className="st-blockcard" onClick={() => onAdd(type)}>
-            <span className={`st-blockicon st-blockicon-${type}`} aria-hidden />
-            <strong>{blockSpecs[type].label}</strong>
-            <span>{blockSpecs[type].description}</span>
-          </button>
-        ))}
+        {blockTypes.map((type) => {
+          const Icon = BLOCK_ICONS[type];
+          return (
+            <button key={type} type="button" className="st-blockcard" onClick={() => onAdd(type)}>
+              <span className="st-blockicon" aria-hidden>
+                <Icon />
+              </span>
+              <strong>{blockSpecs[type].label}</strong>
+              <span>{blockSpecs[type].description}</span>
+            </button>
+          );
+        })}
       </div>
     </Modal>
   );
