@@ -934,7 +934,7 @@ h4 {
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(80, 0, 0, 0.28);
+  background: rgba(80, 0, 0, 0.55);
   mix-blend-mode: multiply;
   pointer-events: none;
 }
