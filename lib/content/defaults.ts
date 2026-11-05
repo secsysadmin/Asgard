@@ -96,7 +96,7 @@ const home: Page = {
       hours: "9:00 AM – 5:00 PM",
       location: "Legends Event Center, 2533 Midtown Park Blvd, Bryan, TX",
       directionsHref: LEGENDS_MAP,
-      virtual: "Virtual fair: September 11, 2026 · 9:00 AM – 5:00 PM on HireAggies",
+      virtual: "Virtual fair: September 11, 2026, 9:00 AM – 5:00 PM on HireAggies",
       virtualHref: HIREAGGIES_STUDENTS,
       image: { ...careerFairPoster },
       video: { ...careerFairVideo },
@@ -109,7 +109,7 @@ const home: Page = {
         { date: "Aug 24 – Sep 4", title: "Pre-Career Fair Week", meta: "Workshops, tabling & free food", href: "/students#pre-fair-week" },
         { date: "Tue, Sep 8", title: "Company Chat + Welcome Social", meta: "Meet recruiters before the floor opens", href: "/students#company-chat" },
         { date: "Wed–Thu, Sep 9–10", title: "In-person fair", meta: "9 AM – 5 PM · Legends Event Center", href: "/students#dates" },
-        { date: "Fri, Sep 11", title: "Virtual fair", meta: "9 AM – 5 PM · HireAggies", href: "/students#virtual-fair" },
+        { date: "Fri, Sep 11", title: "Virtual fair", meta: "9 AM – 5 PM on HireAggies", href: "/students#virtual-fair" },
       ],
     }),
     blk("home-about", "about", {
@@ -170,14 +170,14 @@ const students: Page = {
   layout: "guide",
   blocks: [
     blk("stu-header", "pageHeader", {
-      eyebrow: "Students · Fall 2026",
+      eyebrow: "Fall 2026",
       title: "Everything you need for fair day",
       intro: "<p>Current students don’t need to register. Bring your A&amp;M ID, dress professionally, and plan which of the 500+ companies you want to meet.</p>",
       facts: [
-        { label: "Fair days", value: "Wed–Thu, Sep 9–10 · 9 AM – 5 PM" },
+        { label: "Fair days", value: "Wed–Thu, Sep 9–10, 9 AM – 5 PM" },
         { label: "Location", value: "Legends Event Center, Bryan" },
         { label: "Getting there", value: "Free shuttle from Zachry, every 7–10 min" },
-        { label: "Virtual fair", value: "Fri, Sep 11 · HireAggies" },
+        { label: "Virtual fair", value: "Fri, Sep 11 on HireAggies" },
       ],
       links: [
         { label: "Search companies", href: "https://tamu-csm.symplicity.com/students/app/career-fairs/b35a231b6bedd62b18e97cad9c8babb3/overview" },
@@ -227,21 +227,21 @@ const students: Page = {
           title: "Week 1 — Tabling",
           meta: "August 24–27",
           entries: [
-            { time: "Mon, Aug 24 · 9 AM – 12 PM", title: "Donut Day", detail: "<p>ConocoPhillips Atrium. Free donuts on the first day of school — bring your fair questions.</p>" },
-            { time: "Tue, Aug 25 · 9 AM – 12 PM", title: "Tabling", detail: "<p>ConocoPhillips Atrium. Ask questions and pick up resources for the week.</p>" },
-            { time: "Wed, Aug 26 · 11 AM – 2 PM", title: "Snow Cone Day", detail: "<p>E-Quad. Free snow cones.</p>" },
-            { time: "Thu, Aug 27 · 9 AM – 12 PM", title: "Cookies & Career Fair", detail: "<p>ConocoPhillips Atrium. Answers about fair rules, company search, and venue logistics.</p>" },
+            { time: "Mon, Aug 24, 9 AM – 12 PM", title: "Donut Day", detail: "<p>ConocoPhillips Atrium. Free donuts on the first day of school — bring your fair questions.</p>" },
+            { time: "Tue, Aug 25, 9 AM – 12 PM", title: "Tabling", detail: "<p>ConocoPhillips Atrium. Ask questions and pick up resources for the week.</p>" },
+            { time: "Wed, Aug 26, 11 AM – 2 PM", title: "Snow Cone Day", detail: "<p>E-Quad. Free snow cones.</p>" },
+            { time: "Thu, Aug 27, 9 AM – 12 PM", title: "Cookies & Career Fair", detail: "<p>ConocoPhillips Atrium. Answers about fair rules, company search, and venue logistics.</p>" },
           ],
         },
         {
           title: "Week 2 — Workshops",
           meta: "August 31 – September 4",
           entries: [
-            { time: "Mon, Aug 31 · 5:30 – 6:30 PM", title: "Resume Workshop", detail: "<p>Chevron Rooms. The do’s and don’ts of an effective resume.</p>" },
-            { time: "Tue, Sep 1 · 5:30 – 6:30 PM", title: "Elevator Pitch Workshop", detail: "<p>WEB 232. Deliver a confident pitch and make a lasting impression.</p>" },
-            { time: "Wed, Sep 2 · 5:30 – 6:30 PM", title: "LinkedIn Workshop", detail: "<p>WEB 232. Build a profile that stands out to recruiters.</p>" },
-            { time: "Thu, Sep 3 · 5:30 – 6:30 PM", title: "Student Panel", detail: "<p>WEB 232. Hear how other students prepare and make the most of fair day.</p>" },
-            { time: "Fri, Sep 4 · 9 AM – 12 PM", title: "Career Fair office hours", detail: "<p>ConocoPhillips Atrium. Drop in for last-minute questions or resources.</p>" },
+            { time: "Mon, Aug 31, 5:30 – 6:30 PM", title: "Resume Workshop", detail: "<p>Chevron Rooms. The do’s and don’ts of an effective resume.</p>" },
+            { time: "Tue, Sep 1, 5:30 – 6:30 PM", title: "Elevator Pitch Workshop", detail: "<p>WEB 232. Deliver a confident pitch and make a lasting impression.</p>" },
+            { time: "Wed, Sep 2, 5:30 – 6:30 PM", title: "LinkedIn Workshop", detail: "<p>WEB 232. Build a profile that stands out to recruiters.</p>" },
+            { time: "Thu, Sep 3, 5:30 – 6:30 PM", title: "Student Panel", detail: "<p>WEB 232. Hear how other students prepare and make the most of fair day.</p>" },
+            { time: "Fri, Sep 4, 9 AM – 12 PM", title: "Career Fair office hours", detail: "<p>ConocoPhillips Atrium. Drop in for last-minute questions or resources.</p>" },
           ],
         },
       ],
@@ -297,7 +297,7 @@ const students: Page = {
         },
         {
           title: "Virtual fair",
-          meta: "Friday, September 11 · HireAggies",
+          meta: "Friday, September 11 on HireAggies",
           entries: [
             { time: "9:00 AM – 5:00 PM", title: "Virtual Career Fair", detail: "<p>RSVP on HireAggies beforehand. <a href=\"#virtual-students\">How to register</a></p>" },
           ],
@@ -339,8 +339,8 @@ const students: Page = {
         { label: "Fair pop-up dates", value: "Wednesday–Thursday, September 2–3" },
         { label: "Pop-up hours", value: "10:00 AM – 4:00 PM" },
         { label: "Pop-up location", value: "ConocoPhillips Atrium" },
-        { label: "Year-round location", value: "MSC L428 · Mondays & Thursdays, 10 AM – 4 PM" },
-        { label: "Cost", value: "Free to borrow · $5 subsidized dry cleaning" },
+        { label: "Year-round location", value: "MSC L428, Mondays & Thursdays, 10 AM – 4 PM" },
+        { label: "Cost", value: "Free to borrow, $5 dry cleaning" },
         { label: "Who can borrow", value: "Current Texas A&M students" },
       ],
       links: [
@@ -401,7 +401,7 @@ const students: Page = {
       heading: "Virtual Career Fair",
       body: "<p>Meet leading employers from anywhere — live sessions, one-on-one recruiter chats, and on-the-spot interviews — hosted on HireAggies (Symplicity).</p>",
       facts: [
-        { label: "When", value: "Friday, September 11 · 9 AM – 5 PM CST" },
+        { label: "When", value: "Friday, September 11, 9 AM – 5 PM CST" },
         { label: "Where", value: "HireAggies (Symplicity)" },
         { label: "RSVP", value: "Opens on HireAggies closer to the fair" },
       ],
@@ -498,14 +498,14 @@ const recruiters: Page = {
   layout: "guide",
   blocks: [
     blk("rec-header", "pageHeader", {
-      eyebrow: "Recruiters · Fall 2026",
+      eyebrow: "Fall 2026",
       title: "Plan your company’s visit",
       intro: "<p>Meet 12,000+ Aggie engineers seeking internships, co-ops, and full-time roles at the largest student-run career fair in the nation.</p>",
       facts: [
-        { label: "Registration closes", value: "Thu, Aug 21 · 11:59 PM CST" },
+        { label: "Registration closes", value: "Thu, Aug 21, 11:59 PM CST" },
         { label: "Ship booth materials by", value: "Mon, Sep 7 · Legends Event Center" },
-        { label: "Fair days", value: "Wed–Thu, Sep 9–10 · 9 AM – 5 PM" },
-        { label: "Payment due", value: "Fri, Sep 11 · $50 late fee after" },
+        { label: "Fair days", value: "Wed–Thu, Sep 9–10, 9 AM – 5 PM" },
+        { label: "Payment due", value: "Fri, Sep 11 ($50 late fee after)" },
       ],
       links: [
         { label: "Register on Symplicity", href: SYMPLICITY_EMPLOYERS },
@@ -777,13 +777,13 @@ const discovery: Page = {
   layout: "guide",
   blocks: [
     blk("cdf-header", "pageHeader", {
-      eyebrow: "Recruiters · Fall 2026",
+      eyebrow: "Fall 2026",
       title: "Career Discovery Fair",
       intro: "<p>Meet 3,000+ first-year engineering students as they explore majors and industries. Build your brand early and connect with future talent.</p>",
       facts: [
-        { label: "Date", value: "Tue, Nov 17 · 9 AM – 4 PM" },
+        { label: "Date", value: "Tue, Nov 17, 9 AM – 4 PM" },
         { label: "Location", value: "Texas A&M Hotel and Conference Center" },
-        { label: "Registration opens", value: "May 18, 2026 · Symplicity" },
+        { label: "Registration opens", value: "May 18, 2026 on Symplicity" },
         { label: "Cost", value: "Free for companies" },
       ],
       links: [

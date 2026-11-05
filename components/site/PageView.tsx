@@ -26,6 +26,12 @@ const LOGO_HEIGHT = 331;
 const ACTIVE_SECTION_OFFSET_PX = 160;
 const HEADER_SOLID_SCROLL_PX = 24;
 const PAGE_BOTTOM_TOLERANCE_PX = 4;
+// Space kept between the bottom of the pinned menu and the bottom of the window.
+const TOC_BOTTOM_GAP_PX = 24;
+// Below this much room, the menu stops shrinking and scrolls away with the page instead.
+const TOC_MIN_ROOM_PX = 160;
+// How far inside the menu's edges the active link is kept when the menu scrolls itself.
+const TOC_ACTIVE_MARGIN_PX = 32;
 
 function isCurrent(href: string, page?: Page) {
   return !!page && page.slug !== "" && href.split("#")[0] === `/${page.slug}`;
@@ -225,12 +231,62 @@ function useRevealLinkedAnswer(enabled: boolean) {
   }, [enabled]);
 }
 
+function keepActiveLinkInView(toc: HTMLElement) {
+  if (toc.scrollHeight <= toc.clientHeight) return;
+  const link = toc.querySelector<HTMLElement>('a[aria-current="true"]');
+  if (!link) return;
+  const box = toc.getBoundingClientRect();
+  const rect = link.getBoundingClientRect();
+  if (rect.top < box.top + TOC_ACTIVE_MARGIN_PX) toc.scrollTop -= box.top + TOC_ACTIVE_MARGIN_PX - rect.top;
+  else if (rect.bottom > box.bottom - TOC_ACTIVE_MARGIN_PX) toc.scrollTop += rect.bottom - (box.bottom - TOC_ACTIVE_MARGIN_PX);
+}
+
+// A sticky menu can't extend past the bottom of the guide, so once the last section is shorter than
+// the menu, the whole menu slides up under the header. Instead, shrink it to the room left above the
+// guide's end (it scrolls internally) and keep the active link visible inside it.
+function usePinnedToc(nav: RefObject<HTMLElement | null>, active: string, enabled: boolean) {
+  useEffect(() => {
+    const toc = nav.current;
+    const guide = toc?.parentElement;
+    if (!enabled || !toc || !guide) return;
+    let frame = 0;
+    let lastRoom = "";
+    const fit = () => {
+      frame = 0;
+      const top = parseFloat(getComputedStyle(toc).top) || 0;
+      const room = Math.min(window.innerHeight - top - TOC_BOTTOM_GAP_PX, guide.getBoundingClientRect().bottom - top);
+      const value = `${Math.round(Math.max(room, TOC_MIN_ROOM_PX))}px`;
+      if (value === lastRoom) return;
+      lastRoom = value;
+      toc.style.setProperty("--toc-room", value);
+      keepActiveLinkInView(toc);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(fit);
+    };
+    fit();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      toc.style.removeProperty("--toc-room");
+    };
+  }, [nav, enabled]);
+
+  useEffect(() => {
+    if (enabled && nav.current) keepActiveLinkInView(nav.current);
+  }, [nav, active, enabled]);
+}
+
 function Toc({ groups }: TocProps) {
   const edit = useEdit();
   const ids = groups.flatMap((group) => group.items.map((item) => item.id));
   const { active, pin } = useActiveSection(ids, !edit);
   const [open, setOpen] = useState(false);
   const nav = useRef<HTMLElement>(null);
+  usePinnedToc(nav, active, !edit);
   useDismiss(nav, open, useCallback(() => setOpen(false), []));
   const activeLabel = groups.flatMap((group) => group.items).find((item) => item.id === active)?.label ?? "Sections";
   if (!groups.length) return null;

@@ -33,7 +33,6 @@ type Props<K extends BlockType> = { block: Extract<Block, { type: K }>; data: Bl
 type HeadProps = { heading: string; intro?: string; at: Path };
 type NoteProps = { value: string; at: Path };
 type FactListProps = { facts: { label: string; value: string }[]; at: Path; plain?: boolean };
-type FactValueProps = { value: string; path: Path };
 type ActionsProps = { links: LinkRef[]; at: Path; className?: string; icon?: LucideIcon };
 type BlockViewProps = { block: Block; at: Path };
 
@@ -44,7 +43,8 @@ const TUCK_MIN_OVERHANG_PX = 96;
 const CAROUSEL_PAGE_FRACTION = 0.9;
 const LEAVES_SITE = /^(https?:|mailto:|tel:)/i;
 const NON_DIAL_CHARS = /[^\d+]/g;
-const TIME_SPAN = /(\b\d{1,2}(?::\d{2})?(?:\s?[ap]\.?m\.?)?(?:\s?[–-]\s?\d{1,2}(?::\d{2})?)?\s?[ap]\.?m\b\.?(?:\s(?:CST|CDT|CT)\b)?)/i;
+const OFFICE_PARTS = /\s*[·\n]\s*/;
+const PHONE_NUMBER = /^\+?[\d\s().-]{7,}$/;
 
 const FACT_ICONS: [RegExp, LucideIcon][] = [
   [/time|hour/i, Clock],
@@ -180,25 +180,11 @@ function FactList({ facts, at, plain = false }: FactListProps) {
               )}
               <Text value={fact.label} path={[...p, "label"]} placeholder="Label" />
             </dt>
-            {plain ? (
-              <FactValue value={fact.value} path={[...p, "value"]} />
-            ) : (
-              <Text as="dd" value={fact.value} path={[...p, "value"]} placeholder="Value" />
-            )}
+            <Text as="dd" value={fact.value} path={[...p, "value"]} placeholder="Value" />
           </div>
         );
       }}
     />
-  );
-}
-
-function FactValue({ value, path }: FactValueProps) {
-  const edit = useEdit();
-  if (edit || !value) return <Text as="dd" value={value} path={path} placeholder="Value" />;
-  return (
-    <dd>
-      {value.split(TIME_SPAN).map((part, i) => (i % 2 === 1 ? <span key={i} className="fact-time">{part}</span> : part))}
-    </dd>
   );
 }
 
@@ -254,7 +240,7 @@ function KeyDates({ data, at }: Props<"keyDates">) {
             <MaybeLink href={item.href} className="key-date">
               <Text className="key-date-when" value={item.date} path={[...p, "date"]} placeholder="Date" />
               <Text className="key-date-title" value={item.title} path={[...p, "title"]} placeholder="What’s happening" />
-              <Text className="key-date-meta" value={item.meta} path={[...p, "meta"]} placeholder="Time · place" />
+              <Text className="key-date-meta" value={item.meta} path={[...p, "meta"]} placeholder="Time and place" />
               {item.href && <ArrowRight className="key-date-arrow" aria-hidden />}
             </MaybeLink>
           </li>
@@ -384,7 +370,7 @@ function Timeline({ data, at }: Props<"timeline">) {
           <section className="timeline-day">
             <header>
               <Text as="h3" value={day.title} path={[...p, "title"]} placeholder="Day" />
-              <Text as="p" value={day.meta} path={[...p, "meta"]} placeholder="Date · place" />
+              <Text as="p" value={day.meta} path={[...p, "meta"]} placeholder="Date and place" />
             </header>
             <List
               as="ol"
@@ -738,7 +724,21 @@ function Contact({ data, at }: Props<"contact">) {
           {(data.phone || edit) && (
             <>
               <h3>Office</h3>
-              <Text as="p" value={data.phone} path={[...at, "phone"]} placeholder="Office & phone" />
+              {edit ? (
+                <Text as="p" value={data.phone} path={[...at, "phone"]} placeholder="Office & phone" />
+              ) : (
+                <p className="office">
+                  {data.phone.split(OFFICE_PARTS).map((part) =>
+                    PHONE_NUMBER.test(part) ? (
+                      <a key={part} className="phone" href={`tel:${part.replace(NON_DIAL_CHARS, "")}`}>
+                        <Phone aria-hidden /> {part}
+                      </a>
+                    ) : (
+                      <span key={part}>{part}</span>
+                    ),
+                  )}
+                </p>
+              )}
             </>
           )}
           {(data.address || edit) && (

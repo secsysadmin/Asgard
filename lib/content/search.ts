@@ -69,7 +69,7 @@ function ownText(record: Fields, exclude = ""): string {
     .filter(([key, value]) => typeof value === "string" || DETAIL_LISTS.has(key) || isFieldObject(value))
     .flatMap(([key, value]) => textOf(value, key))
     .filter((part) => part && part !== exclude)
-    .join(" · ");
+    .join(". ");
 }
 
 function titledItems(record: Fields): Fields[] {

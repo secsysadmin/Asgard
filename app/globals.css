@@ -978,10 +978,11 @@ h4 {
 a.key-date:hover { transform: translateY(-3px); }
 a.key-date:hover::before { background: var(--brass); }
 .key-date-when {
-  font: 500 13px/1.3 var(--mono);
+  font: 600 13.5px/1.3 var(--sans);
+  font-variant-numeric: tabular-nums;
   color: var(--maroon);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
 }
 .key-date-title {
   margin-top: 29px;
@@ -1184,7 +1185,9 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   }
   .schedule tbody th,
   .data-table tbody th {
-    font: 500 13px/1.4 var(--mono);
+    font: 600 13px/1.4 var(--sans);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
     color: var(--maroon);
     text-transform: uppercase;
   }
@@ -1233,7 +1236,8 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 }
 .timeline-day > header p {
   margin: 8px 0 0;
-  font: 500 13px/1.45 var(--mono);
+  font: 600 14px/1.45 var(--sans);
+  font-variant-numeric: tabular-nums;
   color: var(--maroon);
 }
 .timeline-day ol {
@@ -1273,7 +1277,8 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   background: rgba(80, 0, 0, 0.2);
 }
 .timeline-time {
-  font: 500 12.5px/1.4 var(--mono);
+  font: 500 13.5px/1.4 var(--sans);
+  font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
 }
 .timeline-entry h4 {
@@ -1963,6 +1968,11 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .contact-grid p {
   margin: 0;
 }
+.contact-grid .office {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
 .people {
   list-style: none;
   margin: 0;
@@ -1978,7 +1988,8 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   font-size: 14px;
   color: var(--ink-soft);
 }
-.people .phone {
+.people .phone,
+.office .phone {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1986,7 +1997,8 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   color: var(--maroon);
   text-decoration: none;
 }
-.people .phone svg {
+.people .phone svg,
+.office .phone svg {
   width: 14px;
   height: 14px;
 }
@@ -2056,11 +2068,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 }
 .facts-plain .fact dd {
   font-weight: 500;
-}
-.facts-plain .fact-time {
-  font: 500 0.9em/1 var(--mono);
-  letter-spacing: -0.01em;
-  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 .band-pageHeader.tone-maroon {
   background: var(--maroon);
@@ -2198,64 +2206,62 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
     grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
   }
 }
+/* The pinned menu's height comes from --toc-room, which the page sets to the space left between the
+   header and the end of the guide; the fallback is the window height for before that runs. */
 .toc {
   position: sticky;
-  top: calc(var(--header-h) + 12px);
-  max-height: calc(100dvh - var(--header-h) - 24px);
+  top: calc(var(--header-h) + 24px);
+  max-height: var(--toc-room, calc(100dvh - var(--header-h) - 48px));
   overflow-y: auto;
-  padding: 8px 0;
-  font-size: 15.5px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  margin-top: clamp(56px, 8cqi, 96px);
+  padding: 0 0 8px;
+  font-size: 15px;
 }
 .toc-toggle {
   display: none;
 }
 .toc-title {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   font: 600 13px/1.2 var(--sans);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--maroon-light);
 }
 .toc-group + .toc-group {
-  margin-top: 13px;
+  margin-top: 20px;
 }
 .toc-group > p {
-  margin: 0 0 4px;
-  font: 500 13px/1.3 var(--mono);
-  text-transform: uppercase;
-  color: var(--maroon-light);
-  letter-spacing: 0.04em;
+  margin: 0 0 6px;
+  font: 600 13px/1.3 var(--sans);
+  color: var(--ink-faint);
 }
 .toc ul {
   list-style: none;
   margin: 0;
   padding: 0;
-  border-left: 2px solid var(--maroon-soft);
+  border-left: 1px solid var(--line);
 }
 .toc a {
   display: block;
-  padding: 4px 10px 4px 14px;
-  margin-left: -2px;
-  border-left: 3px solid transparent;
-  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 4px 8px 4px 14px;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
   text-decoration: none;
-  color: var(--maroon-light);
-  font-weight: 500;
-  line-height: 1.25;
+  color: var(--ink-soft);
+  line-height: 1.35;
 }
 .toc a:hover {
   color: var(--maroon);
-  background: var(--maroon-soft);
+}
+.toc a:focus-visible {
+  outline-offset: -3px;
 }
 .toc a[aria-current="true"] {
   color: var(--maroon);
-  font-weight: 700;
-  background: var(--maroon-soft);
-  border-left-color: var(--maroon-light);
-}
-@media (min-height: 850px) {
-  .toc-group + .toc-group { margin-top: 16px; }
-  .toc a { padding-block: 5px; }
+  font-weight: 600;
+  border-left-color: var(--maroon);
 }
 @container site (max-width: 960px) {
   .guide {
@@ -2285,10 +2291,8 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
     text-align: left;
   }
   .toc-toggle-label {
-    font: 600 12.5px/1.2 var(--sans);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--maroon-light);
+    font: 600 13px/1.2 var(--sans);
+    color: var(--ink-faint);
   }
   .toc-toggle-current {
     flex: 1;
