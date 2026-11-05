@@ -21,11 +21,16 @@ async function readRow(): Promise<Row | null> {
   return rows[0] ?? null;
 }
 
+// Public pages hand all content to the browser, so hidden blocks must be removed here, not just styled away.
+function withoutHiddenBlocks(content: SiteContent): SiteContent {
+  return { ...content, pages: content.pages.map((page) => ({ ...page, blocks: page.blocks.filter((block) => block.visible) })) };
+}
+
 export const getPublishedContent = cache(async (): Promise<SiteContent> => {
   if (!hasDatabase()) return freshDefaults();
   try {
     const row = await readRow();
-    return row?.published ? normalizeContent(row.published) : freshDefaults();
+    return withoutHiddenBlocks(row?.published ? normalizeContent(row.published) : freshDefaults());
   } catch (error) {
     console.error("Falling back to default content:", error);
     return freshDefaults();

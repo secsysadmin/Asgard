@@ -200,6 +200,15 @@ export const blockSpecs: { [K in BlockType]: BlockSpec<K> } = {
 
 export const richKeys = new Set(["summary", "intro", "body", "note", "detail", "a", "address", "announcement"]);
 
+export function emptyListItem(key: string): unknown {
+  if (key === "gallery" || key === "images") return { src: "", alt: "" };
+  if (key === "links" || key === "nav") return { label: "", href: "" };
+  if (key === "facts") return { label: "", value: "" };
+  if (key === "people") return { name: "", role: "", phone: "" };
+  if (key === "columns") return "Column";
+  return "";
+}
+
 export const blockTypes = Object.keys(blockSpecs) as BlockType[];
 
 export function newBlockId(type: string) {

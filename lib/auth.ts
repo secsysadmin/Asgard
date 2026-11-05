@@ -16,6 +16,9 @@ const LOCAL_LOGIN_BUCKET = "local";
 const DUMMY_PASSWORD_HASH = `scrypt-v1$${"0".repeat(32)}$${"0".repeat(128)}`;
 const LOGIN_WINDOW_SECONDS = 15 * 60;
 const MAX_LOGIN_ATTEMPTS = 20;
+const ACCOUNT_BUCKET_PREFIX = "account:";
+const IPV6_NETWORK_GROUPS = 4;
+const IPV6_GROUPS = 8;
 const INVALID_LOGIN = "Email or password is incorrect.";
 const LIMITED_LOGIN = "Too many sign-in attempts. Please try again in 15 minutes.";
 const MAX_EMAIL_LENGTH = 254;
@@ -54,7 +57,10 @@ export function unauthorized() {
 
 async function allowLoginAttempt(bucket: string) {
   const schema = deploymentSchema();
-  const rows = await database().query(
+  const sql = database();
+  const [, rows] = await sql.transaction([
+    sql.query(`delete from ${schema}.staff_login_limits where reset_at <= now()`),
+    sql.query(
     `insert into ${schema}.staff_login_limits (bucket, attempts, reset_at)
      values ($1, 1, now() + $2 * interval '1 second')
      on conflict (bucket) do update set
@@ -62,7 +68,8 @@ async function allowLoginAttempt(bucket: string) {
        reset_at = case when staff_login_limits.reset_at <= now() then now() + $2 * interval '1 second' else staff_login_limits.reset_at end
      returning attempts`,
     [bucket, LOGIN_WINDOW_SECONDS],
-  ) as AttemptCount[];
+    ),
+  ]) as [unknown, AttemptCount[]];
   return rows[0]?.attempts <= MAX_LOGIN_ATTEMPTS;
 }
 
@@ -70,7 +77,7 @@ function invalidLogin() {
   return Response.json({ error: INVALID_LOGIN }, { status: 401, headers: NO_CACHE_HEADERS });
 }
 
-async function createSession(email: string, bucket: string) {
+async function createSession(email: string, buckets: string[]) {
   const token = randomBytes(SESSION_BYTES).toString("hex");
   const expires = new Date(Date.now() + SESSION_LIFETIME_SECONDS * MILLISECONDS_PER_SECOND);
   const sql = database();
@@ -78,14 +85,34 @@ async function createSession(email: string, bucket: string) {
   await sql.transaction([
     sql.query(`delete from ${schema}.staff_sessions where expires_at <= now()`),
     sql.query(`insert into ${schema}.staff_sessions (token_hash, email, expires_at) values ($1, $2, $3)`, [tokenHash(token), email, expires.toISOString()]),
-    sql.query(`delete from ${schema}.staff_login_limits where bucket = $1`, [bucket]),
+    sql.query(`delete from ${schema}.staff_login_limits where bucket = any($1)`, [buckets]),
   ]);
   (await cookies()).set(SESSION_COOKIE, token, { ...SESSION_COOKIE_OPTIONS, expires });
 }
 
+// One IPv6 customer usually holds a whole /64, so limiting single addresses would barely slow them down.
+function ipv6Network(address: string) {
+  const [head, tail = ""] = address.toLowerCase().split("::");
+  const front = head ? head.split(":") : [];
+  const back = tail ? tail.split(":") : [];
+  const groups = address.includes("::") ? [...front, ...Array(IPV6_GROUPS - front.length - back.length).fill("0"), ...back] : front;
+  return `${groups.slice(0, IPV6_NETWORK_GROUPS).join(":")}::/64`;
+}
+
 function loginBucket(request: Request) {
   const address = process.env.VERCEL ? request.headers.get("x-vercel-forwarded-for")?.split(",")[0].trim() : LOCAL_LOGIN_BUCKET;
-  return tokenHash(address || LOCAL_LOGIN_BUCKET);
+  const network = address?.includes(":") ? ipv6Network(address) : address;
+  return tokenHash(network || LOCAL_LOGIN_BUCKET);
+}
+
+// A per-account limit stops attackers spread across many networks from guessing one staff password.
+const accountBucket = (email: string) => tokenHash(`${ACCOUNT_BUCKET_PREFIX}${email}`);
+
+function limitedLogin() {
+  return Response.json({ error: LIMITED_LOGIN }, {
+    status: 429,
+    headers: { ...NO_CACHE_HEADERS, "Retry-After": String(LOGIN_WINDOW_SECONDS) },
+  });
 }
 
 function readCredentials(input: unknown) {
@@ -98,14 +125,11 @@ function readCredentials(input: unknown) {
 export async function signIn(input: unknown, request: Request) {
   const bucket = loginBucket(request);
   await ensureSchema();
-  if (!(await allowLoginAttempt(bucket))) {
-    return Response.json({ error: LIMITED_LOGIN }, {
-      status: 429,
-      headers: { ...NO_CACHE_HEADERS, "Retry-After": String(LOGIN_WINDOW_SECONDS) },
-    });
-  }
+  if (!(await allowLoginAttempt(bucket))) return limitedLogin();
   const credentials = readCredentials(input);
   if (!credentials) return invalidLogin();
+  const account = accountBucket(credentials.email);
+  if (!(await allowLoginAttempt(account))) return limitedLogin();
   const rows = await database().query(
     `select email, password_hash from ${deploymentSchema()}.staff_users where email = $1`,
     [credentials.email],
@@ -113,7 +137,7 @@ export async function signIn(input: unknown, request: Request) {
   const user = rows[0];
   const matches = await verifyPassword(credentials.password, user?.password_hash ?? DUMMY_PASSWORD_HASH);
   if (!user || !matches) return invalidLogin();
-  await createSession(user.email, bucket);
+  await createSession(user.email, [bucket, account]);
   return Response.json({ ok: true }, { headers: NO_CACHE_HEADERS });
 }
 

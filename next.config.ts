@@ -16,7 +16,9 @@ const nextConfig: NextConfig = {
   images: { unoptimized: true },
   async headers() {
     return [
-      { source: "/:path*", headers: SECURITY_HEADERS },
+      // Media responses set their own complete headers (see lib/media.ts); a Content-Security-Policy
+      // here would replace the SVG sandbox, because Next keeps config headers over a route's own.
+      { source: "/((?!api/media/).*)", headers: SECURITY_HEADERS },
       {
         source: "/video/:file(.*\\.v[0-9]+\\.(?:mp4|webm|jpg))",
         headers: [{ key: "Cache-Control", value: VERSIONED_MEDIA_CACHE }],
