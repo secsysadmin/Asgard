@@ -838,7 +838,7 @@ h4 {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 58% center;
+  object-position: 58% top;
 }
 .hero-video {
   pointer-events: none;
@@ -2047,6 +2047,9 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .facts-plain .fact dt {
   font: 400 14px/1.35 var(--sans);
   letter-spacing: 0;
+  text-transform: lowercase;
+}
+.facts-plain .fact dt::first-letter {
   text-transform: uppercase;
 }
 .facts-plain .fact dd {
@@ -2129,6 +2132,18 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .page-guide > .band-pageHeader > .page-header {
   max-width: var(--guide-max);
   margin-inline: auto;
+}
+.page-guide > .band-pageHeader .page-header .eyebrow {
+  display: none;
+}
+.page-guide > .band-pageHeader .page-header h1 {
+  max-width: 17ch;
+  text-wrap: balance;
+}
+@container site (min-width: 901px) {
+  .page-guide > .band-pageHeader > .page-header {
+    min-height: 370px;
+  }
 }
 .guide {
   display: grid;
