@@ -2198,64 +2198,59 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
     grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
   }
 }
+/* The pinned menu's height comes from --toc-room, which the page sets to the space left between the
+   header and the end of the guide; the fallback is the window height for before that runs. */
 .toc {
   position: sticky;
-  top: calc(var(--header-h) + 12px);
-  max-height: calc(100dvh - var(--header-h) - 24px);
+  top: calc(var(--header-h) + 24px);
+  max-height: var(--toc-room, calc(100dvh - var(--header-h) - 48px));
   overflow-y: auto;
-  padding: 8px 0;
-  font-size: 15.5px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding: 0 0 8px;
+  font-size: 15px;
 }
 .toc-toggle {
   display: none;
 }
 .toc-title {
-  margin: 0 0 12px;
-  font: 600 13px/1.2 var(--sans);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--maroon-light);
+  margin: 0 0 16px;
+  font: 600 15px/1.3 var(--sans);
+  color: var(--ink);
 }
 .toc-group + .toc-group {
-  margin-top: 13px;
+  margin-top: 20px;
 }
 .toc-group > p {
-  margin: 0 0 4px;
-  font: 500 13px/1.3 var(--mono);
-  text-transform: uppercase;
-  color: var(--maroon-light);
-  letter-spacing: 0.04em;
+  margin: 0 0 6px;
+  font: 600 13px/1.3 var(--sans);
+  color: var(--ink-faint);
 }
 .toc ul {
   list-style: none;
   margin: 0;
   padding: 0;
-  border-left: 2px solid var(--maroon-soft);
+  border-left: 1px solid var(--line);
 }
 .toc a {
   display: block;
-  padding: 4px 10px 4px 14px;
-  margin-left: -2px;
-  border-left: 3px solid transparent;
-  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 4px 8px 4px 14px;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
   text-decoration: none;
-  color: var(--maroon-light);
-  font-weight: 500;
-  line-height: 1.25;
+  color: var(--ink-soft);
+  line-height: 1.35;
 }
 .toc a:hover {
   color: var(--maroon);
-  background: var(--maroon-soft);
+}
+.toc a:focus-visible {
+  outline-offset: -3px;
 }
 .toc a[aria-current="true"] {
   color: var(--maroon);
-  font-weight: 700;
-  background: var(--maroon-soft);
-  border-left-color: var(--maroon-light);
-}
-@media (min-height: 850px) {
-  .toc-group + .toc-group { margin-top: 16px; }
-  .toc a { padding-block: 5px; }
+  font-weight: 600;
+  border-left-color: var(--maroon);
 }
 @container site (max-width: 960px) {
   .guide {
@@ -2285,10 +2280,8 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
     text-align: left;
   }
   .toc-toggle-label {
-    font: 600 12.5px/1.2 var(--sans);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--maroon-light);
+    font: 600 13px/1.2 var(--sans);
+    color: var(--ink-faint);
   }
   .toc-toggle-current {
     flex: 1;
