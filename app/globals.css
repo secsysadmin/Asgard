@@ -1963,6 +1963,11 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .contact-grid p {
   margin: 0;
 }
+.contact-grid .office {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
 .people {
   list-style: none;
   margin: 0;
@@ -1978,7 +1983,8 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   font-size: 14px;
   color: var(--ink-soft);
 }
-.people .phone {
+.people .phone,
+.office .phone {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1986,7 +1992,8 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   color: var(--maroon);
   text-decoration: none;
 }
-.people .phone svg {
+.people .phone svg,
+.office .phone svg {
   width: 14px;
   height: 14px;
 }

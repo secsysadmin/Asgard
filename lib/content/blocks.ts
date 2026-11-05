@@ -43,7 +43,7 @@ export const blockSpecs: { [K in BlockType]: BlockSpec<K> } = {
     description: "A row of dates that link to more detail.",
     starter: () => ({
       heading: "Key dates",
-      items: [{ date: "Sep 1", title: "Event", meta: "Time · Place", href: "" }],
+      items: [{ date: "Sep 1", title: "Event", meta: "Time, place", href: "" }],
     }),
   },
   about: {
@@ -88,7 +88,7 @@ export const blockSpecs: { [K in BlockType]: BlockSpec<K> } = {
     starter: () => ({
       heading: "Itinerary",
       intro: "",
-      days: [{ title: "Day one", meta: "Date · Place", entries: [{ time: "9:00 AM", title: "Entry", detail: "" }] }],
+      days: [{ title: "Day one", meta: "Date, place", entries: [{ time: "9:00 AM", title: "Entry", detail: "" }] }],
       note: "",
     }),
   },

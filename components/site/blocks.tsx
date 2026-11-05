@@ -44,6 +44,8 @@ const TUCK_MIN_OVERHANG_PX = 96;
 const CAROUSEL_PAGE_FRACTION = 0.9;
 const LEAVES_SITE = /^(https?:|mailto:|tel:)/i;
 const NON_DIAL_CHARS = /[^\d+]/g;
+const OFFICE_PARTS = /\s*[·\n]\s*/;
+const PHONE_NUMBER = /^\+?[\d\s().-]{7,}$/;
 const TIME_SPAN = /(\b\d{1,2}(?::\d{2})?(?:\s?[ap]\.?m\.?)?(?:\s?[–-]\s?\d{1,2}(?::\d{2})?)?\s?[ap]\.?m\b\.?(?:\s(?:CST|CDT|CT)\b)?)/i;
 
 const FACT_ICONS: [RegExp, LucideIcon][] = [
@@ -254,7 +256,7 @@ function KeyDates({ data, at }: Props<"keyDates">) {
             <MaybeLink href={item.href} className="key-date">
               <Text className="key-date-when" value={item.date} path={[...p, "date"]} placeholder="Date" />
               <Text className="key-date-title" value={item.title} path={[...p, "title"]} placeholder="What’s happening" />
-              <Text className="key-date-meta" value={item.meta} path={[...p, "meta"]} placeholder="Time · place" />
+              <Text className="key-date-meta" value={item.meta} path={[...p, "meta"]} placeholder="Time and place" />
               {item.href && <ArrowRight className="key-date-arrow" aria-hidden />}
             </MaybeLink>
           </li>
@@ -384,7 +386,7 @@ function Timeline({ data, at }: Props<"timeline">) {
           <section className="timeline-day">
             <header>
               <Text as="h3" value={day.title} path={[...p, "title"]} placeholder="Day" />
-              <Text as="p" value={day.meta} path={[...p, "meta"]} placeholder="Date · place" />
+              <Text as="p" value={day.meta} path={[...p, "meta"]} placeholder="Date and place" />
             </header>
             <List
               as="ol"
@@ -738,7 +740,21 @@ function Contact({ data, at }: Props<"contact">) {
           {(data.phone || edit) && (
             <>
               <h3>Office</h3>
-              <Text as="p" value={data.phone} path={[...at, "phone"]} placeholder="Office & phone" />
+              {edit ? (
+                <Text as="p" value={data.phone} path={[...at, "phone"]} placeholder="Office & phone" />
+              ) : (
+                <p className="office">
+                  {data.phone.split(OFFICE_PARTS).map((part) =>
+                    PHONE_NUMBER.test(part) ? (
+                      <a key={part} className="phone" href={`tel:${part.replace(NON_DIAL_CHARS, "")}`}>
+                        <Phone aria-hidden /> {part}
+                      </a>
+                    ) : (
+                      <span key={part}>{part}</span>
+                    ),
+                  )}
+                </p>
+              )}
             </>
           )}
           {(data.address || edit) && (
