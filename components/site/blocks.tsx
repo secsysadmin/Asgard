@@ -39,6 +39,7 @@ type BlockViewProps = { block: Block; at: Path };
 
 const MAX_CARD_COLUMNS = 3;
 const MAX_PHOTO_STRIP_COLUMNS = 3;
+const FULL_WIDTH_EVENT_GALLERIES = new Set(["company-chat", "pre-fair-events", "welcome-social"]);
 const TUCK_MIN_OVERHANG_PX = 96;
 const CAROUSEL_PAGE_FRACTION = 0.9;
 const LEAVES_SITE = /^(https?:|mailto:|tel:)/i;
@@ -458,10 +459,10 @@ function useTuckPhotos(ref: RefObject<HTMLDivElement | null>, enabled: boolean) 
   return enabled && tuck;
 }
 
-function Event({ data, at }: Props<"event">) {
+function Event({ block, data, at }: Props<"event">) {
   const edit = useEdit();
   const event = useRef<HTMLDivElement>(null);
-  const tuck = useTuckPhotos(event, data.gallery.length > 1);
+  const tuck = useTuckPhotos(event, data.gallery.length > 1 && !FULL_WIDTH_EVENT_GALLERIES.has(block.id));
   const gallery = (data.gallery.length > 0 || edit) && (
     <List
       className={`photo-strip photo-strip-${Math.min(data.gallery.length, MAX_PHOTO_STRIP_COLUMNS)}`}
