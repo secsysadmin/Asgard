@@ -2031,7 +2031,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
   gap: clamp(28px, 5cqi, 80px);
-  align-items: center;
+  align-items: start;
 }
 .page-header .eyebrow::before {
   content: none;
@@ -2064,7 +2064,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .facts-plain .fact dt {
   font: 400 14px/1.35 var(--sans);
   letter-spacing: 0;
-  text-transform: none;
+  text-transform: uppercase;
 }
 .facts-plain .fact dd {
   font-weight: 500;
