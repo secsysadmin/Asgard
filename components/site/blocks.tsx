@@ -33,7 +33,6 @@ type Props<K extends BlockType> = { block: Extract<Block, { type: K }>; data: Bl
 type HeadProps = { heading: string; intro?: string; at: Path };
 type NoteProps = { value: string; at: Path };
 type FactListProps = { facts: { label: string; value: string }[]; at: Path; plain?: boolean };
-type FactValueProps = { value: string; path: Path };
 type ActionsProps = { links: LinkRef[]; at: Path; className?: string; icon?: LucideIcon };
 type BlockViewProps = { block: Block; at: Path };
 
@@ -46,7 +45,6 @@ const LEAVES_SITE = /^(https?:|mailto:|tel:)/i;
 const NON_DIAL_CHARS = /[^\d+]/g;
 const OFFICE_PARTS = /\s*[·\n]\s*/;
 const PHONE_NUMBER = /^\+?[\d\s().-]{7,}$/;
-const TIME_SPAN = /(\b\d{1,2}(?::\d{2})?(?:\s?[ap]\.?m\.?)?(?:\s?[–-]\s?\d{1,2}(?::\d{2})?)?\s?[ap]\.?m\b\.?(?:\s(?:CST|CDT|CT)\b)?)/i;
 
 const FACT_ICONS: [RegExp, LucideIcon][] = [
   [/time|hour/i, Clock],
@@ -182,25 +180,11 @@ function FactList({ facts, at, plain = false }: FactListProps) {
               )}
               <Text value={fact.label} path={[...p, "label"]} placeholder="Label" />
             </dt>
-            {plain ? (
-              <FactValue value={fact.value} path={[...p, "value"]} />
-            ) : (
-              <Text as="dd" value={fact.value} path={[...p, "value"]} placeholder="Value" />
-            )}
+            <Text as="dd" value={fact.value} path={[...p, "value"]} placeholder="Value" />
           </div>
         );
       }}
     />
-  );
-}
-
-function FactValue({ value, path }: FactValueProps) {
-  const edit = useEdit();
-  if (edit || !value) return <Text as="dd" value={value} path={path} placeholder="Value" />;
-  return (
-    <dd>
-      {value.split(TIME_SPAN).map((part, i) => (i % 2 === 1 ? <span key={i} className="fact-time">{part}</span> : part))}
-    </dd>
   );
 }
 

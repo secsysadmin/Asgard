@@ -55,7 +55,7 @@ Maroon is the institutional anchor; warm white and cream carry the main surfaces
 
 ## Typography
 
-Source Serif 4 gives page and section headings a sturdy editorial voice. Source Sans 3 carries body copy and functional information; DM Mono is reserved for metadata such as times and dates. The hero retains its Playfair Display and IBM Plex Sans typography.
+Source Serif 4 gives page and section headings a sturdy editorial voice. Source Sans 3 carries body copy and functional information, including dates and times, which use its tabular figures so they read as part of the sentence; DM Mono is reserved for small uppercase labels and keyboard hints, since its slashed zero makes times like 8:00 read as 8:ØØ. The hero retains its Playfair Display and IBM Plex Sans typography.
 
 ## Layout
 
