@@ -145,7 +145,7 @@ export function teamPage(members: Block): Page {
     blocks: [
       blk("team-header", "pageHeader", {
         eyebrow: "Student Engineers’ Council",
-        title: "Meet the Team",
+        title: "Meet the team",
         intro: TEAM_INTRO,
         facts: [],
         links: [],
