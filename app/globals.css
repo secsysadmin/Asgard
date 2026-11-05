@@ -2207,6 +2207,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
+  margin-top: clamp(56px, 8cqi, 96px);
   padding: 0 0 8px;
   font-size: 15px;
 }
@@ -2214,9 +2215,11 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   display: none;
 }
 .toc-title {
-  margin: 0 0 16px;
-  font: 600 15px/1.3 var(--sans);
-  color: var(--ink);
+  margin: 0 0 14px;
+  font: 600 13px/1.2 var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--maroon-light);
 }
 .toc-group + .toc-group {
   margin-top: 20px;
