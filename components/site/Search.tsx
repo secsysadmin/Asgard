@@ -8,8 +8,7 @@ import { revealHash } from "./reveal";
 type Props = { content: SiteContent };
 type GroupItem = { result: SearchResult; position: number };
 type Group = { page: string; items: GroupItem[] };
-type SuggestionsProps = { lead: string; onPick: (suggestion: string) => void };
-type NoResultsProps = { query: string; contactEmail: string; onPick: (suggestion: string) => void };
+type NoResultsProps = { query: string; contactEmail: string };
 type ResultListProps = {
   ref?: Ref<HTMLUListElement>;
   id: string;
@@ -20,9 +19,6 @@ type ResultListProps = {
   onOpen: (result: SearchResult) => void;
 };
 
-const SUGGESTIONS = ["dress code", "parking", "shuttle", "registration", "virtual fair", "hotels", "headshots", "payment"];
-const SUGGESTION_LEAD = "Try";
-const NO_RESULTS_SUGGESTION_LEAD = "Or try";
 const SEARCH_PLACEHOLDER = "Search dates, parking, dress code, FAQs…";
 const APPLE_DEVICE = /Mac|iPhone|iPad/;
 const APPLE_SHORTCUT_LABEL = "⌘K";
@@ -83,36 +79,11 @@ function useSearchShortcut() {
   return { open, setOpen };
 }
 
-function suggestionSeparator(index: number) {
-  if (index === 0) return " ";
-  return index === SUGGESTIONS.length - 1 ? ", or " : ", ";
-}
-
-function Suggestions({ lead, onPick }: SuggestionsProps) {
+function NoResults({ query, contactEmail }: NoResultsProps) {
   return (
-    <p className="search-suggest">
-      {lead}
-      {SUGGESTIONS.map((suggestion, index) => (
-        <Fragment key={suggestion}>
-          {suggestionSeparator(index)}
-          <button type="button" onClick={() => onPick(suggestion)}>
-            {suggestion}
-          </button>
-        </Fragment>
-      ))}
-      .
+    <p className="search-empty" role="status">
+      Nothing matches “{query}”. Try a shorter word, or email <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
     </p>
-  );
-}
-
-function NoResults({ query, contactEmail, onPick }: NoResultsProps) {
-  return (
-    <div className="search-empty">
-      <p role="status">
-        Nothing matches “{query}”. Try a shorter word, or email <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
-      </p>
-      <Suggestions lead={NO_RESULTS_SUGGESTION_LEAD} onPick={onPick} />
-    </div>
   );
 }
 
@@ -244,15 +215,15 @@ export function SiteSearch({ content }: Props) {
             </button>
           </div>
 
-          <div className="search-body">
-            {!query.trim() ? (
-              <Suggestions lead={SUGGESTION_LEAD} onPick={updateQuery} />
-            ) : results.length === 0 ? (
-              <NoResults query={query} contactEmail={content.settings.contactEmail} onPick={updateQuery} />
-            ) : (
-              <ResultList ref={list} id={listId} groups={groups} query={query} active={active} onHover={setActive} onOpen={go} />
-            )}
-          </div>
+          {query.trim() && (
+            <div className="search-body">
+              {results.length === 0 ? (
+                <NoResults query={query} contactEmail={content.settings.contactEmail} />
+              ) : (
+                <ResultList ref={list} id={listId} groups={groups} query={query} active={active} onHover={setActive} onOpen={go} />
+              )}
+            </div>
+          )}
         </dialog>
       )}
     </>

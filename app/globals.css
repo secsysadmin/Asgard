@@ -350,7 +350,6 @@ svg {
   align-items: center;
   gap: 12px;
   padding: 0 10px 0 20px;
-  border-bottom: 1px solid var(--line);
 }
 .search-box > svg {
   flex: none;
@@ -395,37 +394,16 @@ svg {
 }
 .search-body {
   flex: 1;
+  border-top: 1px solid var(--line);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-.search-suggest,
 .search-empty {
   margin: 0;
   padding: 16px 20px 20px;
   font-size: 15px;
   line-height: 1.7;
   color: var(--ink-soft);
-}
-.search-empty p {
-  margin: 0;
-}
-.search-empty .search-suggest {
-  margin-top: 8px;
-  padding: 0;
-}
-.search-suggest button {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--maroon);
-  font-weight: 500;
-  text-decoration: underline;
-  text-decoration-color: rgba(80, 0, 0, 0.3);
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-.search-suggest button:hover {
-  text-decoration-color: var(--maroon);
 }
 .search-empty a {
   color: var(--maroon);
@@ -496,7 +474,6 @@ svg {
   .search-box {
     padding-left: 16px;
   }
-  .search-suggest,
   .search-empty {
     padding-inline: 16px;
   }
