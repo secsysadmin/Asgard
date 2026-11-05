@@ -4,16 +4,21 @@ const TAG = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>|<!--[\s\S]*?-->/g;
 const DANGEROUS_ELEMENTS = /<(script|style|template|iframe|object)\b[\s\S]*?<\/\1\s*>/gi;
 const HREF_ATTRIBUTE = /href\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i;
 const SAFE_SCHEMES = /^(https?:|mailto:|tel:)/i;
+// Browsers drop tabs and newlines from URLs and read "\\" as "/", so "/\\evil.com" or "/\t/evil.com"
+// would leave the site even though they look like local paths.
+export const URL_TRICK_CHARACTERS = /[\x00-\x1f\x7f\\]/;
 const EXTERNAL_URL = /^https?:/i;
 const TRAILING_EMPTY_PARAGRAPHS = /(<p>\s*(<br>)?\s*<\/p>\s*)+$/g;
 
 const escapeText = (text: string) => text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const escapeAttr = (value: string) =>
-  value.replace(/&(?!amp;|lt;|gt;|quot;|#\d+;)/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+// Escape every "&": a numeric entity such as "&#9;" would otherwise turn back into a tab in the browser,
+// after safeHref has already checked the raw text.
+const escapeAttr = (value: string) => value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
 export function safeHref(href: string) {
   const value = href.trim();
+  if (URL_TRICK_CHARACTERS.test(value)) return "";
   if (SAFE_SCHEMES.test(value)) return value;
   if (/^[/#]/.test(value) && !value.startsWith("//")) return value;
   return "";

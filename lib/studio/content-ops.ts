@@ -1,4 +1,4 @@
-import { blankLike, blockSpecs } from "../content/blocks";
+import { blankLike, blockSpecs, emptyListItem } from "../content/blocks";
 import type { Block, SiteContent } from "../content/types";
 import { getIn, type Path } from "./paths";
 
@@ -20,18 +20,9 @@ function starterListItem(content: SiteContent, listPath: Path): unknown {
   return Array.isArray(node) && node.length ? blankLike(node[0]) : undefined;
 }
 
-function emptyItemForKey(key: string): unknown {
-  if (key === "gallery" || key === "images") return { src: "", alt: "" };
-  if (key === "links" || key === "nav") return { label: "", href: "" };
-  if (key === "facts") return { label: "", value: "" };
-  if (key === "people") return { name: "", role: "", phone: "" };
-  if (key === "columns") return "Column";
-  return "";
-}
-
 export function templateFor(content: SiteContent, listPath: Path): unknown {
   const list = getIn(content, listPath);
   if (Array.isArray(list) && list.length) return blankLike(list[0]);
   const fromStarter = isBlockListPath(listPath) ? starterListItem(content, listPath) : undefined;
-  return fromStarter ?? emptyItemForKey(String(listPath[listPath.length - 1]));
+  return fromStarter ?? emptyListItem(String(listPath[listPath.length - 1]));
 }

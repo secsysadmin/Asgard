@@ -1,5 +1,5 @@
-import { sanitizeHtml, safeHref } from "../sanitize";
-import { blockSpecs, newBlockId, richKeys } from "./blocks";
+import { sanitizeHtml, safeHref, URL_TRICK_CHARACTERS } from "../sanitize";
+import { blockSpecs, emptyListItem, newBlockId, richKeys } from "./blocks";
 import { defaultContent, defaultTeamBlock, HOME_ABOUT_BODY, teamPage } from "./defaults";
 import { careerFairPoster, careerFairVideo } from "./hero-video";
 import type { Block, BlockType, Page, SiteContent } from "./types";
@@ -67,8 +67,10 @@ const findBlock = <T extends BlockType>(blocks: Block[], id: string, type: T) =>
 const byLabel = <T extends { label: string }>(items: T[], label: string) =>
   items.find((item) => item.label.toLowerCase() === label);
 
-const safeSrc = (src: string) =>
-  /^(https:\/\/|\/(?!\/))/i.test(src.trim()) ? src.trim() : "";
+const safeSrc = (src: string) => {
+  const value = src.trim();
+  return /^(https:\/\/|\/(?!\/))/i.test(value) && !URL_TRICK_CHARACTERS.test(value) ? value : "";
+};
 
 const optionalText = (value: unknown, maxLength: number) => (typeof value === "string" ? value.slice(0, maxLength) : "");
 
@@ -84,7 +86,9 @@ function conform(input: unknown, shape: unknown, key = ""): unknown {
   if (typeof shape === "boolean") return typeof input === "boolean" ? input : shape;
   if (Array.isArray(shape)) {
     if (!Array.isArray(input)) return shape;
-    return input.slice(0, MAX_LIST_ITEMS).map((item) => conform(item, shape[0] ?? item, key));
+    // An empty starter list has no item shape, so use the known item template instead of trusting the input's.
+    const itemShape = shape.length ? shape[0] : emptyListItem(key);
+    return input.slice(0, MAX_LIST_ITEMS).map((item) => conform(item, itemShape, key));
   }
   if (isObject(shape)) {
     const source = isObject(input) ? input : {};
