@@ -120,25 +120,28 @@ function Hero({ data, at }: Props<"hero">) {
   const withVideo = !!data.video.src;
   return (
     <div className={cx("hero", withVideo && "hero-with-video")}>
-      {withVideo ? <HeroVideo data={data} at={at} /> : (
+      {!withVideo && (
         <>
           <Img value={data.image} path={[...at, "image"]} className="hero-image" frameClassName="hero-media" loading="eager" />
           <div className="hero-shade" aria-hidden />
         </>
       )}
       <div className="hero-copy">
-        <div className="hero-message">
-          <h1>
-            {data.emphasis ? <Text value={data.emphasis} path={[...at, "emphasis"]} placeholder="Emphasis" /> : <Text value={data.title} path={[...at, "title"]} placeholder="Headline" />}
-          </h1>
-          <Rich value={data.summary} path={[...at, "summary"]} className="hero-summary" placeholder="Supporting sentence" />
-          <div className="hero-actions">
-            <Lnk className="button button-light" value={data.primary} path={[...at, "primary"]}>
-              <ArrowRight aria-hidden />
-            </Lnk>
-            <Lnk className="button button-outline-light" value={data.secondary} path={[...at, "secondary"]}>
-              <ArrowRight aria-hidden />
-            </Lnk>
+        <div className="hero-stage">
+          {withVideo && <HeroVideo data={data} at={at} />}
+          <div className="hero-message">
+            <h1>
+              {data.emphasis ? <Text value={data.emphasis} path={[...at, "emphasis"]} placeholder="Emphasis" /> : <Text value={data.title} path={[...at, "title"]} placeholder="Headline" />}
+            </h1>
+            <Rich value={data.summary} path={[...at, "summary"]} className="hero-summary" placeholder="Supporting sentence" />
+            <div className="hero-actions">
+              <Lnk className="button button-light" value={data.primary} path={[...at, "primary"]}>
+                <ArrowRight aria-hidden />
+              </Lnk>
+              <Lnk className="button button-outline-light" value={data.secondary} path={[...at, "secondary"]}>
+                <ArrowRight aria-hidden />
+              </Lnk>
+            </div>
           </div>
         </div>
         <div className="hero-details">
