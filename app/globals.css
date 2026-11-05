@@ -2063,9 +2063,10 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .facts-plain .fact dd {
   font-weight: 500;
 }
-.facts-plain .fact dd.fact-when {
-  font: 500 14.5px/1.45 var(--mono);
+.facts-plain .fact-time {
+  font: 500 0.9em/1 var(--mono);
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 .band-pageHeader.tone-maroon {
   background: var(--maroon);
@@ -2135,9 +2136,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   }
   .band-pageHeader .fact dd {
     font-size: 15px;
-  }
-  .band-pageHeader .fact dd.fact-when {
-    font-size: 14px;
   }
 }
 
