@@ -127,23 +127,6 @@ svg {
   color: var(--white);
   border-bottom: 1px solid var(--maroon-dark);
 }
-.site-header-overlay {
-  background: rgba(80, 0, 0, 0.35);
-  border-bottom-color: transparent;
-  backdrop-filter: blur(4px);
-  transition: background-color 250ms ease, border-color 250ms ease, backdrop-filter 250ms ease;
-}
-.site-header-overlay.site-header-scrolled {
-  background: var(--maroon);
-  border-bottom-color: var(--maroon-dark);
-  backdrop-filter: blur(12px);
-}
-.site-header-overlay + .page > .band-hero:first-child {
-  margin-top: calc(-1 * var(--header-h));
-}
-.site-header-overlay + .page .hero-with-video .hero-copy {
-  padding-top: calc(88px + var(--header-h));
-}
 .site-header-inner {
   height: var(--header-h);
   display: flex;
@@ -754,7 +737,7 @@ h4 {
 
 .hero-with-video {
   display: flex;
-  min-height: 744px;
+  min-height: calc(744px - var(--header-h));
   background: var(--maroon-dark);
 }
 .hero-with-video .hero-copy {
@@ -763,7 +746,7 @@ h4 {
   flex-direction: column;
   justify-content: space-between;
   width: 100%;
-  min-height: 744px;
+  min-height: calc(744px - var(--header-h));
   max-width: none;
   padding: 88px 0 0;
   text-align: center;
