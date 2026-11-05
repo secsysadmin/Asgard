@@ -1921,12 +1921,12 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 #home-about .stats > div { padding: 22px clamp(16px, 2cqi, 32px) 4px; border-left: 1px solid var(--line-strong); }
 #home-about .stats > div:first-child { padding-left: 0; border-left: 0; }
 #home-about .stats dd { font: 400 15px/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--ink-soft); }
-#home-about .about > div:first-child, #home-contact .contact {
+#home-about .about > div:first-child, #home-contact .contact, .guide-body > .band-contact .contact {
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: clamp(16px, 2cqi, 32px);
 }
-#home-about .about > div:first-child > h2, #home-contact .contact > div:first-child { grid-column: 1 / 6; }
-#home-about .about > div:first-child .lead, #home-contact .contact > .contact-grid { grid-column: 7 / -1; }
+#home-about .about > div:first-child > h2, #home-contact .contact > div:first-child, .guide-body > .band-contact .contact > div:first-child { grid-column: 1 / 6; }
+#home-about .about > div:first-child .lead, #home-contact .contact > .contact-grid, .guide-body > .band-contact .contact > .contact-grid { grid-column: 7 / -1; }
 .contact h2 {
   margin-bottom: 14px;
 }
@@ -1942,18 +1942,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   padding-bottom: 6px;
   max-width: 100%;
   overflow-wrap: anywhere;
-}
-.guide-body .contact .lead {
-  max-width: 62ch;
-}
-.guide-body .contact-email {
-  font-size: clamp(18px, 1.7cqi, 22px);
-}
-.guide-body .contact-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-  gap: 28px clamp(24px, 3cqi, 48px);
-  padding-top: 28px;
-  border-top: 1px solid var(--line);
 }
 .contact-email svg {
   width: 22px;
@@ -2105,12 +2093,13 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   grid-column: 2;
 }
 @container site (max-width: 900px) {
-  #home-about .about > div:first-child, #home-contact .contact {
+  #home-about .about > div:first-child, #home-contact .contact, .guide-body > .band-contact .contact {
     grid-template-columns: 1fr;
     gap: 18px;
   }
   #home-about .about > div:first-child > h2, #home-about .about > div:first-child .lead,
-  #home-contact .contact > div:first-child, #home-contact .contact > .contact-grid { grid-column: 1; }
+  #home-contact .contact > div:first-child, #home-contact .contact > .contact-grid,
+  .guide-body > .band-contact .contact > div:first-child, .guide-body > .band-contact .contact > .contact-grid { grid-column: 1; }
   .page-header-split {
     grid-template-columns: 1fr;
   }
@@ -2186,7 +2175,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   border-radius: 0;
   background: transparent;
 }
-.guide-body .band h2 {
+.guide-body .band:not(.band-contact) h2 {
   font-size: clamp(28px, 3.4cqi, 40px);
 }
 .guide-body .band .key-dates-heading {
