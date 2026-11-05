@@ -8,7 +8,7 @@ import { revealHash } from "./reveal";
 type Props = { content: SiteContent };
 type GroupItem = { result: SearchResult; position: number };
 type Group = { page: string; items: GroupItem[] };
-type NoResultsProps = { query: string; contactEmail: string };
+type NoResultsProps = { query: string };
 type ResultListProps = {
   ref?: Ref<HTMLUListElement>;
   id: string;
@@ -79,10 +79,10 @@ function useSearchShortcut() {
   return { open, setOpen };
 }
 
-function NoResults({ query, contactEmail }: NoResultsProps) {
+function NoResults({ query }: NoResultsProps) {
   return (
     <p className="search-empty" role="status">
-      Nothing matches “{query}”. Try a shorter word, or email <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
+      No results for “{query}”.
     </p>
   );
 }
@@ -218,7 +218,7 @@ export function SiteSearch({ content }: Props) {
           {query.trim() && (
             <div className="search-body">
               {results.length === 0 ? (
-                <NoResults query={query} contactEmail={content.settings.contactEmail} />
+                <NoResults query={query} />
               ) : (
                 <ResultList ref={list} id={listId} groups={groups} query={query} active={active} onHover={setActive} onOpen={go} />
               )}

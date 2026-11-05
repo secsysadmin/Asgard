@@ -405,11 +405,6 @@ svg {
   line-height: 1.7;
   color: var(--ink-soft);
 }
-.search-empty a {
-  color: var(--maroon);
-  font-weight: 500;
-  text-underline-offset: 3px;
-}
 .search-results,
 .search-results ul {
   list-style: none;
