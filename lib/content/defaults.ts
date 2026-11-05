@@ -164,7 +164,7 @@ export const defaultTeamBlock = blk("home-team", "team", {
 const students: Page = {
   id: "students",
   slug: "students",
-  title: "Student guide",
+  title: "Students",
   description:
     "Everything Texas A&M students need for the 2026 SEC Engineering Career Fair: dates, registration, dress code, shuttle and parking, company search, the virtual fair, and FAQs.",
   layout: "guide",
@@ -492,7 +492,7 @@ const students: Page = {
 const recruiters: Page = {
   id: "recruiters",
   slug: "recruiters",
-  title: "Recruiter guide",
+  title: "Recruiters",
   description:
     "Registration, pricing, itinerary, parking, booth and shipping logistics, the virtual fair, and hotels for recruiters attending the 2026 SEC Engineering Career Fair.",
   layout: "guide",
