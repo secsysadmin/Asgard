@@ -2026,11 +2026,14 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   gap: clamp(28px, 5cqi, 80px);
   align-items: center;
 }
+.page-header .eyebrow::before {
+  content: none;
+}
 .page-header h1 {
-  font: 500 clamp(38px, 4.6cqi, 64px) / 1.02 var(--display);
-  letter-spacing: -0.025em;
+  font: 500 clamp(30px, 3.2cqi, 44px) / 1.1 var(--display);
+  letter-spacing: -0.015em;
   color: var(--ink);
-  max-width: 16ch;
+  max-width: 22ch;
 }
 .page-intro {
   margin-top: 18px;
@@ -2041,12 +2044,28 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .page-header-actions {
   margin-top: 26px;
 }
-.band-pageHeader .facts {
-  background: var(--white);
-  border: 1px solid var(--line);
+.band-pageHeader .facts-plain {
+  padding: 2px 0 2px clamp(20px, 2.4cqi, 32px);
+  border-left: 1px solid var(--line-strong);
+  border-radius: 0;
+  background: none;
 }
-.band-pageHeader .fact-icon {
-  background: var(--cream);
+.facts-plain .fact {
+  min-height: 0;
+  padding: 9px 0;
+  border-bottom: 0;
+}
+.facts-plain .fact dt {
+  font: 400 14px/1.35 var(--sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.facts-plain .fact dd {
+  font-weight: 500;
+}
+.facts-plain .fact dd.fact-when {
+  font: 500 14.5px/1.45 var(--mono);
+  letter-spacing: -0.01em;
 }
 .band-pageHeader.tone-maroon {
   background: var(--maroon);
@@ -2067,8 +2086,8 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 .page-header:not(.page-header-split) h1 {
   grid-area: title;
   max-width: none;
-  font-size: clamp(44px, 6.4cqi, 96px);
-  line-height: 0.95;
+  font-size: clamp(34px, 4.3cqi, 64px);
+  line-height: 1.02;
 }
 .page-header:not(.page-header-split) .page-intro {
   grid-area: intro;
@@ -2087,6 +2106,11 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   #home-contact .contact > div:first-child, #home-contact .contact > .contact-grid { grid-column: 1; }
   .page-header-split {
     grid-template-columns: 1fr;
+  }
+  .band-pageHeader .facts-plain {
+    padding: 10px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--line-strong);
   }
   .page-header:not(.page-header-split) .page-header-main {
     grid-template-columns: 1fr;
@@ -2109,19 +2133,11 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
     padding: 0 14px;
     font-size: 14px;
   }
-  .band-pageHeader .facts {
-    padding: 2px 18px;
-  }
-  .band-pageHeader .fact {
-    padding: 11px 0 11px 46px;
-  }
-  .band-pageHeader .fact-icon {
-    width: 32px;
-    height: 32px;
-    margin-top: -16px;
-  }
   .band-pageHeader .fact dd {
     font-size: 15px;
+  }
+  .band-pageHeader .fact dd.fact-when {
+    font-size: 14px;
   }
 }
 

@@ -32,7 +32,7 @@ import { HeroVideo } from "./HeroVideo";
 type Props<K extends BlockType> = { block: Extract<Block, { type: K }>; data: BlockData[K]; at: Path };
 type HeadProps = { heading: string; intro?: string; at: Path };
 type NoteProps = { value: string; at: Path };
-type FactListProps = { facts: { label: string; value: string }[]; at: Path };
+type FactListProps = { facts: { label: string; value: string }[]; at: Path; plain?: boolean };
 type ActionsProps = { links: LinkRef[]; at: Path; className?: string; icon?: LucideIcon };
 type BlockViewProps = { block: Block; at: Path };
 
@@ -42,6 +42,7 @@ const TUCK_MIN_OVERHANG_PX = 96;
 const CAROUSEL_PAGE_FRACTION = 0.9;
 const LEAVES_SITE = /^(https?:|mailto:|tel:)/i;
 const NON_DIAL_CHARS = /[^\d+]/g;
+const DATE_OR_TIME_VALUE = /^(?:mon|tue|wed|thu|fri|sat|sun|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?[\s,–-]|\b\d{1,2}(?::\d{2})?\s?[ap]\.?m\b/i;
 
 const FACT_ICONS: [RegExp, LucideIcon][] = [
   [/time|hour/i, Clock],
@@ -155,13 +156,13 @@ function Hero({ data, at }: Props<"hero">) {
   );
 }
 
-function FactList({ facts, at }: FactListProps) {
+function FactList({ facts, at, plain = false }: FactListProps) {
   const edit = useEdit();
   if (!facts.length && !edit) return null;
   return (
     <List
       as="dl"
-      className="facts"
+      className={plain ? "facts facts-plain" : "facts"}
       items={facts}
       path={at}
       label="fact"
@@ -170,12 +171,20 @@ function FactList({ facts, at }: FactListProps) {
         return (
           <div className="fact">
             <dt>
-              <span className="fact-icon" aria-hidden>
-                <Icon />
-              </span>
+              {!plain && (
+                <span className="fact-icon" aria-hidden>
+                  <Icon />
+                </span>
+              )}
               <Text value={fact.label} path={[...p, "label"]} placeholder="Label" />
             </dt>
-            <Text as="dd" value={fact.value} path={[...p, "value"]} placeholder="Value" />
+            <Text
+              as="dd"
+              className={plain && DATE_OR_TIME_VALUE.test(fact.value) ? "fact-when" : undefined}
+              value={fact.value}
+              path={[...p, "value"]}
+              placeholder="Value"
+            />
           </div>
         );
       }}
@@ -215,7 +224,7 @@ function PageHeader({ data, at }: Props<"pageHeader">) {
         <Rich value={data.intro} path={[...at, "intro"]} className="page-intro" placeholder="Introduce this page" />
         <Actions links={data.links} at={[...at, "links"]} className="actions page-header-actions" />
       </div>
-      <FactList facts={data.facts} at={[...at, "facts"]} />
+      <FactList facts={data.facts} at={[...at, "facts"]} plain />
     </div>
   );
 }
