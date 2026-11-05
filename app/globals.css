@@ -2105,13 +2105,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   font-size: clamp(32px, 3.4cqi, 48px);
   line-height: 1.08;
 }
-:is([data-page="students"], [data-page="recruiters"]) > .band-pageHeader .page-header h1 {
-  font-size: clamp(44px, 5cqi, 76px);
-  line-height: 1.02;
-  max-width: 16ch;
-  overflow-wrap: anywhere;
-  text-wrap: balance;
-}
 .page-header:not(.page-header-split) .page-intro {
   grid-area: intro;
   margin-top: 0;
