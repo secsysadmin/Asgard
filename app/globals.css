@@ -1920,7 +1920,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 #home-about .stats { gap: 20px 0; }
 #home-about .stats > div { padding: 22px clamp(16px, 2cqi, 32px) 4px; border-left: 1px solid var(--line-strong); }
 #home-about .stats > div:first-child { padding-left: 0; border-left: 0; }
-#home-about .stats dd { font: 600 13px/1.4 var(--mono); letter-spacing: 0.03em; text-transform: uppercase; }
+#home-about .stats dd { font: 400 15px/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--ink-soft); }
 #home-about .about > div:first-child, #home-contact .contact {
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: clamp(16px, 2cqi, 32px);
@@ -1943,25 +1943,17 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   max-width: 100%;
   overflow-wrap: anywhere;
 }
-.guide-body .contact > div,
-.guide-body .contact-grid {
-  display: contents;
-}
-.guide-body .contact :is(h2, .lead) {
-  grid-column: 1 / -1;
-}
 .guide-body .contact .lead {
-  margin-bottom: 28px;
+  max-width: 62ch;
 }
 .guide-body .contact-email {
-  grid-column: 1 / -1;
-  align-self: start;
-  justify-self: start;
-  margin: 0 0 32px;
   font-size: clamp(18px, 1.7cqi, 22px);
 }
-.guide-body .contact-grid > div {
-  margin-bottom: 24px;
+.guide-body .contact-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 28px clamp(24px, 3cqi, 48px);
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
 }
 .contact-email svg {
   width: 22px;
@@ -2060,15 +2052,14 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   margin-top: 26px;
 }
 .band-pageHeader .facts-plain {
-  padding: 2px 0 2px clamp(20px, 2.4cqi, 32px);
-  border-left: 1px solid var(--line-strong);
-  border-radius: 0;
-  background: none;
+  padding: 4px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--white);
 }
 .facts-plain .fact {
   min-height: 0;
-  padding: 9px 0;
-  border-bottom: 0;
+  padding: 14px 0;
 }
 .facts-plain .fact dt {
   font: 400 14px/1.35 var(--sans);
@@ -2124,9 +2115,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
     grid-template-columns: 1fr;
   }
   .band-pageHeader .facts-plain {
-    padding: 10px 0 0;
-    border-left: 0;
-    border-top: 1px solid var(--line-strong);
+    padding: 2px 18px;
   }
   .page-header:not(.page-header-split) .page-header-main {
     grid-template-columns: 1fr;
@@ -2218,24 +2207,6 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
 @container site (min-width: 1240px) {
   .guide-body .event {
     grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-  }
-}
-.guide-body .contact {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 clamp(24px, 3cqi, 48px);
-}
-@container site (min-width: 1440px) {
-  .guide-body .contact {
-    grid-template-columns: minmax(0, 1.15fr) repeat(2, minmax(0, 1fr));
-  }
-  .guide-body .contact .contact-email {
-    grid-column: auto;
-    margin-bottom: 0;
-  }
-}
-@container site (max-width: 700px) {
-  .guide-body .contact {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 .toc {
