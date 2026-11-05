@@ -1,5 +1,5 @@
 "use client";
-import { ArrowDown, ArrowRight, ArrowUp, CornerDownLeft, Search as SearchIcon, X } from "lucide-react";
+import { Search as SearchIcon, X } from "lucide-react";
 import { Fragment, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type Ref, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { buildSearchIndex, search, snippet, tokenize, type SearchResult } from "@/lib/content/search";
 import type { SiteContent } from "@/lib/content/types";
@@ -8,7 +8,7 @@ import { revealHash } from "./reveal";
 type Props = { content: SiteContent };
 type GroupItem = { result: SearchResult; position: number };
 type Group = { page: string; items: GroupItem[] };
-type SuggestionsProps = { onPick: (suggestion: string) => void };
+type SuggestionsProps = { lead: string; onPick: (suggestion: string) => void };
 type NoResultsProps = { query: string; contactEmail: string; onPick: (suggestion: string) => void };
 type ResultListProps = {
   ref?: Ref<HTMLUListElement>;
@@ -20,7 +20,9 @@ type ResultListProps = {
   onOpen: (result: SearchResult) => void;
 };
 
-const SUGGESTIONS = ["Dress code", "Parking", "Shuttle", "Registration", "Virtual fair", "Hotels", "Headshots", "Payment"];
+const SUGGESTIONS = ["dress code", "parking", "shuttle", "registration", "virtual fair", "hotels", "headshots", "payment"];
+const SUGGESTION_LEAD = "Try";
+const NO_RESULTS_SUGGESTION_LEAD = "Or try";
 const SEARCH_PLACEHOLDER = "Search dates, parking, dress code, FAQs…";
 const APPLE_DEVICE = /Mac|iPhone|iPad/;
 const APPLE_SHORTCUT_LABEL = "⌘K";
@@ -81,37 +83,36 @@ function useSearchShortcut() {
   return { open, setOpen };
 }
 
-function Suggestions({ onPick }: SuggestionsProps) {
+function suggestionSeparator(index: number) {
+  if (index === 0) return " ";
+  return index === SUGGESTIONS.length - 1 ? ", or " : ", ";
+}
+
+function Suggestions({ lead, onPick }: SuggestionsProps) {
   return (
-    <div className="search-suggest">
-      <p>Popular searches</p>
-      <ul>
-        {SUGGESTIONS.map((suggestion) => (
-          <li key={suggestion}>
-            <button type="button" onClick={() => onPick(suggestion)}>
-              {suggestion} <ArrowRight aria-hidden />
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <p className="search-suggest">
+      {lead}
+      {SUGGESTIONS.map((suggestion, index) => (
+        <Fragment key={suggestion}>
+          {suggestionSeparator(index)}
+          <button type="button" onClick={() => onPick(suggestion)}>
+            {suggestion}
+          </button>
+        </Fragment>
+      ))}
+      .
+    </p>
   );
 }
 
 function NoResults({ query, contactEmail, onPick }: NoResultsProps) {
   return (
-    <>
-      <div className="search-empty" role="status">
-        <p>
-          No results for “<strong>{query}</strong>”.
-        </p>
-        <p>
-          Try a shorter word, or email{" "}
-          <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
-        </p>
-      </div>
-      <Suggestions onPick={onPick} />
-    </>
+    <div className="search-empty">
+      <p role="status">
+        Nothing matches “{query}”. Try a shorter word, or email <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
+      </p>
+      <Suggestions lead={NO_RESULTS_SUGGESTION_LEAD} onPick={onPick} />
+    </div>
   );
 }
 
@@ -143,7 +144,6 @@ function ResultList({ ref, id, groups, query, active, onHover, onOpen }: ResultL
                   <span className="search-result-title">{highlight(result.title, query)}</span>
                   {result.section !== result.title && <span className="search-result-section">{result.section}</span>}
                   {result.text && <span className="search-result-text">{highlight(snippet(result.text, query), query)}</span>}
-                  <ArrowRight aria-hidden className="search-result-arrow" />
                 </a>
               </li>
             ))}
@@ -151,31 +151,6 @@ function ResultList({ ref, id, groups, query, active, onHover, onOpen }: ResultL
         </li>
       ))}
     </ul>
-  );
-}
-
-function KeyHints() {
-  return (
-    <footer className="search-foot" aria-hidden>
-      <span>
-        <kbd>
-          <ArrowUp />
-        </kbd>
-        <kbd>
-          <ArrowDown />
-        </kbd>{" "}
-        to move
-      </span>
-      <span>
-        <kbd>
-          <CornerDownLeft />
-        </kbd>{" "}
-        to open
-      </span>
-      <span>
-        <kbd>esc</kbd> to close
-      </span>
-    </footer>
   );
 }
 
@@ -248,9 +223,6 @@ export function SiteSearch({ content }: Props) {
           onClose={() => setOpen(false)}
           onClick={(event) => event.target === dialog.current && close()}
         >
-          <div className="search-heading">
-            <h2>Search the fair</h2>
-          </div>
           <div className="search-box">
             <SearchIcon aria-hidden />
             <input
@@ -274,14 +246,13 @@ export function SiteSearch({ content }: Props) {
 
           <div className="search-body">
             {!query.trim() ? (
-              <Suggestions onPick={updateQuery} />
+              <Suggestions lead={SUGGESTION_LEAD} onPick={updateQuery} />
             ) : results.length === 0 ? (
               <NoResults query={query} contactEmail={content.settings.contactEmail} onPick={updateQuery} />
             ) : (
               <ResultList ref={list} id={listId} groups={groups} query={query} active={active} onHover={setActive} onOpen={go} />
             )}
           </div>
-          <KeyHints />
         </dialog>
       )}
     </>
