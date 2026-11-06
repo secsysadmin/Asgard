@@ -756,7 +756,7 @@ h4 {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: clamp(472px, calc(100svh - 268px), 780px);
+  min-height: clamp(360px, calc(100svh - 440px), 668px);
   overflow: hidden;
   background: #000;
 }
@@ -790,7 +790,7 @@ h4 {
 .hero-with-video .hero-details {
   padding: 22px var(--gutter);
   border-top: 1px solid rgba(255, 255, 255, 0.14);
-  background: var(--maroon);
+  background: #151515;
   text-align: left;
 }
 .hero-with-video .hero-meta {
@@ -869,7 +869,7 @@ h4 {
 }
 @container site (max-width: 520px) {
   .hero-with-video .hero-stage {
-    min-height: 502px;
+    min-height: 390px;
   }
   .hero-with-video .hero-summary {
     font-size: 17px;
