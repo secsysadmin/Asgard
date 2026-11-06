@@ -95,8 +95,8 @@ function withLink(content: SiteContent, { path, current: previous }: LinkTarget,
 }
 
 function saveStatus(saveState: SaveState, unpublished: boolean) {
-  if (saveState === "error") return { icon: <TriangleAlert aria-hidden />, text: "Draft not saved", tone: "error" };
-  if (saveState === "saving") return { icon: <Loader2 className="st-spin" aria-hidden />, text: "Saving draft…", tone: "" };
+  if (saveState === "failed") return { icon: <TriangleAlert aria-hidden />, text: "Draft not saved", tone: "error" };
+  if (saveState === "pending" || saveState === "saving") return { icon: <Loader2 className="st-spin" aria-hidden />, text: "Saving draft…", tone: "" };
   if (unpublished) return { icon: <Pencil aria-hidden />, text: "Draft saved · ready to publish", tone: "draft" };
   return { icon: <Check aria-hidden />, text: "All changes are live", tone: "ok" };
 }
@@ -175,7 +175,7 @@ export function Studio() {
 
   const { toast, notify, dismiss, withdraw } = useToast();
   const { content, contentRef, history, load, commit, undo, redo } = useEditHistory();
-  const { saveState, isSaved, markSaved, retrySave } = useDraftAutosave({ content, contentRef, notify, withdraw });
+  const { saveState, markSaved, retrySave } = useDraftAutosave({ content, contentRef, notify, withdraw });
   const { library, libraryError, loadLibrary } = useMediaLibrary();
   const canvasWidth = useElementWidth(canvas, INITIAL_CANVAS_WIDTH, !!content);
   useUndoShortcuts(undo, redo, !publishing);
@@ -264,8 +264,8 @@ export function Studio() {
   const blockIndex = page.blocks.findIndex((block) => block.id === selected);
   const selectedBlock = blockIndex >= 0 ? page.blocks[blockIndex] : null;
   const unpublished = JSON.stringify(content) !== JSON.stringify(published);
-  const dirty = !isSaved;
-  const status = saveStatus(dirty && saveState === "saved" ? "saving" : saveState, unpublished);
+  const dirty = saveState !== "saved";
+  const status = saveStatus(saveState, unpublished);
   const zoom = Math.min(1, Math.max(MIN_ZOOM, canvasWidth / DEVICE_WIDTH[device]));
 
   const openPage = (index: number) => {
@@ -417,7 +417,7 @@ export function Studio() {
           {status.icon}
           {status.text}
         </span>
-        {saveState === "error" && <button type="button" className="st-btn st-btn-small" onClick={() => void retrySave()}>Retry save</button>}
+        {saveState === "failed" && <button type="button" className="st-btn st-btn-small" onClick={() => void retrySave()}>Retry save</button>}
         <button type="button" className="st-btn st-btn-primary" onClick={publish} disabled={publishing || !unpublished || dirty} title={dirty ? "Wait until the draft is saved" : !unpublished ? "There are no unpublished changes" : "Publish all draft changes to the live site"}>
           {publishing ? <Loader2 className="st-spin" aria-hidden /> : <Upload aria-hidden />} Publish
         </button>
