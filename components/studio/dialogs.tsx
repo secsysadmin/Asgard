@@ -424,7 +424,8 @@ export function MediaLibrary({ library, error, onChange }: MediaLibraryProps) {
   const [pendingDelete, setPendingDelete] = useState<MediaItem | null>(null);
   const upload = async (files: FileList) => {
     const list = [...files];
-    setBusy(list.length);
+    // Add to the count rather than replacing it, so a batch dropped mid-upload doesn't lose the first one's.
+    setBusy((count) => count + list.length);
     setMessage("");
     for (const file of list) {
       try {
