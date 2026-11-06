@@ -17,7 +17,7 @@ export type SaveState = "idle" | "saving" | "saved" | "error";
 type ContentUpdate = SiteContent | ((current: SiteContent) => SiteContent);
 type Commit = (next: ContentUpdate, coalesceKey?: string) => void;
 
-type Toast = { text: string; tone?: Tone };
+type Toast = { id: number; text: string; tone?: Tone };
 type AutosaveOptions = {
   content: SiteContent | null;
   contentRef: RefObject<SiteContent | null>;
@@ -28,10 +28,13 @@ type Stack = { current: SiteContent[] };
 
 export function useToast() {
   const [toast, setToast] = useState<Toast | null>(null);
+  const nextId = useRef(0);
   const notify = useCallback<Notify>((text, tone) => {
-    setToast({ text, tone });
+    const id = ++nextId.current;
+    setToast({ id, text, tone });
     if (tone === "error") return;
-    window.setTimeout(() => setToast((current) => (current?.text === text && current.tone !== "error" ? null : current)), TOAST_DURATION_MS);
+    // Match on id, not text, so an older timer can't close a newer toast that repeats the same message.
+    window.setTimeout(() => setToast((current) => (current?.id === id ? null : current)), TOAST_DURATION_MS);
   }, []);
   const dismiss = useCallback(() => setToast(null), []);
   const withdraw = useCallback((text: string) => setToast((current) => (current?.text === text ? null : current)), []);
