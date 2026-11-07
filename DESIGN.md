@@ -4,11 +4,10 @@ description: An editorial, information-first fair site for Aggie engineers and r
 colors:
   maroon: "#500000"
   maroon-dark: "#360000"
-  cream: "#f5f1e8"
-  paper: "#fbfaf6"
+  paper: "#ffffff"
   ink: "#1f1a17"
   sand: "#e7d7c2"
-  warm-white: "#faf7f2"
+  white: "#ffffff"
   brass: "#c7a66a"
 typography:
   display:
@@ -51,7 +50,7 @@ The public site behaves like a well-designed event program: clear hierarchy, pra
 
 ## Colors
 
-Maroon is the institutional anchor; warm white and cream carry the main surfaces, and muted brass accents the hero metadata and timeline interaction.
+Maroon is the institutional anchor; white carries the main surfaces, and muted brass accents the hero metadata and timeline interaction.
 
 ## Typography
 
@@ -91,7 +90,7 @@ The home hero uses the career fair film as a full-bleed background with cover si
 
 ## Do's and Don'ts
 
-- Do use a maroon, cream, ink, and warm-sand relationship; keep sand focused on moments of emphasis.
+- Do use a maroon, white, ink, and warm-sand relationship; keep sand focused on moments of emphasis.
 - Do use ruled lists for schedules, teams, and logistical information.
 - Don’t use generic dashboard-card grids on the public site.
 - Use gradient or translucent overlays only where needed to support legibility over the hero footage.

@@ -215,8 +215,8 @@ export function BlockInspector({ block, index, pageIndex, page, api, onDelete, o
         <label className="st-field">
           <span>Background</span>
           <select value={block.tone} onChange={(event) => api.set([...base, "tone"], event.target.value)}>
-            <option value="plain">Paper</option>
-            <option value="tint">Cream</option>
+            <option value="plain">White</option>
+            <option value="tint">White (alternate)</option>
             <option value="maroon">Maroon</option>
           </select>
         </label>

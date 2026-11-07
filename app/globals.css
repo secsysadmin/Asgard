@@ -3,9 +3,9 @@
   --maroon-dark: #360000;
   --maroon-soft: #f3e9e6;
   --maroon-light: #8c3b3b;
-  --cream: #f5f1e8;
-  --paper: #fbfaf6;
-  --white: #faf7f2;
+  --cream: #fff;
+  --paper: #fff;
+  --white: #fff;
   --brass: #c7a66a;
   --ink: #1f1a17;
   --ink-soft-on-light: #5a514b;
@@ -1136,7 +1136,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
   border-bottom: 0;
 }
 .data-table tbody tr:nth-child(2n) {
-  background: rgba(245, 241, 232, 0.45);
+  background: var(--white);
 }
 @container site (max-width: 700px) {
   .schedule thead,
@@ -2274,7 +2274,7 @@ a.key-date:hover .key-date-arrow, a.key-date:focus-visible .key-date-arrow { opa
     padding: 0;
     max-height: none;
     overflow: visible;
-    background: rgba(251, 250, 246, 0.97);
+    background: rgba(255, 255, 255, 0.97);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--line);
   }
