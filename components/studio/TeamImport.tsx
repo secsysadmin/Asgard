@@ -1,6 +1,6 @@
 "use client";
 import { ClipboardCopy, ImagePlus, Loader2, Upload } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { uploadFile } from "@/lib/studio/media";
 import {
   buildPlan,
@@ -38,6 +38,8 @@ export function TeamImport({ members, onClose, onApply, onLibraryChange }: TeamI
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  // Photos already uploaded by an earlier attempt, so retrying after a failure doesn't upload them twice.
+  const uploaded = useRef(new Map<File, string>());
 
   const rows = useMemo(() => parseRoster(roster), [roster]);
   const fileNames = useMemo(() => files.map((file) => file.name), [files]);
@@ -79,19 +81,25 @@ export function TeamImport({ members, onClose, onApply, onLibraryChange }: TeamI
     setError("");
     setProgress({ done: 0, total: uploads.length });
     const photos = new Map<string, Member["photo"]>();
+    const uploadedBefore = uploaded.current.size;
     try {
       for (const { entry, file } of uploads) {
         const alt = portraitAlt(entry.member.name);
-        const result = await uploadFile(file, alt);
-        photos.set(entry.key, { src: result.url, alt });
+        let src = uploaded.current.get(file);
+        if (!src) {
+          src = (await uploadFile(file, alt)).url;
+          uploaded.current.set(file, src);
+        }
+        photos.set(entry.key, { src, alt });
         setProgress((current) => current && { ...current, done: current.done + 1 });
       }
     } catch (reason) {
-      setError(errorMessage(reason, "A photo failed to upload. Nothing was changed."));
+      if (uploaded.current.size > uploadedBefore) onLibraryChange();
+      setError(errorMessage(reason, "A photo failed to upload, so the team wasn’t changed. Try again to upload the rest."));
       setProgress(null);
       return;
     }
-    if (uploads.length) onLibraryChange();
+    if (uploaded.current.size > uploadedBefore) onLibraryChange();
     onApply(
       kept.map((entry) => withPortraitAlt(entry.member, photos.get(entry.key) ?? entry.member.photo)),
       summary || "No changes",

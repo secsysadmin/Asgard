@@ -13,11 +13,14 @@ const SAVE_FAILED_MESSAGE = "Couldn’t save the draft.";
 
 type Tone = "error";
 type Notify = (text: string, tone?: Tone) => void;
-export type SaveState = "idle" | "saving" | "saved" | "error";
+// pending: edits are waiting for the autosave timer. saving: a request is out. saved: the server has
+// exactly what's on screen. failed: the last request failed and nothing newer has been sent yet.
+export type SaveState = "pending" | "saving" | "saved" | "failed";
+type SavePhase = Exclude<SaveState, "pending">;
 type ContentUpdate = SiteContent | ((current: SiteContent) => SiteContent);
 type Commit = (next: ContentUpdate, coalesceKey?: string) => void;
 
-type Toast = { text: string; tone?: Tone };
+type Toast = { id: number; text: string; tone?: Tone };
 type AutosaveOptions = {
   content: SiteContent | null;
   contentRef: RefObject<SiteContent | null>;
@@ -28,10 +31,13 @@ type Stack = { current: SiteContent[] };
 
 export function useToast() {
   const [toast, setToast] = useState<Toast | null>(null);
+  const nextId = useRef(0);
   const notify = useCallback<Notify>((text, tone) => {
-    setToast({ text, tone });
+    const id = ++nextId.current;
+    setToast({ id, text, tone });
     if (tone === "error") return;
-    window.setTimeout(() => setToast((current) => (current?.text === text && current.tone !== "error" ? null : current)), TOAST_DURATION_MS);
+    // Match on id, not text, so an older timer can't close a newer toast that repeats the same message.
+    window.setTimeout(() => setToast((current) => (current?.id === id ? null : current)), TOAST_DURATION_MS);
   }, []);
   const dismiss = useCallback(() => setToast(null), []);
   const withdraw = useCallback((text: string) => setToast((current) => (current?.text === text ? null : current)), []);
@@ -93,31 +99,31 @@ export function useEditHistory() {
 }
 
 export function useDraftAutosave({ content, contentRef, notify, withdraw }: AutosaveOptions) {
-  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [phase, setPhase] = useState<SavePhase>("saved");
   const savedJson = useRef("");
   const inFlight = useRef(false);
   const failure = useRef("");
 
   const markSaved = useCallback((value: SiteContent) => {
     savedJson.current = JSON.stringify(value);
-    setSaveState("saved");
+    setPhase("saved");
   }, []);
 
   const saveLatest = useCallback(async function saveLatest() {
     if (inFlight.current || !contentRef.current) return;
     const json = JSON.stringify(contentRef.current);
     if (json === savedJson.current) {
-      setSaveState("saved");
+      setPhase("saved");
       return;
     }
     inFlight.current = true;
-    setSaveState("saving");
+    setPhase("saving");
     try {
       await fetchJson("/api/content", { method: "PUT", headers: JSON_HEADERS, body: json });
       savedJson.current = json;
       withdraw(failure.current);
     } catch (error) {
-      setSaveState("error");
+      setPhase("failed");
       failure.current = errorMessage(error, SAVE_FAILED_MESSAGE);
       notify(failure.current, "error");
       return;
@@ -127,7 +133,7 @@ export function useDraftAutosave({ content, contentRef, notify, withdraw }: Auto
     if (contentRef.current && JSON.stringify(contentRef.current) !== json) {
       void saveLatest();
     } else {
-      setSaveState("saved");
+      setPhase("saved");
     }
   }, [contentRef, notify, withdraw]);
 
@@ -135,10 +141,9 @@ export function useDraftAutosave({ content, contentRef, notify, withdraw }: Auto
     if (!content) return;
     const json = JSON.stringify(content);
     if (json === savedJson.current && !inFlight.current) {
-      setSaveState("saved");
+      setPhase("saved");
       return;
     }
-    setSaveState("saving");
     const timer = window.setTimeout(() => void saveLatest(), AUTOSAVE_DELAY_MS);
     return () => window.clearTimeout(timer);
   }, [content, saveLatest]);
@@ -151,8 +156,10 @@ export function useDraftAutosave({ content, contentRef, notify, withdraw }: Auto
     return () => window.removeEventListener("beforeunload", warn);
   }, [contentRef]);
 
-  const isSaved = !!content && saveState === "saved" && JSON.stringify(content) === savedJson.current && !inFlight.current;
-  return { saveState, isSaved, markSaved, retrySave: saveLatest };
+  // The phase only changes when a request starts or ends, so unsent edits are worked out here instead.
+  const unsent = !content || JSON.stringify(content) !== savedJson.current;
+  const saveState: SaveState = phase === "saved" && unsent ? "pending" : phase;
+  return { saveState, markSaved, retrySave: saveLatest };
 }
 
 export function useUndoShortcuts(undo: () => void, redo: () => void, enabled: boolean) {
